@@ -136,44 +136,44 @@ export default function Reports({ setGlobalNotification }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-1 sm:px-4">
       
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Audits & Reports Center</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Compile dynamic registration metrics, group services processing, and export official PDFs.
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-100">Audit & Reports</h1>
+          <p className="text-[10px] sm:text-sm text-slate-400 mt-0.5">
+            Compile operational metrics and group processed categories.
           </p>
         </div>
         
         <button
           onClick={loadData}
-          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-card hover:bg-secondary font-bold text-xs transition"
+          className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-secondary font-extrabold text-[10px] sm:text-xs transition cursor-pointer select-none"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh Audit Data
+          <RefreshCw className="w-3.5 h-3.5 text-[#F5C800]" />
+          REFRESH AUDIT
         </button>
       </div>
 
-      {/* Period Filter Selector Tabs */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-4">
-        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">Audit Scope Range Selection</span>
+      {/* Period Filter Selector Tabs - highly compact */}
+      <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3 sm:p-4 shadow-sm space-y-3">
+        <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">Audit Scope Range</span>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {[
             { id: 'daily', label: 'TODAY SUMMARY' },
-            { id: '10days', label: 'LAST 10 DAYS' },
-            { id: 'monthly', label: 'CURRENT MONTH' },
-            { id: 'custom', label: 'CUSTOM DATE RANGE' }
+            { id: '10days', label: '10 DAYS' },
+            { id: 'monthly', label: 'THIS MONTH' },
+            { id: 'custom', label: 'CUSTOM RANGE' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setFilterType(tab.id)}
-              className={`py-2 px-4 rounded-xl text-xs font-bold uppercase transition ${
+              className={`py-1.5 px-3 rounded-lg text-[10px] font-extrabold uppercase transition cursor-pointer select-none ${
                 filterType === tab.id
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-emerald-500/10'
-                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  ? 'bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] shadow-md shadow-[#F5C800]/10'
+                  : 'bg-slate-950/40 text-slate-400 hover:bg-slate-850 hover:text-slate-100'
               }`}
             >
               {tab.label}
@@ -183,23 +183,23 @@ export default function Reports({ setGlobalNotification }) {
 
         {/* Custom date range controls */}
         {filterType === 'custom' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/60 max-w-xl">
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 max-w-lg">
             <div>
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">Start Date</label>
+              <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Start Date</label>
               <input
                 type="date"
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-slate-400 focus:outline-none focus:border-[#10b981] transition"
+                className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-1.5 px-2 text-[10px] text-slate-400 focus:outline-none focus:border-[#F5C800] transition"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">End Date</label>
+              <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">End Date</label>
               <input
                 type="date"
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-slate-400 focus:outline-none focus:border-[#10b981] transition"
+                className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-1.5 px-2 text-[10px] text-slate-400 focus:outline-none focus:border-[#F5C800] transition"
               />
             </div>
           </div>
@@ -208,32 +208,32 @@ export default function Reports({ setGlobalNotification }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#F5C800] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           
-          {/* Summary Audit Metric Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Summary Audit Metric Grid - Highly compact 2x2 layout on mobile */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
             
-            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-              <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase block">Units Registered</span>
-              <h3 className="text-xl font-black mt-2 text-slate-200">{totalCount} units</h3>
+            <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Units Registered</span>
+              <h3 className="text-xs sm:text-lg font-black mt-1 text-slate-200">{totalCount} units</h3>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-              <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase block">Registry Value</span>
-              <h3 className="text-xl font-black mt-2 text-emerald-500">${totalAmount.toFixed(2)}</h3>
+            <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Registry Value</span>
+              <h3 className="text-xs sm:text-lg font-black mt-1 text-emerald-400">${totalAmount.toFixed(2)}</h3>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-              <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase block">Ledger Expenses Logged</span>
-              <h3 className="text-xl font-black mt-2 text-red-400">${ledgerExpense.toFixed(2)}</h3>
+            <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ledger Expenses</span>
+              <h3 className="text-xs sm:text-lg font-black mt-1 text-red-500">${ledgerExpense.toFixed(2)}</h3>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-              <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase block">Ledger Net Cash</span>
-              <h3 className={`text-xl font-black mt-2 ${ledgerNet >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ledger Net Cash</span>
+              <h3 className={`text-xs sm:text-lg font-black mt-1 ${ledgerNet >= 0 ? 'text-emerald-400' : 'text-red-550'}`}>
                 ${ledgerNet.toFixed(2)}
               </h3>
             </div>
@@ -241,95 +241,123 @@ export default function Reports({ setGlobalNotification }) {
           </div>
 
           {/* Grouped counts and detailed logs section */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3.5 sm:gap-6">
             
             {/* Dynamic groupings (Left column) */}
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm space-y-4">
+            <div className="premium-glass border border-slate-800 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-3">
               <div>
-                <h3 className="text-xs font-bold tracking-wider uppercase text-slate-300">Category Summaries</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Registration distributions across services.</p>
+                <h3 className="text-xs font-bold tracking-wider uppercase text-slate-300">Category summaries</h3>
+                <p className="text-[9px] text-slate-500 mt-0.5">Registration distributions across services.</p>
               </div>
 
-              <div className="divide-y divide-border/60 text-xs">
+              <div className="divide-y divide-slate-800/40 text-[10px] sm:text-xs">
                 {Object.entries(serviceSummary).map(([name, count]) => (
-                  <div key={name} className="flex justify-between py-3 hover:bg-secondary/20 px-1 rounded transition">
+                  <div key={name} className="flex justify-between py-2.5 hover:bg-slate-900/20 px-1 rounded transition">
                     <span className="text-slate-400 font-semibold">{name}</span>
-                    <span className="font-black text-slate-200 bg-secondary px-2.5 py-0.5 rounded-full">{count} units</span>
+                    <span className="font-black text-slate-200 bg-slate-950/40 px-2 py-0.5 rounded">{count} units</span>
                   </div>
                 ))}
                 
                 {Object.keys(serviceSummary).length === 0 && (
-                  <div className="text-center py-6 text-muted-foreground">No dynamic categories processed.</div>
+                  <div className="text-center py-4 text-slate-500">No categories processed in scope.</div>
                 )}
 
-                <div className="flex justify-between py-4 font-bold text-emerald-400 border-t border-border/80 mt-2">
+                <div className="flex justify-between py-3 font-bold text-emerald-450 border-t border-slate-800/80 mt-2">
                   <span>TOTAL SCOPE VOLUME:</span>
-                  <span className="font-extrabold">{totalCount} units processed</span>
+                  <span className="font-extrabold">{totalCount} units</span>
                 </div>
               </div>
             </div>
 
             {/* Itemized tables list logs (Right column) */}
-            <div className="bg-card border border-border rounded-xl p-5 xl:col-span-2 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="premium-glass border border-slate-800 rounded-xl p-3.5 sm:p-5 xl:col-span-2 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-xs font-bold tracking-wider uppercase text-slate-300">Itemized Range Logs ({filteredRecords.length})</h3>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Entries logged during this auditing scope.</p>
+                  <h3 className="text-xs font-bold tracking-wider uppercase text-slate-300">Itemized logs ({filteredRecords.length})</h3>
+                  <p className="text-[9px] text-slate-500 mt-0.5">Entries logged during this auditing scope.</p>
                 </div>
                 
                 <button
                   onClick={handleExportPDF}
                   disabled={filteredRecords.length === 0}
-                  className="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-primary hover:bg-emerald-600 text-primary-foreground font-black text-xs transition disabled:opacity-50"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs transition disabled:opacity-50 select-none cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   GENERATE PDF AUDIT REPORT
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-[10px]">
-                  <thead>
-                    <tr className="border-b border-border text-muted-foreground font-bold bg-secondary/30">
-                      <th className="py-2.5 px-2">DATE</th>
-                      <th className="py-2.5 px-2">CUSTOMER</th>
-                      <th className="py-2.5 px-2">SERVICE</th>
-                      <th className="py-2.5 px-2">QTY</th>
-                      <th className="py-2.5 px-2">CHARGE</th>
-                      <th className="py-2.5 px-2 text-right">OFFICER</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/60">
-                    {filteredRecords.length > 0 ? (
-                      filteredRecords.map(rec => (
-                        <tr key={rec.id} className="hover:bg-secondary/20 transition">
-                          <td className="py-2.5 px-2 font-medium text-slate-400">
-                            {new Date(rec.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-2.5 px-2 font-bold text-slate-200">
-                            {rec.customer_name}
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <span className="bg-[#10b981]/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded">
-                              {rec.service?.name || 'Category'}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-2 font-bold">{rec.quantity}</td>
-                          <td className="py-2.5 px-2 font-black text-emerald-500">${parseFloat(rec.amount).toFixed(2)}</td>
-                          <td className="py-2.5 px-2 text-right text-muted-foreground">{rec.officer_name}</td>
+              {/* Range Logs Section */}
+              {filteredRecords.length > 0 ? (
+                <div className="space-y-2">
+                  
+                  {/* MOBILE COMPACT CARD VIEW (sm:hidden) */}
+                  <div className="block sm:hidden space-y-2">
+                    {filteredRecords.map(rec => (
+                      <div key={rec.id} className="bg-slate-950/30 p-2.5 rounded-xl border border-slate-850 space-y-2 text-xs">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="font-extrabold text-slate-400">{new Date(rec.created_at).toLocaleDateString()}</span>
+                          <span className="bg-[#10b981]/10 text-emerald-400 font-black px-1.5 py-0.5 rounded text-[8px] uppercase">
+                            {rec.service?.name || 'Category'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-end pt-1">
+                          <div>
+                            <div className="font-bold text-slate-100">{rec.customer_name}</div>
+                            <div className="text-[9px] text-slate-500 mt-0.5">Officer: {rec.officer_name}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-black text-emerald-400">${parseFloat(rec.amount).toFixed(2)}</div>
+                            <div className="text-[8px] text-slate-400 mt-0.5">Qty: x{rec.quantity}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* DESKTOP TABLE VIEW (hidden sm:block) */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-[10px]">
+                      <thead>
+                        <tr className="border-b border-border text-muted-foreground font-bold bg-secondary/30">
+                          <th className="py-2.5 px-2">DATE</th>
+                          <th className="py-2.5 px-2">CUSTOMER</th>
+                          <th className="py-2.5 px-2">SERVICE</th>
+                          <th className="py-2.5 px-2">QTY</th>
+                          <th className="py-2.5 px-2">CHARGE</th>
+                          <th className="py-2.5 px-2 text-right">OFFICER</th>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="6" className="py-12 text-center text-muted-foreground">
-                          <AlertCircle className="w-8 h-8 mx-auto text-slate-600 mb-2" />
-                          No logs found within this date range scope.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody className="divide-y divide-border/60">
+                        {filteredRecords.map(rec => (
+                          <tr key={rec.id} className="hover:bg-secondary/20 transition">
+                            <td className="py-2.5 px-2 font-medium text-slate-400">
+                              {new Date(rec.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-2.5 px-2 font-bold text-slate-200">
+                              {rec.customer_name}
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <span className="bg-[#10b981]/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded">
+                                {rec.service?.name || 'Category'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-2 font-bold">{rec.quantity}</td>
+                            <td className="py-2.5 px-2 font-black text-emerald-500">${parseFloat(rec.amount).toFixed(2)}</td>
+                            <td className="py-2.5 px-2 text-right text-muted-foreground">{rec.officer_name}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+              ) : (
+                <div className="text-center py-12 text-slate-400 bg-slate-950/20 border border-slate-850 rounded-xl flex flex-col items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-slate-650 mb-2" />
+                  <p className="font-bold text-xs">No entries within date range scope</p>
+                </div>
+              )}
             </div>
 
           </div>
@@ -340,3 +368,4 @@ export default function Reports({ setGlobalNotification }) {
     </div>
   );
 }
+

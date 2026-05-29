@@ -2,85 +2,26 @@
 // Emulates Supabase PostgreSQL queries, tables, and constraints in LocalStorage
 
 const KEYS = {
-  SERVICES: 'yorota_services',
-  DAILY_RECORDS: 'yorota_daily_records',
-  TRANSACTIONS: 'yorota_transactions',
-  DEBTORS: 'yorota_debtors',
-  REPORTS: 'yorota_reports',
-  USERS: 'yorota_users',
-  CURRENT_USER: 'yorota_current_user'
+  SERVICES: 'yorota_v3_services',
+  DAILY_RECORDS: 'yorota_v3_daily_records',
+  TRANSACTIONS: 'yorota_v3_transactions',
+  DEBTORS: 'yorota_v3_debtors',
+  REPORTS: 'yorota_v3_reports',
+  USERS: 'yorota_v3_users',
+  CURRENT_USER: 'yorota_v3_current_user'
 };
 
-// Initial services categories seed data
-const DEFAULT_SERVICES = [
-  { id: 's1', name: 'Rider Registration', price: 50.00, description: 'New registration for commercial motorcycle riders', status: 'active', created_at: new Date(Date.now() - 30 * 86400000).toISOString() },
-  { id: 's2', name: 'Tricycle Owner', price: 75.00, description: 'Registration for tricycle vehicle owners', status: 'active', created_at: new Date(Date.now() - 28 * 86400000).toISOString() },
-  { id: 's3', name: 'Renewal', price: 30.00, description: 'Annual driver or commercial permit renewals', status: 'active', created_at: new Date(Date.now() - 25 * 86400000).toISOString() },
-  { id: 's4', name: 'Transfer of Ownership', price: 100.00, description: 'Legal transfer of commercial vehicle licenses', status: 'active', created_at: new Date(Date.now() - 20 * 86400000).toISOString() },
-  { id: 's5', name: 'Temp Operating Permit', price: 20.00, description: 'Temporary operating authorization certificate', status: 'inactive', created_at: new Date(Date.now() - 15 * 86400000).toISOString() }
-];
+// Initial services categories seed data (Completely Empty Slate)
+const DEFAULT_SERVICES = [];
 
 // Helper to seed dates
 const dateOffset = (days) => new Date(Date.now() - days * 86400000).toISOString();
 
-const DEFAULT_DAILY_RECORDS = [
-  { id: 'r1', service_id: 's1', customer_name: 'Abubakar Garba', phone_number: '+234 803 111 2222', quantity: 1, amount: 50.00, officer_name: 'Officer Musa', notes: 'First-time registration', created_at: dateOffset(5) },
-  { id: 'r2', service_id: 's2', customer_name: 'Emmanuel Okafor', phone_number: '+234 812 333 4444', quantity: 2, amount: 150.00, officer_name: 'Officer Musa', notes: 'Two fleets registered', created_at: dateOffset(4) },
-  { id: 'r3', service_id: 's3', customer_name: 'Fatima Bello', phone_number: '+234 905 555 6666', quantity: 1, amount: 30.00, officer_name: 'Officer Musa', notes: 'Yearly renewal', created_at: dateOffset(3) },
-  { id: 'r4', service_id: 's4', customer_name: 'Chinedu Okeke', phone_number: '+234 708 777 8888', quantity: 1, amount: 100.00, officer_name: 'Officer Amina', notes: 'Ownership transfer from Alhaji Sani', created_at: dateOffset(2) },
-  { id: 'r5', service_id: 's1', customer_name: 'Ibrahim Yusuf', phone_number: '+234 803 999 0000', quantity: 2, amount: 100.00, officer_name: 'Officer Amina', notes: 'Express rider registration', created_at: dateOffset(1) },
-  { id: 'r6', service_id: 's3', customer_name: 'Sani Mohammed', phone_number: '+234 802 444 5555', quantity: 3, amount: 90.00, officer_name: 'Officer Musa', notes: 'Group permit renewals', created_at: new Date().toISOString() },
-  { id: 'r7', service_id: 's2', customer_name: 'Tunde Lawal', phone_number: '+234 901 888 9999', quantity: 1, amount: 75.00, officer_name: 'Officer Amina', notes: 'New commercial tricycle registration', created_at: new Date().toISOString() }
-];
+const DEFAULT_DAILY_RECORDS = [];
 
-const DEFAULT_TRANSACTIONS = [
-  { id: 't1', date: dateOffset(5).split('T')[0], type: 'income', amount: 50.00, purpose: 'Rider Registration - Abubakar Garba', collected_by: 'Officer Musa', created_at: dateOffset(5) },
-  { id: 't2', date: dateOffset(4).split('T')[0], type: 'income', amount: 150.00, purpose: 'Tricycle Owner - Emmanuel Okafor', collected_by: 'Officer Musa', created_at: dateOffset(4) },
-  { id: 't3', date: dateOffset(3).split('T')[0], type: 'income', amount: 30.00, purpose: 'Renewal - Fatima Bello', collected_by: 'Officer Musa', created_at: dateOffset(3) },
-  { id: 't4', date: dateOffset(3).split('T')[0], type: 'expense', amount: 45.00, purpose: 'Office printing paper & clipboards', collected_by: 'Admin Ibrahim', created_at: dateOffset(3) },
-  { id: 't5', date: dateOffset(2).split('T')[0], type: 'income', amount: 100.00, purpose: 'Transfer of Ownership - Chinedu Okeke', collected_by: 'Officer Amina', created_at: dateOffset(2) },
-  { id: 't6', date: dateOffset(1).split('T')[0], type: 'income', amount: 100.00, purpose: 'Rider Registration - Ibrahim Yusuf', collected_by: 'Officer Amina', created_at: dateOffset(1) },
-  { id: 't7', date: dateOffset(1).split('T')[0], type: 'expense', amount: 120.00, purpose: 'Internet subscription renewal', collected_by: 'Admin Ibrahim', created_at: dateOffset(1) },
-  { id: 't8', date: new Date().toISOString().split('T')[0], type: 'income', amount: 90.00, purpose: 'Renewal - Sani Mohammed', collected_by: 'Officer Musa', created_at: new Date().toISOString() },
-  { id: 't9', date: new Date().toISOString().split('T')[0], type: 'income', amount: 75.00, purpose: 'Tricycle Owner - Tunde Lawal', collected_by: 'Officer Amina', created_at: new Date().toISOString() }
-];
+const DEFAULT_TRANSACTIONS = [];
 
-const DEFAULT_DEBTORS = [
-  {
-    id: 'd1',
-    customer_name: 'Malam Isa Aliyu',
-    phone_number: '+234 806 222 3333',
-    amount_owed: 120.00,
-    due_date: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
-    status: 'unpaid',
-    payment_history: [],
-    created_at: dateOffset(10)
-  },
-  {
-    id: 'd2',
-    customer_name: 'Grace Nwosu',
-    phone_number: '+234 703 444 5555',
-    amount_owed: 40.00,
-    due_date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0], // Overdue
-    status: 'unpaid',
-    payment_history: [
-      { date: dateOffset(2).split('T')[0], amount_paid: 60.00, received_by: 'Officer Musa' }
-    ],
-    created_at: dateOffset(8)
-  },
-  {
-    id: 'd3',
-    customer_name: 'Haruna Danladi',
-    phone_number: '+234 815 666 7777',
-    amount_owed: 0.00,
-    due_date: dateOffset(1).split('T')[0],
-    status: 'paid',
-    payment_history: [
-      { date: dateOffset(1).split('T')[0], amount_paid: 75.00, received_by: 'Officer Amina' }
-    ],
-    created_at: dateOffset(6)
-  }
-];
+const DEFAULT_DEBTORS = [];
 
 // LocalStorage helpers
 const read = (key, fallback) => {

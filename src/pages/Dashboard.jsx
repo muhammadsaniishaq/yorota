@@ -159,93 +159,177 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
       </div>
 
       {/* Metric Cards Grid - 2 columns on mobile, highly compact */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4">
         
         {/* Card 1: Today Income */}
-        <div className="premium-glass rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest text-slate-400 uppercase">Income Today</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-              <DollarSign className="w-4 h-4" />
+        <div className="premium-glass rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-between relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
+              <DollarSign className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Income Today</span>
+              <h2 className="text-xs font-black text-slate-100 gold-text-glow mt-0.5">${stats.incomeToday.toFixed(2)}</h2>
             </div>
           </div>
-          <div className="mt-3 sm:mt-4">
-            <h2 className="text-lg sm:text-xl font-black text-slate-100 gold-text-glow">${stats.incomeToday.toFixed(2)}</h2>
-            <p className="text-[8px] sm:text-[10px] text-emerald-400 font-bold flex items-center gap-0.5 mt-0.5">
-              <TrendingUp className="w-2.5 h-2.5" /> Live flow
-            </p>
+
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Income Today</span>
+              <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-xl font-black text-slate-100 gold-text-glow">${stats.incomeToday.toFixed(2)}</h2>
+              <p className="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5 mt-0.5">
+                <TrendingUp className="w-2.5 h-2.5" /> Live flow
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Monthly Income */}
-        <div className="premium-glass rounded-2xl p-3 sm:p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest text-slate-400 uppercase">This Month</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-              <DollarSign className="w-4 h-4" />
+        <div className="premium-glass rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-between relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
+              <DollarSign className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">This Month</span>
+              <h2 className="text-xs font-black text-slate-100 gold-text-glow mt-0.5">${stats.incomeThisMonth.toFixed(2)}</h2>
             </div>
           </div>
-          <div className="mt-3 sm:mt-4">
-            <h2 className="text-lg sm:text-xl font-black text-slate-100 gold-text-glow">${stats.incomeThisMonth.toFixed(2)}</h2>
-            <p className="text-[8px] sm:text-[10px] text-slate-500 mt-0.5">Billing cycle</p>
+
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">This Month</span>
+              <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-xl font-black text-slate-100 gold-text-glow">${stats.incomeThisMonth.toFixed(2)}</h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Billing cycle</p>
+            </div>
           </div>
         </div>
 
         {/* Card 3: Total Registrations */}
-        <div className="premium-glass rounded-2xl p-3 sm:p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest text-slate-400 uppercase">Registrations</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-              <FileSpreadsheet className="w-4 h-4" />
+        <div className="premium-glass rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-between relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Registrations</span>
+              <h2 className="text-xs font-black text-slate-100 mt-0.5">{stats.registrations} <span className="text-[9px] font-normal text-slate-400">qty</span></h2>
             </div>
           </div>
-          <div className="mt-3 sm:mt-4">
-            <h2 className="text-lg sm:text-xl font-black text-slate-100">{stats.registrations} <span className="text-[10px] font-normal text-slate-400">qty</span></h2>
-            <p className="text-[8px] sm:text-[10px] text-slate-500 mt-0.5">Rider permits</p>
+
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Registrations</span>
+              <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-xl font-black text-slate-100">{stats.registrations} <span className="text-xs font-normal text-slate-400">units</span></h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Rider permits</p>
+            </div>
           </div>
         </div>
 
         {/* Card 4: Renewals */}
-        <div className="premium-glass rounded-2xl p-3 sm:p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest text-slate-400 uppercase">Renewals</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-              <FileSpreadsheet className="w-4 h-4" />
+        <div className="premium-glass rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-between relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Renewals</span>
+              <h2 className="text-xs font-black text-slate-100 mt-0.5">{stats.renewals} <span className="text-[9px] font-normal text-slate-400">qty</span></h2>
             </div>
           </div>
-          <div className="mt-3 sm:mt-4">
-            <h2 className="text-lg sm:text-xl font-black text-slate-100">{stats.renewals} <span className="text-[10px] font-normal text-slate-400">qty</span></h2>
-            <p className="text-[8px] sm:text-[10px] text-slate-500 mt-0.5">Permits renewed</p>
+
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Renewals</span>
+              <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-xl font-black text-slate-100">{stats.renewals} <span className="text-xs font-normal text-slate-400">units</span></h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Permits renewed</p>
+            </div>
           </div>
         </div>
 
         {/* Card 5: Transfers */}
-        <div className="premium-glass rounded-2xl p-3 sm:p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest text-slate-400 uppercase">Transfers</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-              <FileSpreadsheet className="w-4 h-4" />
+        <div className="premium-glass rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-between relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Transfers</span>
+              <h2 className="text-xs font-black text-slate-100 mt-0.5">{stats.transfers} <span className="text-[9px] font-normal text-slate-400">qty</span></h2>
             </div>
           </div>
-          <div className="mt-3 sm:mt-4">
-            <h2 className="text-lg sm:text-xl font-black text-slate-100">{stats.transfers} <span className="text-[10px] font-normal text-slate-400">qty</span></h2>
-            <p className="text-[8px] sm:text-[10px] text-slate-500 mt-0.5">Ownership reassigned</p>
+
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Transfers</span>
+              <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-xl font-black text-slate-100">{stats.transfers} <span className="text-xs font-normal text-slate-400">units</span></h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Ownership reassigned</p>
+            </div>
           </div>
         </div>
 
         {/* Card 6: Debt */}
-        <div className="premium-glass rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest text-slate-400 uppercase">Debtors</span>
-            <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
-              <UserX className="w-4 h-4" />
+        <div className="premium-glass rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-between relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+              <UserX className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Debtors</span>
+              <h2 className="text-xs font-black text-red-500 mt-0.5">${stats.totalOwed.toFixed(2)}</h2>
             </div>
           </div>
-          <div className="mt-3 sm:mt-4">
-            <h2 className="text-lg sm:text-xl font-black text-red-500">${stats.totalOwed.toFixed(2)}</h2>
-            <p className="text-[8px] sm:text-[10px] text-red-400 font-bold flex items-center gap-0.5 mt-0.5">
-              <AlertCircle className="w-3 h-3 text-red-400" /> {stats.unpaidDebts} Unpaid
-            </p>
+
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Debtors</span>
+              <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
+                <UserX className="w-4.5 h-4.5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-xl font-black text-red-500">${stats.totalOwed.toFixed(2)}</h2>
+              <p className="text-[10px] text-red-400 font-bold flex items-center gap-0.5 mt-0.5">
+                <AlertCircle className="w-3 h-3 text-red-400" /> {stats.unpaidDebts} Unpaid
+              </p>
+            </div>
           </div>
         </div>
 

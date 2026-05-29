@@ -114,95 +114,119 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-1 sm:px-4">
       
       {/* Header toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Office Cash Ledger</h1>
-          <p className="text-sm text-muted-foreground mt-0.5 font-medium">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-100">Office Ledger</h1>
+          <p className="text-[10px] sm:text-sm text-slate-400 mt-0.5">
             Cash receipts, administrative expenditure audits, and net balance controls.
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
           <button
             onClick={() => openModal('expense')}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold border border-red-500/20 text-xs transition"
+            className="flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold border border-red-500/20 text-[10px] sm:text-xs transition cursor-pointer select-none"
           >
-            <FolderMinus className="w-4 h-4" />
+            <FolderMinus className="w-3.5 h-3.5" />
             LOG EXPENSE
           </button>
           
           <button
             onClick={() => openModal('income')}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 text-xs transition"
+            className="flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/20 text-[10px] sm:text-xs transition cursor-pointer select-none"
           >
-            <FolderPlus className="w-4 h-4" />
-            LOG EXTERNAL INCOME
+            <FolderPlus className="w-3.5 h-3.5" />
+            LOG INCOME
           </button>
         </div>
       </div>
 
-      {/* Financial Ledger Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Financial Ledger Metric Cards - Highly compact 3 columns on mobile */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         
         {/* Card 1: Balance */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Net Cash Balance</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <DollarSign className="w-4 h-4" />
-            </div>
+        <div className="premium-glass rounded-xl p-2 sm:p-4 flex items-center justify-between border border-slate-800 shadow-sm relative overflow-hidden">
+          {/* Mobile View */}
+          <div className="flex sm:hidden flex-col w-full">
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Balance</span>
+            <h2 className="text-xs font-black text-slate-100 mt-0.5">${summary.remainingBalance.toFixed(2)}</h2>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-black">${summary.remainingBalance.toFixed(2)}</h2>
-            <p className="text-[10px] text-muted-foreground mt-1">Remaining office cash assets</p>
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Net Balance</span>
+              <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-lg font-black text-slate-100">${summary.remainingBalance.toFixed(2)}</h2>
+              <p className="text-[9px] text-slate-500 mt-0.5">Remaining cash assets</p>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Total Income */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Gross Income</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <ArrowUpRight className="w-4 h-4 text-emerald-500" />
-            </div>
+        <div className="premium-glass rounded-xl p-2 sm:p-4 flex items-center justify-between border border-slate-800 shadow-sm">
+          {/* Mobile View */}
+          <div className="flex sm:hidden flex-col w-full">
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Gross In</span>
+            <h2 className="text-xs font-black text-emerald-400 mt-0.5">${summary.totalIncome.toFixed(2)}</h2>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-black text-emerald-500">${summary.totalIncome.toFixed(2)}</h2>
-            <p className="text-[10px] text-muted-foreground mt-1">Total revenue collected</p>
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Gross Income</span>
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+                <ArrowUpRight className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-lg font-black text-emerald-500">${summary.totalIncome.toFixed(2)}</h2>
+              <p className="text-[9px] text-slate-500 mt-0.5">Gross collections</p>
+            </div>
           </div>
         </div>
 
         {/* Card 3: Total Expenses */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Office Expenses</span>
-            <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
-              <ArrowDownRight className="w-4 h-4 text-red-500" />
-            </div>
+        <div className="premium-glass rounded-xl p-2 sm:p-4 flex items-center justify-between border border-slate-800 shadow-sm">
+          {/* Mobile View */}
+          <div className="flex sm:hidden flex-col w-full">
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Expenses</span>
+            <h2 className="text-xs font-black text-red-500 mt-0.5">${summary.totalExpenses.toFixed(2)}</h2>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-black text-red-500">${summary.totalExpenses.toFixed(2)}</h2>
-            <p className="text-[10px] text-muted-foreground mt-1">Total operational outflows</p>
+          {/* Desktop View */}
+          <div className="hidden sm:flex flex-col justify-between h-full w-full">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Total Expenses</span>
+              <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
+                <ArrowDownRight className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h2 className="text-lg font-black text-red-500">${summary.totalExpenses.toFixed(2)}</h2>
+              <p className="text-[9px] text-slate-500 mt-0.5">Office outflows</p>
+            </div>
           </div>
         </div>
 
       </div>
 
-      {/* Ledger Table controls */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-card border border-border rounded-xl p-4 shadow-sm">
+      {/* Ledger Table Controls */}
+      <div className="flex flex-col sm:flex-row gap-2.5 items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-xl p-2.5 sm:p-4 shadow-sm">
         
         {/* Search */}
         <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search ledger by transaction details, collected by..."
-            className="w-full bg-secondary/50 border border-border rounded-xl py-2 pl-10 pr-4 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition"
+            placeholder="Search particulars or officer..."
+            className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-1.5 pl-9 pr-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#F5C800] transition"
           />
         </div>
 
@@ -210,7 +234,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
         <button
           onClick={handlePrintLedger}
           disabled={filteredTransactions.length === 0}
-          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-emerald-600 text-primary-foreground font-bold text-xs transition disabled:opacity-50"
+          className="w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs transition disabled:opacity-50 select-none cursor-pointer"
         >
           <FileText className="w-4 h-4" />
           EXPORT LEDGER PDF
@@ -218,22 +242,51 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
 
       </div>
 
-      {/* Table Data */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      {/* Table Data Section */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 border-4 border-[#F5C800] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filteredTransactions.length > 0 ? (
+        <div className="space-y-2">
+          
+          {/* MOBILE RESPONSIVE COMPACT CARD VIEW (sm:hidden) */}
+          <div className="block sm:hidden space-y-2">
+            {filteredTransactions.map(tx => (
+              <div key={tx.id} className="premium-glass p-3 rounded-xl border border-slate-800 space-y-2 text-xs shadow-md">
+                <div className="flex justify-between items-center">
+                  <span className="font-extrabold text-slate-400 text-[9px]">{tx.date}</span>
+                  <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                    tx.type === 'income' 
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10' 
+                      : 'bg-red-500/10 text-red-400 border border-red-500/10'
+                  }`}>
+                    {tx.type === 'income' ? '+' : '-'}{tx.type.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-end pt-1">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-slate-100 truncate pr-2">{tx.purpose}</div>
+                    <div className="text-[8px] text-slate-500 mt-0.5">Logged by: {tx.collected_by}</div>
+                  </div>
+                  <div className={`font-black text-xs shrink-0 ${tx.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {tx.type === 'income' ? '+' : '-'}${parseFloat(tx.amount).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        ) : filteredTransactions.length > 0 ? (
-          <div className="overflow-x-auto">
+
+          {/* DESKTOP TRADITIONAL TABLE VIEW (hidden sm:block) */}
+          <div className="hidden sm:block bg-card border border-border rounded-xl overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-secondary/30 text-muted-foreground font-bold">
-                  <th className="py-3.5 px-4">DATE</th>
-                  <th className="py-3.5 px-4">TRANSACTION TYPE</th>
-                  <th className="py-3.5 px-4">PURPOSE / PARTICULARS</th>
-                  <th className="py-3.5 px-4">AMOUNT</th>
-                  <th className="py-3.5 px-4 text-right">LOGGED BY</th>
+                  <th className="py-3 px-4">DATE</th>
+                  <th className="py-3 px-4">TRANSACTION TYPE</th>
+                  <th className="py-3 px-4">PURPOSE / PARTICULARS</th>
+                  <th className="py-3 px-4">AMOUNT</th>
+                  <th className="py-3 px-4 text-right">LOGGED BY</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
@@ -272,41 +325,41 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
               </tbody>
             </table>
           </div>
-        ) : (
-          <div className="text-center py-20 text-muted-foreground flex flex-col items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-slate-500 mb-2" />
-            <p className="font-semibold text-sm">No ledger entries found</p>
-            <p className="text-xs text-muted-foreground/80 mt-1">
-              Adjust search keywords or add a manual cash record above.
-            </p>
-          </div>
-        )}
-      </div>
+
+        </div>
+      ) : (
+        <div className="text-center py-16 text-slate-400 premium-glass border border-slate-800 rounded-xl flex flex-col items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-slate-600 mb-2" />
+          <p className="font-bold text-xs">No transactions in ledger</p>
+          <p className="text-[10px] text-slate-500 mt-1">
+            Manual cash receipts or outflows will display here in real-time.
+          </p>
+        </div>
+      )}
 
       {/* Manual Ledger Log Entry Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 relative">
-            <h2 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-1.5 uppercase tracking-wide">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 relative text-xs">
+            <h2 className="text-xs font-black text-slate-100 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
               {type === 'income' ? (
-                <FolderPlus className="w-5 h-5 text-emerald-500" />
+                <FolderPlus className="w-4 h-4 text-emerald-500" />
               ) : (
-                <FolderMinus className="w-5 h-5 text-red-500" />
+                <FolderMinus className="w-4 h-4 text-red-500" />
               )}
-              Log Office {type} Entry
+              Log Ledger {type}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-950/40 border border-red-500/30 text-red-200 text-xs flex gap-2">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="mb-3.5 p-2 rounded bg-red-950/40 border border-red-500/20 text-red-200 text-[10px]">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSave} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
-                  Cash Flow Amount ($ USD) *
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  Cash Flow Amount ($) *
                 </label>
                 <input
                   type="number"
@@ -316,61 +369,60 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition font-bold"
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5C800] transition font-bold"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
-                  Purpose / Particulars *
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  Particulars / Description *
                 </label>
                 <textarea
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
-                  placeholder={type === 'income' ? 'e.g. Licensing donor grants, auction revenues...' : 'e.g. Utility electricity, office water refills, printer ink replacements...'}
+                  placeholder={type === 'income' ? 'Describe income details...' : 'Describe expenditure details...'}
                   required
-                  rows="3"
-                  className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition resize-none"
+                  rows="2"
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#F5C800] transition resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
-                  Logged By (Security Stamp)
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  Security Operator stamp
                 </label>
                 <input
                   type="text"
                   value={currentUser.name}
                   disabled
-                  className="w-full bg-secondary/30 border border-border rounded-xl py-2 px-3 text-xs text-muted-foreground select-none"
+                  className="w-full bg-slate-950/20 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-500 select-none font-bold"
                 />
               </div>
 
-              {/* Tips block */}
-              <div className="p-3 bg-secondary/40 border border-border text-[9px] text-muted-foreground leading-relaxed flex gap-1">
-                <HelpCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Entering cash flow here impacts the net ledger assets instantly and appears in audits, but does not add daily registration files.</span>
+              <div className="p-2 bg-slate-950/40 rounded border border-slate-850 text-[9px] text-slate-400 flex gap-1.5 leading-relaxed">
+                <HelpCircle className="w-3.5 h-3.5 text-[#F5C800] shrink-0" />
+                <span>Impacts cash assets instantly and appears in audits, but does not alter customer registries.</span>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 justify-end pt-4 border-t border-border mt-6">
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:bg-secondary transition"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 hover:bg-slate-950 transition font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className={`px-5 py-2 rounded-xl text-xs font-extrabold shadow-md transition ${
+                  className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase shadow-md transition cursor-pointer select-none ${
                     type === 'income'
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-[#090d16] shadow-emerald-500/10'
-                      : 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/10'
+                      ? 'bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13]'
+                      : 'bg-red-500 hover:bg-red-600 text-white'
                   }`}
                 >
-                  {formLoading ? 'Logging...' : `Post ${type.toUpperCase()}`}
+                  {formLoading ? 'Posting...' : `Post ${type}`}
                 </button>
               </div>
             </form>
@@ -381,3 +433,4 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
     </div>
   );
 }
+
