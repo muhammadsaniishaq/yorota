@@ -385,6 +385,42 @@ export const db = {
   },
 
   globalSearch: async (query) => {
+    if (isLive()) {
+      if (!query) return { records: [], debtors: [], transactions: [] };
+      const q = `%${query}%`;
+      try {
+        const [recRes, debtRes, txRes] = await Promise.all([
+          supabase
+            .from('daily_records')
+            .select('*, service:services(*)')
+            .or(`customer_name.ilike.${q},phone_number.ilike.${q},notes.ilike.${q},officer_name.ilike.${q}`)
+            .limit(5),
+          supabase
+            .from('debtors')
+            .select('*')
+            .or(`customer_name.ilike.${q},phone_number.ilike.${q}`)
+            .limit(5),
+          supabase
+            .from('transactions')
+            .select('*')
+            .or(`purpose.ilike.${q},collected_by.ilike.${q}`)
+            .limit(5)
+        ]);
+
+        if (recRes.error) throw recRes.error;
+        if (debtRes.error) throw debtRes.error;
+        if (txRes.error) throw txRes.error;
+
+        return {
+          records: recRes.data || [],
+          debtors: debtRes.data || [],
+          transactions: txRes.data || []
+        };
+      } catch (err) {
+        console.error('Live global search error:', err);
+        return { records: [], debtors: [], transactions: [] };
+      }
+    }
     return mockDb.globalSearch(query);
   }
 };
