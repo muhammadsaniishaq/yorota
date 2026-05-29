@@ -136,59 +136,59 @@ export default function Services({ setGlobalNotification }) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-1 sm:px-4">
       
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Category Management</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Configure dynamic registration types, pricing, and operating rules.
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-100">Manage Categories</h1>
+          <p className="text-[10px] sm:text-sm text-slate-400 mt-0.5">
+            Configure dynamic registration types, Naira pricing, and operating rules.
           </p>
         </div>
         
         <button
           onClick={openAddModal}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-emerald-600 shadow-md shadow-emerald-500/10 text-xs transition"
+          className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-extrabold hover:from-[#FFD740] hover:to-[#F5C800] shadow-md shadow-[#F5C800]/10 text-[10px] sm:text-xs transition cursor-pointer select-none"
         >
-          <Plus className="w-4 h-4" />
-          CREATE SERVICE TYPE
+          <Plus className="w-3.5 h-3.5" />
+          CREATE CATEGORY
         </button>
       </div>
 
       {/* Info notice about Dynamic prices */}
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-[#1f2937] flex gap-3 text-xs leading-relaxed max-w-4xl">
-        <Info className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+      <div className="p-3.5 rounded-xl premium-glass border border-slate-800 flex gap-2.5 text-[10px] sm:text-xs leading-relaxed max-w-4xl">
+        <Info className="w-4.5 h-4.5 text-[#F5C800] shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold text-slate-200">Accounting Integrity Enforced: </span>
-          Altering a category price instantly affects any new registrations entered into the system. Historic registrations already logged retain the exact prices they were originally processed at, ensuring ledger accuracy.
+          <span className="font-bold text-slate-200">Accounting Integrity: </span>
+          Altering a category price instantly affects any new registrations entered. Historical records retain their original processed prices to guarantee ledger audit accuracy.
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-center justify-between bg-card border border-border rounded-xl p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-2.5 items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-xl p-2.5 sm:p-4 shadow-sm">
         {/* Search input */}
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search categories by name or keyword..."
-            className="w-full bg-secondary/50 border border-border rounded-xl py-2 pl-10 pr-4 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition"
+            placeholder="Search categories by keyword..."
+            className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-1.5 pl-9 pr-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#F5C800] transition"
           />
         </div>
 
         {/* Status filters */}
-        <div className="flex gap-1 bg-secondary rounded-lg p-1 w-full md:w-auto">
+        <div className="flex gap-1 bg-slate-950/40 rounded-lg p-1 w-full sm:w-auto">
           {['all', 'active', 'inactive'].map((filt) => (
             <button
               key={filt}
               onClick={() => setStatusFilter(filt)}
-              className={`py-1.5 px-4 rounded-md text-[10px] font-bold uppercase transition flex-1 md:flex-none ${
+              className={`py-1 px-3.5 rounded-md text-[9px] font-extrabold uppercase transition flex-1 sm:flex-none cursor-pointer ${
                 statusFilter === filt
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-slate-900 text-slate-100 shadow-sm font-black'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               {filt}
@@ -197,22 +197,62 @@ export default function Services({ setGlobalNotification }) {
         </div>
       </div>
 
-      {/* Categories Data Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      {/* Categories Data Section */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 border-4 border-[#F5C800] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filteredServices.length > 0 ? (
+        <div className="space-y-2">
+          
+          {/* MOBILE RESPONSIVE COMPACT CARD VIEW (sm:hidden) */}
+          <div className="block sm:hidden space-y-2">
+            {filteredServices.map(srv => (
+              <div key={srv.id} className="premium-glass p-3 rounded-xl border border-slate-800 space-y-2 text-xs shadow-md">
+                <div className="flex justify-between items-center">
+                  <span className="font-extrabold text-slate-100 truncate pr-2">{srv.name}</span>
+                  <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                    srv.status === 'active' 
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10' 
+                      : 'bg-slate-500/10 text-slate-400 border border-slate-500/10'
+                  }`}>
+                    {srv.status}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 leading-relaxed">
+                  {srv.description || 'No description provided.'}
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-800/40">
+                  <div className="font-black text-emerald-400 text-xs">₦{parseFloat(srv.price).toFixed(2)}</div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => openEditModal(srv)}
+                      className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-bold hover:bg-slate-800 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(srv.id, srv.name)}
+                      className="px-2.5 py-1 rounded bg-red-500/10 border border-red-500/20 text-[10px] text-red-400 font-bold hover:bg-red-500 hover:text-white transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        ) : filteredServices.length > 0 ? (
-          <div className="overflow-x-auto">
+
+          {/* DESKTOP TRADITIONAL DATA TABLE VIEW (hidden sm:block) */}
+          <div className="hidden sm:block bg-card border border-border rounded-xl overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-secondary/30 text-muted-foreground font-bold">
-                  <th className="py-3.5 px-4">SERVICE CATEGORY NAME</th>
-                  <th className="py-3.5 px-4">PRICE</th>
-                  <th className="py-3.5 px-4">DESCRIPTION</th>
-                  <th className="py-3.5 px-4">STATUS</th>
-                  <th className="py-3.5 px-4 text-right">OPERATIONS</th>
+                  <th className="py-3 px-4">SERVICE CATEGORY NAME</th>
+                  <th className="py-3 px-4">PRICE</th>
+                  <th className="py-3 px-4">DESCRIPTION</th>
+                  <th className="py-3 px-4">STATUS</th>
+                  <th className="py-3 px-4 text-right">OPERATIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
@@ -221,8 +261,8 @@ export default function Services({ setGlobalNotification }) {
                     <td className="py-4 px-4 font-semibold text-slate-200">
                       {srv.name}
                     </td>
-                    <td className="py-4 px-4 font-extrabold text-emerald-500">
-                      ${parseFloat(srv.price).toFixed(2)}
+                    <td className="py-4 px-4 font-extrabold text-emerald-400">
+                      ₦{parseFloat(srv.price).toFixed(2)}
                     </td>
                     <td className="py-4 px-4 text-muted-foreground max-w-sm truncate">
                       {srv.description || '—'}
@@ -264,51 +304,51 @@ export default function Services({ setGlobalNotification }) {
               </tbody>
             </table>
           </div>
-        ) : (
-          <div className="text-center py-20 text-muted-foreground flex flex-col items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-slate-500 mb-2" />
-            <p className="font-semibold text-sm">No service categories found</p>
-            <p className="text-xs text-muted-foreground/80 mt-1">
-              {search ? 'Try adjusting your search criteria.' : 'Create your first operating category above.'}
-            </p>
-          </div>
-        )}
-      </div>
+
+        </div>
+      ) : (
+        <div className="text-center py-16 text-slate-400 premium-glass border border-slate-800 rounded-xl flex flex-col items-center justify-center">
+          <AlertTriangle className="w-8 h-8 text-slate-600 mb-2" />
+          <p className="font-bold text-xs">No service categories found</p>
+          <p className="text-[10px] text-slate-500 mt-1">
+            {search ? 'Try adjusting your search criteria.' : 'Create your first operating category above.'}
+          </p>
+        </div>
+      )}
 
       {/* Add / Edit Service Category Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 relative">
-            <h2 className="text-base font-bold text-slate-100 mb-4 flex items-center gap-1.5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 relative text-xs">
+            <h2 className="text-xs font-black text-slate-100 mb-3.5 flex items-center gap-1.5 uppercase tracking-wide">
               {isEdit ? <Edit3 className="w-4 h-4 text-emerald-500" /> : <Plus className="w-4 h-4 text-emerald-500" />}
-              {isEdit ? 'Edit Category' : 'Create New Category'}
+              {isEdit ? 'Edit Category' : 'Create Category'}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-950/40 border border-red-500/30 text-red-200 text-xs flex gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="mb-3.5 p-2 rounded bg-red-950/40 border border-red-500/20 text-red-200 text-[10px]">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSave} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
                   Category Name *
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Rider Registration, Tricycle Permit"
+                  placeholder="e.g. Rider Registration"
                   required
-                  className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition"
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#F5C800] transition"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
-                  Category Price ($ USD) *
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  Category Price (₦ Naira) *
                 </label>
                 <input
                   type="number"
@@ -318,50 +358,50 @@ export default function Services({ setGlobalNotification }) {
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition"
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#F5C800] transition font-bold text-emerald-450"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
                   Description
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Details about permit guidelines..."
-                  rows="3"
-                  className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#10b981] transition resize-none"
+                  placeholder="Category operating details..."
+                  rows="2"
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#F5C800] transition resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
                   Active Status
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-secondary/50 border border-border rounded-xl py-2 px-3 text-xs text-foreground focus:outline-none focus:border-[#10b981] transition"
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-400 focus:outline-none focus:border-[#F5C800] transition"
                 >
-                  <option value="active">Active (Available for logged entries)</option>
-                  <option value="inactive">Inactive (Hides from dropdowns)</option>
+                  <option value="active">Active (Show in registries)</option>
+                  <option value="inactive">Inactive (Hide from selection)</option>
                 </select>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 justify-end pt-4 border-t border-border mt-6">
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:bg-secondary transition"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 hover:bg-slate-950 transition font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="px-5 py-2 rounded-xl bg-primary hover:bg-emerald-600 text-primary-foreground font-bold text-xs shadow-md shadow-emerald-500/10 transition"
+                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-[10px] uppercase shadow-md shadow-[#F5C800]/10 transition cursor-pointer"
                 >
                   {formLoading ? 'Saving...' : 'Save Category'}
                 </button>

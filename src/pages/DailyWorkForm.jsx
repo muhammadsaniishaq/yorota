@@ -72,7 +72,7 @@ export default function DailyWorkForm({ currentUser, setGlobalNotification, onVi
 
       // Show success message
       setGlobalNotification({ 
-        message: `Registered ${customerName} for ${selectedService.name} ($${totalAmount}) successfully!`, 
+        message: `Registered ${customerName} for ${selectedService.name} (₦${totalAmount}) successfully!`, 
         type: 'success' 
       });
 
@@ -117,7 +117,7 @@ export default function DailyWorkForm({ currentUser, setGlobalNotification, onVi
         {/* Mobile Quick Summary Valuation */}
         <div className="sm:hidden premium-glass px-2.5 py-1 rounded-xl border border-[#F5C800]/20 text-right">
           <span className="text-[8px] font-bold text-slate-400 block uppercase">VALUATION</span>
-          <span className="text-xs font-black text-emerald-400">${totalAmount}</span>
+          <span className="text-xs font-black text-emerald-400">₦{totalAmount}</span>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function DailyWorkForm({ currentUser, setGlobalNotification, onVi
                 >
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name.toUpperCase()} - (${parseFloat(cat.price).toFixed(2)})
+                      {cat.name.toUpperCase()} - (₦{parseFloat(cat.price).toFixed(2)})
                     </option>
                   ))}
                 </select>
@@ -236,7 +236,7 @@ export default function DailyWorkForm({ currentUser, setGlobalNotification, onVi
           {/* Amount Card */}
           <div className="premium-glass rounded-xl sm:rounded-2xl p-4 border border-slate-800 shadow-md relative overflow-hidden">
             <span className="text-[9px] font-extrabold text-slate-400 tracking-widest uppercase block mb-1">Scope Valuation</span>
-            <h3 className="text-2xl font-black text-[#F5C800] tracking-tight">${totalAmount}</h3>
+            <h3 className="text-2xl font-black text-[#F5C800] tracking-tight">₦{totalAmount}</h3>
             
             <div className="divide-y divide-slate-800/60 text-[10px] mt-4 space-y-2">
               <div className="flex justify-between pt-1">
@@ -245,7 +245,7 @@ export default function DailyWorkForm({ currentUser, setGlobalNotification, onVi
               </div>
               <div className="flex justify-between pt-2">
                 <span className="text-slate-400">Unit Processing:</span>
-                <span className="font-medium text-slate-200">${unitPrice.toFixed(2)}</span>
+                <span className="font-medium text-slate-200">₦{unitPrice.toFixed(2)}</span>
               </div>
               <div className="flex justify-between pt-2">
                 <span className="text-slate-400">Volume Units:</span>
@@ -253,7 +253,7 @@ export default function DailyWorkForm({ currentUser, setGlobalNotification, onVi
               </div>
               <div className="flex justify-between pt-2 text-[#F5C800] font-bold border-none">
                 <span>Calculated Total:</span>
-                <span className="font-black">${totalAmount}</span>
+                <span className="font-black">₦{totalAmount}</span>
               </div>
             </div>
           </div>

@@ -142,7 +142,7 @@ export default function DailyEntries({ setGlobalNotification }) {
                     <div className="text-[10px] text-slate-400 mt-0.5">{rec.phone_number}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-black text-emerald-400 text-xs">${parseFloat(rec.amount).toFixed(2)}</div>
+                    <div className="font-black text-emerald-400 text-xs">₦{parseFloat(rec.amount).toFixed(2)}</div>
                     <div className="text-[8px] text-slate-500 mt-0.5">Officer: {rec.officer_name}</div>
                   </div>
                 </div>
@@ -201,7 +201,7 @@ export default function DailyEntries({ setGlobalNotification }) {
                         {rec.quantity}
                       </td>
                       <td className="py-3 px-4 font-black text-emerald-500">
-                        ${parseFloat(rec.amount).toFixed(2)}
+                        ₦{parseFloat(rec.amount).toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-muted-foreground font-medium">
                         {rec.officer_name}
@@ -303,7 +303,7 @@ export default function DailyEntries({ setGlobalNotification }) {
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-800/60">
                   <span className="text-slate-400">Unit Price:</span>
-                  <span className="font-medium text-slate-200">${(selectedRecord.amount / selectedRecord.quantity).toFixed(2)}</span>
+                  <span className="font-medium text-slate-200">₦{(selectedRecord.amount / selectedRecord.quantity).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-800/60">
                   <span className="text-slate-400">Volume Quantity:</span>
@@ -311,7 +311,7 @@ export default function DailyEntries({ setGlobalNotification }) {
                 </div>
                 <div className="flex justify-between py-1 text-emerald-400 font-bold">
                   <span>Settled Amount:</span>
-                  <span className="font-black text-xs">${parseFloat(selectedRecord.amount).toFixed(2)}</span>
+                  <span className="font-black text-xs">₦{parseFloat(selectedRecord.amount).toFixed(2)}</span>
                 </div>
               </div>
 

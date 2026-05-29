@@ -83,7 +83,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
       });
 
       setGlobalNotification({ 
-        message: `Successfully logged ${type} transaction of $${parseFloat(amount).toFixed(2)}`, 
+        message: `Successfully logged ${type} transaction of ₦${parseFloat(amount).toFixed(2)}`, 
         type: 'success' 
       });
       setModalOpen(false);
@@ -152,7 +152,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
           {/* Mobile View */}
           <div className="flex sm:hidden flex-col w-full">
             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Balance</span>
-            <h2 className="text-xs font-black text-slate-100 mt-0.5">${summary.remainingBalance.toFixed(2)}</h2>
+            <h2 className="text-xs font-black text-slate-100 mt-0.5">₦{summary.remainingBalance.toFixed(2)}</h2>
           </div>
           {/* Desktop View */}
           <div className="hidden sm:flex flex-col justify-between h-full w-full">
@@ -163,7 +163,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
               </div>
             </div>
             <div className="mt-4">
-              <h2 className="text-lg font-black text-slate-100">${summary.remainingBalance.toFixed(2)}</h2>
+              <h2 className="text-lg font-black text-slate-100">₦{summary.remainingBalance.toFixed(2)}</h2>
               <p className="text-[9px] text-slate-500 mt-0.5">Remaining cash assets</p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
           {/* Mobile View */}
           <div className="flex sm:hidden flex-col w-full">
             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Gross In</span>
-            <h2 className="text-xs font-black text-emerald-400 mt-0.5">${summary.totalIncome.toFixed(2)}</h2>
+            <h2 className="text-xs font-black text-emerald-400 mt-0.5">₦{summary.totalIncome.toFixed(2)}</h2>
           </div>
           {/* Desktop View */}
           <div className="hidden sm:flex flex-col justify-between h-full w-full">
@@ -185,7 +185,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
               </div>
             </div>
             <div className="mt-4">
-              <h2 className="text-lg font-black text-emerald-500">${summary.totalIncome.toFixed(2)}</h2>
+              <h2 className="text-lg font-black text-emerald-500">₦{summary.totalIncome.toFixed(2)}</h2>
               <p className="text-[9px] text-slate-500 mt-0.5">Gross collections</p>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
           {/* Mobile View */}
           <div className="flex sm:hidden flex-col w-full">
             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Expenses</span>
-            <h2 className="text-xs font-black text-red-500 mt-0.5">${summary.totalExpenses.toFixed(2)}</h2>
+            <h2 className="text-xs font-black text-red-500 mt-0.5">₦{summary.totalExpenses.toFixed(2)}</h2>
           </div>
           {/* Desktop View */}
           <div className="hidden sm:flex flex-col justify-between h-full w-full">
@@ -207,7 +207,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
               </div>
             </div>
             <div className="mt-4">
-              <h2 className="text-lg font-black text-red-500">${summary.totalExpenses.toFixed(2)}</h2>
+              <h2 className="text-lg font-black text-red-500">₦{summary.totalExpenses.toFixed(2)}</h2>
               <p className="text-[9px] text-slate-500 mt-0.5">Office outflows</p>
             </div>
           </div>
@@ -270,7 +270,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
                     <div className="text-[8px] text-slate-500 mt-0.5">Logged by: {tx.collected_by}</div>
                   </div>
                   <div className={`font-black text-xs shrink-0 ${tx.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {tx.type === 'income' ? '+' : '-'}${parseFloat(tx.amount).toFixed(2)}
+                    {tx.type === 'income' ? '+' : '-'}₦{parseFloat(tx.amount).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -315,7 +315,7 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
                     <td className={`py-3.5 px-4 font-black ${
                       tx.type === 'income' ? 'text-emerald-500' : 'text-red-500'
                     }`}>
-                      {tx.type === 'income' ? '+' : '-'}${parseFloat(tx.amount).toFixed(2)}
+                      {tx.type === 'income' ? '+' : '-'}₦{parseFloat(tx.amount).toFixed(2)}
                     </td>
                     <td className="py-3.5 px-4 text-right text-muted-foreground font-medium">
                       {tx.collected_by}

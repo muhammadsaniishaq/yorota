@@ -170,7 +170,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Income Today</span>
-              <h2 className="text-xs font-black text-slate-100 gold-text-glow mt-0.5">${stats.incomeToday.toFixed(2)}</h2>
+              <h2 className="text-xs font-black text-slate-100 gold-text-glow mt-0.5">₦{stats.incomeToday.toFixed(2)}</h2>
             </div>
           </div>
 
@@ -183,7 +183,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
               </div>
             </div>
             <div className="mt-4">
-              <h2 className="text-xl font-black text-slate-100 gold-text-glow">${stats.incomeToday.toFixed(2)}</h2>
+              <h2 className="text-xl font-black text-slate-100 gold-text-glow">₦{stats.incomeToday.toFixed(2)}</h2>
               <p className="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5 mt-0.5">
                 <TrendingUp className="w-2.5 h-2.5" /> Live flow
               </p>
@@ -200,7 +200,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">This Month</span>
-              <h2 className="text-xs font-black text-slate-100 gold-text-glow mt-0.5">${stats.incomeThisMonth.toFixed(2)}</h2>
+              <h2 className="text-xs font-black text-slate-100 gold-text-glow mt-0.5">₦{stats.incomeThisMonth.toFixed(2)}</h2>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
               </div>
             </div>
             <div className="mt-4">
-              <h2 className="text-xl font-black text-slate-100 gold-text-glow">${stats.incomeThisMonth.toFixed(2)}</h2>
+              <h2 className="text-xl font-black text-slate-100 gold-text-glow">₦{stats.incomeThisMonth.toFixed(2)}</h2>
               <p className="text-[10px] text-slate-500 mt-0.5">Billing cycle</p>
             </div>
           </div>
@@ -312,7 +312,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Debtors</span>
-              <h2 className="text-xs font-black text-red-500 mt-0.5">${stats.totalOwed.toFixed(2)}</h2>
+              <h2 className="text-xs font-black text-red-500 mt-0.5">₦{stats.totalOwed.toFixed(2)}</h2>
             </div>
           </div>
 
@@ -325,7 +325,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
               </div>
             </div>
             <div className="mt-4">
-              <h2 className="text-xl font-black text-red-500">${stats.totalOwed.toFixed(2)}</h2>
+              <h2 className="text-xl font-black text-red-500">₦{stats.totalOwed.toFixed(2)}</h2>
               <p className="text-[10px] text-red-400 font-bold flex items-center gap-0.5 mt-0.5">
                 <AlertCircle className="w-3 h-3 text-red-400" /> {stats.unpaidDebts} Unpaid
               </p>
@@ -364,7 +364,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
                   contentStyle={{ backgroundColor: '#0c1220', borderColor: '#1a263d', color: '#f8fafc', borderRadius: '12px', fontSize: '10px' }}
                   labelStyle={{ fontWeight: 'black', color: '#F5C800' }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#F5C800" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" name="Revenue ($)" />
+                <Area type="monotone" dataKey="revenue" stroke="#F5C800" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" name="Revenue (₦)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -441,7 +441,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
                         <div className="text-[9px] text-slate-500 mt-0.5">{act.time}</div>
                       </td>
                       <td className="py-2 px-2 font-black text-emerald-400">
-                        ${parseFloat(act.amount).toFixed(2)}
+                        ₦{parseFloat(act.amount).toFixed(2)}
                       </td>
                       <td className="py-2 px-2 text-right text-slate-400 font-bold hidden sm:table-cell">
                         {act.actor}
