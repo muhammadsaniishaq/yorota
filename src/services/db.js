@@ -8,14 +8,15 @@ export const db = {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      // Fetch user profile metadata (role and name)
+      // Fetch user profile metadata (role and name) without throwing on empty array
       const { data: profile, error: pError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', data.user.id)
-        .single();
+        .eq('id', data.user.id);
         
-      if (pError) {
+      if (pError) throw pError;
+      
+      if (!profile || profile.length === 0) {
         // Fallback if profile doesn't exist yet: initialize a profile dynamically
         const fallbackName = data.user.email.split('@')[0];
         const fallbackRole = data.user.email.includes('admin') ? 'admin' : 'officer';
@@ -23,27 +24,32 @@ export const db = {
         const { data: newProfile, error: insErr } = await supabase
           .from('profiles')
           .insert([{ id: data.user.id, name: fallbackName, role: fallbackRole }])
-          .select()
-          .single();
+          .select();
           
-        if (insErr) throw new Error('Profile verification failed. User profile could not be initialized.');
+        if (insErr) {
+          console.error('Profile insertion error:', insErr);
+          throw new Error(`Profile initialization failed: ${insErr.message}. Ensure your "profiles" RLS policy permits authenticated inserts with check constraints.`);
+        }
+        
+        const createdProfile = newProfile[0];
         return {
           user: {
             id: data.user.id,
             email: data.user.email,
-            name: newProfile.name,
-            role: newProfile.role
+            name: createdProfile.name,
+            role: createdProfile.role
           },
           session: data.session
         };
       }
       
+      const activeProfile = profile[0];
       return { 
         user: { 
           id: data.user.id,
           email: data.user.email, 
-          name: profile.name, 
-          role: profile.role 
+          name: activeProfile.name, 
+          role: activeProfile.role 
         }, 
         session: data.session 
       };

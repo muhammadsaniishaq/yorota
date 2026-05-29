@@ -36,13 +36,22 @@ ON public.profiles FOR UPDATE
 TO authenticated
 USING (auth.uid() = id);
 
+-- Helper function to check if user is admin (prevents RLS recursion)
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN SECURITY DEFINER AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = user_id AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql;
+
 DROP POLICY IF EXISTS "Allow Admin to manage all profiles" ON public.profiles;
 CREATE POLICY "Allow Admin to manage all profiles" 
 ON public.profiles FOR ALL 
 TO authenticated 
-USING (
-  auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin')
-);
+USING (public.is_admin(auth.uid()));
 
 
 
@@ -92,9 +101,7 @@ DROP POLICY IF EXISTS "Allow Admin full write access to categories" ON public.se
 CREATE POLICY "Allow Admin full write access to categories" 
 ON public.services FOR ALL 
 TO authenticated 
-USING (
-  auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin')
-);
+USING (public.is_admin(auth.uid()));
 
 
 -- ── 3. DAILY RECORDS TABLE (Officer Daily Work) ──────────────────────────
@@ -177,12 +184,12 @@ USING (true);
 
 -- ── 6. SYNC EXISTING USERS WITH PROFILES ─────────────────────────────
 -- In case users signed up before the trigger was created, running this will 
--- safely create their profile records as 'admin' by default (so they have access).
+-- safely create their profile records automatically mapping roles.
 INSERT INTO public.profiles (id, name, role)
 SELECT 
   id, 
   COALESCE(raw_user_meta_data->>'name', split_part(email, '@', 1)),
-  'admin' -- Defaulting to 'admin' so they can see all options, change as needed.
+  CASE WHEN email LIKE '%admin%' THEN 'admin' ELSE 'officer' END
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
 

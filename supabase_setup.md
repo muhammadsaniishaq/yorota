@@ -16,7 +16,11 @@ Copy and execute the following SQL script inside the **Supabase SQL Editor** to 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. PROFILES (Extends Supabase Auth users to store name and roles metadata)
+-- ── 0. CLEAN SLATE RESOLVER ──────────────────────────────────────────────
+-- Safely drop existing conflicting tables from old or starter configurations
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- ── 1. PROFILES (Extends Supabase Auth users to store name and roles metadata)
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     name TEXT NOT NULL,
@@ -32,13 +36,55 @@ ON public.profiles FOR SELECT
 TO authenticated 
 USING (true);
 
-CREATE POLICY "Allow Admin to update profiles" 
+CREATE POLICY "Allow users to insert their own profile"
+ON public.profiles FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Allow users to update their own profile"
+ON public.profiles FOR UPDATE
+TO authenticated
+USING (auth.uid() = id);
+
+-- Helper function to check if user is admin (prevents RLS recursion)
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN SECURITY DEFINER AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = user_id AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE POLICY "Allow Admin to manage all profiles" 
 ON public.profiles FOR ALL 
 TO authenticated 
-USING (auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin'));
+USING (public.is_admin(auth.uid()));
 
 
--- 2. SERVICES / CATEGORIES (Dynamic category management)
+-- ── AUTOMATIC PROFILE CREATION TRIGGER ─────────────────────────────────────
+-- Automatically inserts a row into public.profiles when a new user signs up.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, role)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    COALESCE(new.raw_user_meta_data->>'role', 'officer')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ── 2. SERVICES / CATEGORIES (Dynamic category management)
 CREATE TABLE public.services (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
@@ -61,7 +107,7 @@ USING (true);
 CREATE POLICY "Allow Admin full write access to categories" 
 ON public.services FOR ALL 
 TO authenticated 
-USING (auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin'));
+USING (public.is_admin(auth.uid()));
 
 
 -- 3. DAILY RECORDS (Officer work registry)
@@ -137,6 +183,18 @@ CREATE POLICY "Allow authenticated full access to debtors roster"
 ON public.debtors FOR ALL 
 TO authenticated 
 USING (true);
+
+
+-- ── 6. SYNC EXISTING USERS WITH PROFILES ─────────────────────────────
+-- Safely creates a profile record for existing authenticated users
+-- automatically parsing names and roles based on their emails.
+INSERT INTO public.profiles (id, name, role)
+SELECT 
+  id, 
+  COALESCE(raw_user_meta_data->>'name', split_part(email, '@', 1)),
+  CASE WHEN email LIKE '%admin%' THEN 'admin' ELSE 'officer' END
+FROM auth.users
+ON CONFLICT (id) DO NOTHING;
 ```
 
 ---
