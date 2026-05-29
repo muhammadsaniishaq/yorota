@@ -25,6 +25,14 @@ export default function Reports({ setGlobalNotification }) {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
 
+  // Interactive splits actions modals states
+  const [hqModalOpen, setHqModalOpen] = useState(false);
+  const [officeModalOpen, setOfficeModalOpen] = useState(false);
+  const [remitAmount, setRemitAmount] = useState('');
+  const [disburseAmount, setDisburseAmount] = useState('');
+  const [modalError, setModalError] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -93,6 +101,17 @@ export default function Reports({ setGlobalNotification }) {
   const setAsideHQ = setAsideTotal * 0.7;
   const setAsideOffice = setAsideTotal * 0.3;
 
+  // Retrieve remittances logged as expenditures in cash ledger
+  const hqRemitted = filteredTransactions
+    .filter(t => t.type === 'expense' && t.purpose === 'HQ Remittance')
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+  const hqOutstanding = Math.max(0, setAsideHQ - hqRemitted);
+
+  const officeDisbursed = filteredTransactions
+    .filter(t => t.type === 'expense' && t.purpose === 'Office Disbursal')
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+  const officeBalance = Math.max(0, setAsideOffice - officeDisbursed);
+
   // Dynamic Grouping of service categories processed
   const serviceSummary = {};
   categories.forEach(cat => {
@@ -131,7 +150,11 @@ export default function Reports({ setGlobalNotification }) {
         categories: serviceSummary,
         setAsideTotal,
         setAsideHQ,
-        setAsideOffice
+        setAsideOffice,
+        hqRemitted,
+        hqOutstanding,
+        officeDisbursed,
+        officeBalance
       };
 
       pdfGenerator.generateReport(typeText, dateRangeText, filteredRecords, summaryPayload, filteredTransactions);
@@ -139,6 +162,60 @@ export default function Reports({ setGlobalNotification }) {
     } catch (err) {
       console.error(err);
       setGlobalNotification({ message: 'Failed to compile PDF report', type: 'error' });
+    }
+  };
+
+  const handleRecordHQRemittance = async (e) => {
+    e.preventDefault();
+    if (!remitAmount || isNaN(parseFloat(remitAmount)) || parseFloat(remitAmount) <= 0) {
+      setModalError('Please enter a valid amount.');
+      return;
+    }
+    setModalLoading(true);
+    setModalError('');
+    try {
+      await db.transactions.create({
+        type: 'expense',
+        amount: parseFloat(remitAmount),
+        purpose: 'HQ Remittance',
+        collected_by: 'Authorized Officer'
+      });
+      setHqModalOpen(false);
+      setRemitAmount('');
+      setGlobalNotification({ message: `HQ Remittance of ₦${parseFloat(remitAmount).toFixed(2)} logged successfully!`, type: 'success' });
+      loadData();
+    } catch (err) {
+      console.error(err);
+      setModalError(err.message || 'Error occurred while saving remittance.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleRecordOfficeDisbursal = async (e) => {
+    e.preventDefault();
+    if (!disburseAmount || isNaN(parseFloat(disburseAmount)) || parseFloat(disburseAmount) <= 0) {
+      setModalError('Please enter a valid amount.');
+      return;
+    }
+    setModalLoading(true);
+    setModalError('');
+    try {
+      await db.transactions.create({
+        type: 'expense',
+        amount: parseFloat(disburseAmount),
+        purpose: 'Office Disbursal',
+        collected_by: 'Authorized Officer'
+      });
+      setOfficeModalOpen(false);
+      setDisburseAmount('');
+      setGlobalNotification({ message: `Office Disbursal of ₦${parseFloat(disburseAmount).toFixed(2)} logged successfully!`, type: 'success' });
+      loadData();
+    } catch (err) {
+      console.error(err);
+      setModalError(err.message || 'Error occurred while saving disbursal.');
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -249,17 +326,22 @@ export default function Reports({ setGlobalNotification }) {
 
           {/* Revenue Share Split Gauge Widget */}
           <div className="premium-glass border border-slate-800 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-4">
+            
+            {/* Widget Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-xs sm:text-sm font-black tracking-tight text-[#F5C800] uppercase gold-text-glow">
-                  Revenue Share & Retention (Lissafin Raba Kudi & Ajiya)
+                  Revenue Share & Retention Audit
                 </h3>
-                <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">
-                  ₦500 set-aside fee dynamically calculated for each registered unit: 70% Headquarters / 30% Local Office
+                <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+                  A flat ₦500 administrative surcharge is set aside per unit and split: 70% to Headquarters / 30% retained locally.
+                  <span className="text-emerald-450 font-bold block mt-0.5">
+                    * Surcharge Separation: Base category fees (e.g. Registry Value above) are kept 100% separate and do not include this surcharge.
+                  </span>
                 </p>
               </div>
-              <div className="bg-slate-950/40 border border-slate-800 rounded-lg px-3 py-1 text-[10px] font-black text-slate-450 uppercase shrink-0">
-                Rate: ₦500 / unit
+              <div className="bg-slate-950/40 border border-slate-800 rounded-lg px-3 py-1 text-[10px] font-black text-slate-400 uppercase shrink-0">
+                Surcharge: ₦500 / unit
               </div>
             </div>
 
@@ -269,12 +351,12 @@ export default function Reports({ setGlobalNotification }) {
                 <div 
                   className="bg-gradient-to-r from-emerald-500 to-[#F5C800] h-full shadow-md shadow-emerald-500/10 transition-all duration-500" 
                   style={{ width: '70%' }}
-                  title="Headquarters: 70%"
+                  title="Headquarters Portion: 70%"
                 />
                 <div 
-                  className="bg-[#CA8A04]/40 h-full transition-all duration-500" 
+                  className="bg-[#CA8A04]/45 h-full transition-all duration-500" 
                   style={{ width: '30%' }}
-                  title="Local Office Retention: 30%"
+                  title="Local Office Portion: 30%"
                 />
               </div>
               <div className="flex justify-between text-[9px] font-extrabold uppercase text-slate-400 px-0.5">
@@ -292,28 +374,78 @@ export default function Reports({ setGlobalNotification }) {
             {/* Shares Split Metrics Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
               
-              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between">
-                <div>
-                  <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Set-Aside (100%)</span>
-                  <h4 className="text-xs sm:text-base font-black text-slate-200 mt-1">₦{setAsideTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+              {/* Column 1: Headquarters Split */}
+              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-emerald-500/30 space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-wider block">Headquarters Share (70%)</span>
+                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-850/40">
+                    <span className="text-slate-500">Total Generated:</span>
+                    <span className="font-bold text-slate-200">₦{setAsideHQ.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-slate-500 text-red-400">Total Paid (Remitted):</span>
+                    <span className="font-bold text-red-400">₦{hqRemitted.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] font-extrabold border-t border-slate-850/30 pt-1">
+                    <span className="text-emerald-450">Outstanding Due:</span>
+                    <span className="font-black text-emerald-400">₦{hqOutstanding.toFixed(2)}</span>
+                  </div>
                 </div>
-                <span className="text-[8px] text-slate-500 mt-1 block">Formula: ₦500 × {totalCount} units</span>
+                <button
+                  onClick={() => { setModalError(''); setRemitAmount(''); setHqModalOpen(true); }}
+                  disabled={hqOutstanding <= 0}
+                  className="w-full py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 transition cursor-pointer select-none disabled:opacity-50"
+                >
+                  Record HQ Remittance
+                </button>
               </div>
 
-              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-emerald-500/30">
-                <div>
-                  <span className="text-[8px] sm:text-[9px] font-bold text-emerald-450 uppercase tracking-wider block">Headquarters Share (70%)</span>
-                  <h4 className="text-xs sm:text-base font-black text-emerald-400 mt-1">₦{setAsideHQ.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+              {/* Column 2: Local Office Split */}
+              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-[#CA8A04]/40 space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-wider block">Local Office Share (30%)</span>
+                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-850/40">
+                    <span className="text-slate-500">Total Generated:</span>
+                    <span className="font-bold text-slate-200">₦{setAsideOffice.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-slate-500 text-red-400">Total Disbursed:</span>
+                    <span className="font-bold text-red-400">₦{officeDisbursed.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] font-extrabold border-t border-slate-850/30 pt-1">
+                    <span className="text-[#F5C800]">Retained Balance:</span>
+                    <span className="font-black text-[#F5C800]">₦{officeBalance.toFixed(2)}</span>
+                  </div>
                 </div>
-                <span className="text-[8px] text-slate-500 mt-1 block">Due to State HQ</span>
+                <button
+                  onClick={() => { setModalError(''); setDisburseAmount(''); setOfficeModalOpen(true); }}
+                  disabled={officeBalance <= 0}
+                  className="w-full py-1.5 rounded-lg bg-[#CA8A04]/10 border border-[#CA8A04]/20 text-[9px] font-black uppercase text-[#F5C800] hover:bg-[#CA8A04] hover:text-slate-950 transition cursor-pointer select-none disabled:opacity-50"
+                >
+                  Record Office Disbursal
+                </button>
               </div>
 
-              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-[#CA8A04]/40">
-                <div>
-                  <span className="text-[8px] sm:text-[9px] font-bold text-[#F5C800] uppercase tracking-wider block">Local Office Share (30%)</span>
-                  <h4 className="text-xs sm:text-base font-black text-[#F5C800] mt-1">₦{setAsideOffice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+              {/* Column 3: Set-aside Surcharge Audit (100%) */}
+              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-slate-800 space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-wider block">Surcharge Audit (100%)</span>
+                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-850/40">
+                    <span className="text-slate-500">Cumulative Generated:</span>
+                    <span className="font-bold text-slate-200">₦{setAsideTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-slate-500">Total Outflow:</span>
+                    <span className="font-bold text-red-400">₦{(hqRemitted + officeDisbursed).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] font-extrabold border-t border-slate-850/30 pt-1">
+                    <span className="text-slate-350">Remaining Vault:</span>
+                    <span className="font-black text-slate-200">₦{(hqOutstanding + officeBalance).toFixed(2)}</span>
+                  </div>
                 </div>
-                <span className="text-[8px] text-slate-500 mt-1 block">Retained in local treasury</span>
+                <div className="text-[8.5px] font-bold text-slate-500 text-center py-1 bg-slate-950/40 border border-slate-850/80 rounded-lg">
+                  Formula: ₦500 × {totalCount} units
+                </div>
               </div>
 
             </div>
@@ -441,6 +573,106 @@ export default function Reports({ setGlobalNotification }) {
 
           </div>
 
+        </div>
+      )}
+
+      {/* HQ Remittance Modal */}
+      {hqModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 relative text-xs text-slate-100">
+            <h2 className="text-xs font-black text-[#F5C800] mb-3.5 uppercase tracking-wide">
+              Record Headquarters Remittance
+            </h2>
+            {modalError && (
+              <div className="mb-3.5 p-2 rounded bg-red-950/40 border border-red-500/20 text-red-200 text-[10px]">
+                {modalError}
+              </div>
+            )}
+            <form onSubmit={handleRecordHQRemittance} className="space-y-3.5">
+              <div>
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  HQ Remittance Amount (₦ Naira) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={hqOutstanding}
+                  value={remitAmount}
+                  onChange={(e) => setRemitAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5C800] transition font-bold"
+                />
+              </div>
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => { setHqModalOpen(false); setModalError(''); }}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 hover:bg-slate-950 transition font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={modalLoading}
+                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-[10px] uppercase shadow-md shadow-[#F5C800]/10 transition cursor-pointer"
+                >
+                  {modalLoading ? 'Logging...' : 'Record Payment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Office Disbursal Modal */}
+      {officeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 relative text-xs text-slate-100">
+            <h2 className="text-xs font-black text-[#F5C800] mb-3.5 uppercase tracking-wide">
+              Record Office Retention Disbursal
+            </h2>
+            {modalError && (
+              <div className="mb-3.5 p-2 rounded bg-red-950/40 border border-red-500/20 text-red-200 text-[10px]">
+                {modalError}
+              </div>
+            )}
+            <form onSubmit={handleRecordOfficeDisbursal} className="space-y-3.5">
+              <div>
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  Disbursal Amount (₦ Naira) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={officeBalance}
+                  value={disburseAmount}
+                  onChange={(e) => setDisburseAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5C800] transition font-bold"
+                />
+              </div>
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => { setOfficeModalOpen(false); setModalError(''); }}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 hover:bg-slate-950 transition font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={modalLoading}
+                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-[10px] uppercase shadow-md shadow-[#F5C800]/10 transition cursor-pointer"
+                >
+                  {modalLoading ? 'Logging...' : 'Record Disbursal'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
