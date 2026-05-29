@@ -260,11 +260,31 @@ export const pdfGenerator = {
     doc.setTextColor(summary.ledgerNet >= 0 ? BRAND_GREEN : [239, 68, 68]);
     doc.text(`₦${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
 
+    // Set-aside Revenue Split Audit Block (₦500 per unit, 70% HQ / 30% local office)
+    let ySplit = 85;
+    doc.setFillColor(245, 247, 250);
+    doc.rect(15, ySplit, 180, 18, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.rect(15, ySplit, 180, 18, 'S');
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text('REVENUE SHARE & AJIYA RETENTION AUDIT (₦500 / unit)', 20, ySplit + 5.5);
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...BRAND_DARK);
+    doc.text(`Total Ajiya (100%): ₦${parseFloat(summary.setAsideTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 20, ySplit + 12);
+    doc.text(`Headquarters Share (70%): ₦${parseFloat(summary.setAsideHQ || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 85, ySplit + 12);
+    doc.text(`Local Office Retained (30%): ₦${parseFloat(summary.setAsideOffice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 142, ySplit + 12);
+
     // Header 1: Category Summary Breakdowns
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(...BRAND_DARK);
-    doc.text('SERVICE CATEGORY SUMMARY', 15, 92);
+    doc.text('SERVICE CATEGORY SUMMARY', 15, 110);
 
     // Create service table body
     const catRows = Object.entries(summary.categories).map(([name, count]) => {
@@ -274,7 +294,7 @@ export const pdfGenerator = {
     });
 
     doc.autoTable({
-      startY: 96,
+      startY: 114,
       head: [['Category Service Name', 'Units Logged', 'Revenue Generated']],
       body: catRows.length > 0 ? catRows : [['No data recorded', '0', '₦0.00']],
       headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold' },

@@ -88,6 +88,11 @@ export default function Reports({ setGlobalNotification }) {
   const totalCount = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
   const totalAmount = filteredRecords.reduce((sum, r) => sum + parseFloat(r.amount), 0);
 
+  // Revenue Sharing Set-Aside Audits (₦500 per unit, split 70/30)
+  const setAsideTotal = totalCount * 500;
+  const setAsideHQ = setAsideTotal * 0.7;
+  const setAsideOffice = setAsideTotal * 0.3;
+
   // Dynamic Grouping of service categories processed
   const serviceSummary = {};
   categories.forEach(cat => {
@@ -123,7 +128,10 @@ export default function Reports({ setGlobalNotification }) {
         totalCount,
         totalAmount,
         ledgerNet,
-        categories: serviceSummary
+        categories: serviceSummary,
+        setAsideTotal,
+        setAsideHQ,
+        setAsideOffice
       };
 
       pdfGenerator.generateReport(typeText, dateRangeText, filteredRecords, summaryPayload, filteredTransactions);
@@ -237,6 +245,78 @@ export default function Reports({ setGlobalNotification }) {
               </h3>
             </div>
 
+          </div>
+
+          {/* Revenue Share Split Gauge Widget */}
+          <div className="premium-glass border border-slate-800 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs sm:text-sm font-black tracking-tight text-[#F5C800] uppercase gold-text-glow">
+                  Revenue Share & Retention (Lissafin Raba Kudi & Ajiya)
+                </h3>
+                <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">
+                  ₦500 set-aside fee dynamically calculated for each registered unit: 70% Headquarters / 30% Local Office
+                </p>
+              </div>
+              <div className="bg-slate-950/40 border border-slate-800 rounded-lg px-3 py-1 text-[10px] font-black text-slate-450 uppercase shrink-0">
+                Rate: ₦500 / unit
+              </div>
+            </div>
+
+            {/* Split Proportion Progress Bar Gauge */}
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-full bg-slate-950 rounded-full overflow-hidden flex border border-slate-900">
+                <div 
+                  className="bg-gradient-to-r from-emerald-500 to-[#F5C800] h-full shadow-md shadow-emerald-500/10 transition-all duration-500" 
+                  style={{ width: '70%' }}
+                  title="Headquarters: 70%"
+                />
+                <div 
+                  className="bg-[#CA8A04]/40 h-full transition-all duration-500" 
+                  style={{ width: '30%' }}
+                  title="Local Office Retention: 30%"
+                />
+              </div>
+              <div className="flex justify-between text-[9px] font-extrabold uppercase text-slate-400 px-0.5">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Headquarters Share (70%)
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#CA8A04]" />
+                  Local Office Share (30%)
+                </span>
+              </div>
+            </div>
+
+            {/* Shares Split Metrics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              
+              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between">
+                <div>
+                  <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Set-Aside (100%)</span>
+                  <h4 className="text-xs sm:text-base font-black text-slate-200 mt-1">₦{setAsideTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+                </div>
+                <span className="text-[8px] text-slate-500 mt-1 block">Formula: ₦500 × {totalCount} units</span>
+              </div>
+
+              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-emerald-500/30">
+                <div>
+                  <span className="text-[8px] sm:text-[9px] font-bold text-emerald-450 uppercase tracking-wider block">Headquarters Share (70%)</span>
+                  <h4 className="text-xs sm:text-base font-black text-emerald-400 mt-1">₦{setAsideHQ.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+                </div>
+                <span className="text-[8px] text-slate-500 mt-1 block">Due to State HQ</span>
+              </div>
+
+              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-[#CA8A04]/40">
+                <div>
+                  <span className="text-[8px] sm:text-[9px] font-bold text-[#F5C800] uppercase tracking-wider block">Local Office Share (30%)</span>
+                  <h4 className="text-xs sm:text-base font-black text-[#F5C800] mt-1">₦{setAsideOffice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+                </div>
+                <span className="text-[8px] text-slate-500 mt-1 block">Retained in local treasury</span>
+              </div>
+
+            </div>
           </div>
 
           {/* Grouped counts and detailed logs section */}
