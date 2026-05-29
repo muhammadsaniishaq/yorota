@@ -100,11 +100,6 @@ export default function App() {
           />
         );
       case 'services':
-        // Double check Admin guards
-        if (currentUser.role !== 'admin') {
-          setCurrentView('dashboard');
-          return null;
-        }
         return <Services setGlobalNotification={triggerNotification} />;
       case 'daily-entry':
         return (

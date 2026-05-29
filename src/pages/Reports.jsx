@@ -9,7 +9,6 @@ import {
   ChevronRight,
   TrendingUp,
   TrendingDown,
-  DollarSign,
   AlertCircle
 } from 'lucide-react';
 import { db } from '../services/db';
@@ -223,18 +222,18 @@ export default function Reports({ setGlobalNotification }) {
 
             <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
               <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Registry Value</span>
-              <h3 className="text-xs sm:text-lg font-black mt-1 text-emerald-400">${totalAmount.toFixed(2)}</h3>
+              <h3 className="text-xs sm:text-lg font-black mt-1 text-emerald-400">₦{totalAmount.toFixed(2)}</h3>
             </div>
 
             <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
               <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ledger Expenses</span>
-              <h3 className="text-xs sm:text-lg font-black mt-1 text-red-500">${ledgerExpense.toFixed(2)}</h3>
+              <h3 className="text-xs sm:text-lg font-black mt-1 text-red-500">₦{ledgerExpense.toFixed(2)}</h3>
             </div>
 
             <div className="premium-glass border border-slate-800 rounded-xl p-2.5 sm:p-4 shadow-sm">
               <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ledger Net Cash</span>
               <h3 className={`text-xs sm:text-lg font-black mt-1 ${ledgerNet >= 0 ? 'text-emerald-400' : 'text-red-550'}`}>
-                ${ledgerNet.toFixed(2)}
+                ₦{ledgerNet.toFixed(2)}
               </h3>
             </div>
 
@@ -307,7 +306,7 @@ export default function Reports({ setGlobalNotification }) {
                             <div className="text-[9px] text-slate-500 mt-0.5">Officer: {rec.officer_name}</div>
                           </div>
                           <div className="text-right">
-                            <div className="font-black text-emerald-400">${parseFloat(rec.amount).toFixed(2)}</div>
+                            <div className="font-black text-emerald-400">₦{parseFloat(rec.amount).toFixed(2)}</div>
                             <div className="text-[8px] text-slate-400 mt-0.5">Qty: x{rec.quantity}</div>
                           </div>
                         </div>
@@ -343,7 +342,7 @@ export default function Reports({ setGlobalNotification }) {
                               </span>
                             </td>
                             <td className="py-2.5 px-2 font-bold">{rec.quantity}</td>
-                            <td className="py-2.5 px-2 font-black text-emerald-500">${parseFloat(rec.amount).toFixed(2)}</td>
+                            <td className="py-2.5 px-2 font-black text-emerald-500">₦{parseFloat(rec.amount).toFixed(2)}</td>
                             <td className="py-2.5 px-2 text-right text-muted-foreground">{rec.officer_name}</td>
                           </tr>
                         ))}

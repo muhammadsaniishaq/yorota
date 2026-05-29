@@ -1,7 +1,6 @@
 // YOROTA Smart Office - Administrative Dashboard
 import React, { useState, useEffect } from 'react';
 import { 
-  DollarSign, 
   FileSpreadsheet, 
   TrendingUp, 
   UserX, 
@@ -166,7 +165,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
           {/* Mobile View */}
           <div className="flex items-center gap-2 sm:hidden w-full">
             <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
-              <DollarSign className="w-4.5 h-4.5" />
+              <CreditCard className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">Income Today</span>
@@ -179,7 +178,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Income Today</span>
               <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-                <DollarSign className="w-4 h-4" />
+                <CreditCard className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-4">
@@ -196,7 +195,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
           {/* Mobile View */}
           <div className="flex items-center gap-2 sm:hidden w-full">
             <div className="w-8 h-8 rounded-lg bg-[#F5C800]/10 text-[#F5C800] flex items-center justify-center shrink-0">
-              <DollarSign className="w-4.5 h-4.5" />
+              <CreditCard className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">This Month</span>
@@ -209,7 +208,7 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">This Month</span>
               <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
-                <DollarSign className="w-4 h-4" />
+                <CreditCard className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-4">
@@ -474,15 +473,13 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0" />
             </button>
 
-            {currentUser?.role === 'admin' && (
-              <button 
-                onClick={() => onViewChange('services')}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-[#F5C800] font-bold border border-[#F5C800]/20 transition text-[10px] sm:text-xs group text-left cursor-pointer hover:border-[#F5C800]/50"
-              >
-                <span>ADD CATEGORY</span>
-                <Settings className="w-3.5 h-3.5 text-[#F5C800] group-hover:rotate-45 transition-transform duration-300 shrink-0" />
-              </button>
-            )}
+            <button 
+              onClick={() => onViewChange('services')}
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-[#F5C800] font-bold border border-[#F5C800]/20 transition text-[10px] sm:text-xs group text-left cursor-pointer hover:border-[#F5C800]/50"
+            >
+              <span>ADD CATEGORY</span>
+              <Settings className="w-3.5 h-3.5 text-[#F5C800] group-hover:rotate-45 transition-transform duration-300 shrink-0" />
+            </button>
 
             <button 
               onClick={() => onViewChange('ledger')}

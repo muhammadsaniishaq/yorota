@@ -69,7 +69,7 @@ export default function Topbar({
       case 'ledger': return 'Cash Balance Ledger';
       case 'debtors': return 'Outstanding Debts';
       case 'reports': return 'Revenue Audit Reports';
-      case 'services': return 'Category configuration';
+      case 'services': return 'Manage Categories';
       default: return 'Administrative Portal';
     }
   };
@@ -156,7 +156,7 @@ export default function Topbar({
                     >
                       <div>
                         <span className="font-semibold block text-slate-200">{d.customer_name}</span>
-                        <span className="text-red-400 font-bold">Owes: ${d.amount_owed.toFixed(2)}</span>
+                        <span className="text-red-400 font-bold">Owes: ₦{d.amount_owed.toFixed(2)}</span>
                       </div>
                       <ArrowRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition" />
                     </div>
@@ -183,7 +183,7 @@ export default function Topbar({
                         <span className="text-muted-foreground">{t.date} • {t.collected_by}</span>
                       </div>
                       <span className={`font-bold ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
-                        {t.type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}
+                        {t.type === 'income' ? '+' : '-'}₦{parseFloat(t.amount).toFixed(2)}
                       </span>
                     </div>
                   ))}

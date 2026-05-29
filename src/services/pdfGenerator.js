@@ -147,8 +147,8 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'normal');
     doc.text(record.service?.name || 'Service Category', 13, 82);
     doc.text(record.quantity.toString(), 95, 82, { align: 'center' });
-    doc.text(`$${(record.amount / record.quantity).toFixed(2)}`, 113, 82, { align: 'right' });
-    doc.text(`$${parseFloat(record.amount).toFixed(2)}`, 133, 82, { align: 'right' });
+    doc.text(`₦${(record.amount / record.quantity).toFixed(2)}`, 113, 82, { align: 'right' });
+    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 133, 82, { align: 'right' });
 
     doc.line(10, 86, 138, 86);
 
@@ -175,11 +175,11 @@ export const pdfGenerator = {
 
     doc.setFont('Helvetica', 'normal');
     doc.setTextColor(...BRAND_DARK);
-    doc.text(`$${parseFloat(record.amount).toFixed(2)}`, 133, 106, { align: 'right' });
-    doc.text('$0.00', 133, 112, { align: 'right' });
+    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 133, 106, { align: 'right' });
+    doc.text('₦0.00', 133, 112, { align: 'right' });
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`$${parseFloat(record.amount).toFixed(2)}`, 133, 120, { align: 'right' });
+    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 133, 120, { align: 'right' });
 
     // Validation Seal and sign
     doc.setDrawColor(...BRAND_GREEN);
@@ -246,7 +246,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`$${parseFloat(summary.totalAmount).toFixed(2)}`, 81, 75);
+    doc.text(`₦${parseFloat(summary.totalAmount).toFixed(2)}`, 81, 75);
 
     // Card 3
     doc.setFillColor(248, 250, 252);
@@ -258,7 +258,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(summary.ledgerNet >= 0 ? BRAND_GREEN : [239, 68, 68]);
-    doc.text(`$${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
+    doc.text(`₦${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
 
     // Header 1: Category Summary Breakdowns
     doc.setFont('Helvetica', 'bold');
@@ -270,13 +270,13 @@ export const pdfGenerator = {
     const catRows = Object.entries(summary.categories).map(([name, count]) => {
       const serviceRecords = records.filter(r => r.service?.name === name);
       const totalAmount = serviceRecords.reduce((sum, r) => sum + parseFloat(r.amount), 0);
-      return [name, count.toString(), `$${totalAmount.toFixed(2)}`];
+      return [name, count.toString(), `₦${totalAmount.toFixed(2)}`];
     });
 
     doc.autoTable({
       startY: 96,
       head: [['Category Service Name', 'Units Logged', 'Revenue Generated']],
-      body: catRows.length > 0 ? catRows : [['No data recorded', '0', '$0.00']],
+      body: catRows.length > 0 ? catRows : [['No data recorded', '0', '₦0.00']],
       headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 8 },
       theme: 'striped',
@@ -295,7 +295,7 @@ export const pdfGenerator = {
       rec.customer_name,
       rec.service?.name || 'Unknown',
       rec.quantity.toString(),
-      `$${parseFloat(rec.amount).toFixed(2)}`,
+      `₦${parseFloat(rec.amount).toFixed(2)}`,
       rec.officer_name
     ]);
 
@@ -340,7 +340,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`$${parseFloat(summary.totalIncome).toFixed(2)}`, 19, 75);
+    doc.text(`₦${parseFloat(summary.totalIncome).toFixed(2)}`, 19, 75);
 
     // Card 2: Expenses
     doc.setFillColor(248, 250, 252);
@@ -352,7 +352,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(239, 68, 68); // Red
-    doc.text(`$${parseFloat(summary.totalExpenses).toFixed(2)}`, 81, 75);
+    doc.text(`₦${parseFloat(summary.totalExpenses).toFixed(2)}`, 81, 75);
 
     // Card 3: Net Cash
     doc.setFillColor(248, 250, 252);
@@ -364,7 +364,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(summary.remainingBalance >= 0 ? BRAND_GREEN : [239, 68, 68]);
-    doc.text(`$${parseFloat(summary.remainingBalance).toFixed(2)}`, 144, 75);
+    doc.text(`₦${parseFloat(summary.remainingBalance).toFixed(2)}`, 144, 75);
 
     // Header 1: Ledgers
     doc.setFont('Helvetica', 'bold');
@@ -376,7 +376,7 @@ export const pdfGenerator = {
       t.date,
       t.type.toUpperCase(),
       t.purpose,
-      `$${parseFloat(t.amount).toFixed(2)}`,
+      `₦${parseFloat(t.amount).toFixed(2)}`,
       t.collected_by
     ]);
 

@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-  Plus, 
-  DollarSign, 
+  Plus,
   Calendar, 
   CheckCircle, 
   AlertTriangle,
@@ -82,7 +81,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       return;
     }
     if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      setError('Outstanding debt must be greater than $0.');
+      setError('Outstanding debt must be greater than ₦0.');
       return;
     }
 
@@ -97,7 +96,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
         due_date: dueDate
       });
 
-      setGlobalNotification({ message: `Successfully registered debt of $${parseFloat(amount).toFixed(2)} for ${name}`, type: 'success' });
+      setGlobalNotification({ message: `Successfully registered debt of ₦${parseFloat(amount).toFixed(2)} for ${name}`, type: 'success' });
       setAddModalOpen(false);
       loadData();
     } catch (err) {
@@ -130,7 +129,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       );
 
       setGlobalNotification({ 
-        message: `Registered payment of $${parseFloat(payAmount).toFixed(2)} for ${selectedDebtor.customer_name}. Cash posted to ledger!`, 
+        message: `Registered payment of ₦${parseFloat(payAmount).toFixed(2)} for ${selectedDebtor.customer_name}. Cash posted to ledger!`, 
         type: 'success' 
       });
       setPayModalOpen(false);
@@ -190,7 +189,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
           </div>
           <div>
             <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Owed</span>
-            <h2 className="text-xs sm:text-lg font-black text-red-500 mt-0.5">${summary.totalOwed.toFixed(2)}</h2>
+            <h2 className="text-xs sm:text-lg font-black text-red-500 mt-0.5">₦{summary.totalOwed.toFixed(2)}</h2>
           </div>
         </div>
 
@@ -248,7 +247,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                   </div>
                   <div className="text-right">
                     <div className={`font-black text-xs ${deb.status === 'unpaid' ? 'text-red-500' : 'text-emerald-500'}`}>
-                      ${parseFloat(deb.amount_owed).toFixed(2)}
+                      ₦{parseFloat(deb.amount_owed).toFixed(2)}
                     </div>
                     {deb.status === 'unpaid' && new Date(deb.due_date) < new Date().setHours(0,0,0,0) && (
                       <div className="text-[8px] text-red-400 font-extrabold mt-0.5">OVERDUE</div>
@@ -297,7 +296,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                       {deb.phone_number}
                     </td>
                     <td className={`py-4 px-4 font-black ${deb.status === 'unpaid' ? 'text-red-500' : 'text-emerald-500'}`}>
-                      ${parseFloat(deb.amount_owed).toFixed(2)}
+                      ₦{parseFloat(deb.amount_owed).toFixed(2)}
                     </td>
                     <td className="py-4 px-4 font-medium text-slate-400">
                       <div className="flex items-center gap-1.5">
@@ -395,7 +394,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
-                    Amount Owed ($) *
+                    Amount Owed (₦ Naira) *
                   </label>
                   <input
                     type="number"
@@ -468,13 +467,13 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Total Owed:</span>
-                  <span className="font-black text-red-500">${selectedDebtor.amount_owed.toFixed(2)}</span>
+                  <span className="font-black text-red-500">₦{selectedDebtor.amount_owed.toFixed(2)}</span>
                 </div>
               </div>
 
               <div>
                 <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
-                  Cash Repayment Amount ($) *
+                  Cash Repayment Amount (₦ Naira) *
                 </label>
                 <input
                   type="number"

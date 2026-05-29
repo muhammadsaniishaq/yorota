@@ -32,7 +32,7 @@ export default function Sidebar({
     { id: 'ledger', label: 'Office Cash Ledger', icon: CreditCard, roles: ['admin', 'officer'] },
     { id: 'debtors', label: 'Outstanding Debts', icon: UserX, roles: ['admin', 'officer'] },
     { id: 'reports', label: 'Reports & Audits', icon: BarChart3, roles: ['admin', 'officer'] },
-    { id: 'services', label: 'Services Category', icon: Settings, roles: ['admin'] } // Admin only
+    { id: 'services', label: 'Manage Categories', icon: Settings, roles: ['admin', 'officer'] } // Accessible to all roles
   ];
 
   return (
