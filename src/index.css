@@ -26,40 +26,40 @@
   --foreground: #0f172a;        /* slate 900 */
   --card: #ffffff;              /* pure white */
   --card-foreground: #0f172a;
-  --primary: #10b981;           /* Emerald 500 */
-  --primary-foreground: #ffffff;
+  --primary: #F5C800;           /* Luxury Gold */
+  --primary-foreground: #090d16;
   --secondary: #f1f5f9;         /* slate 100 */
   --secondary-foreground: #0f172a;
   --muted: #f1f5f9;             /* slate 100 */
   --muted-foreground: #64748b;  /* slate 500 */
-  --accent: #10b981;            /* Emerald */
-  --accent-foreground: #ffffff;
+  --accent: #F5C800;            /* Gold */
+  --accent-foreground: #090d16;
   --destructive: #ef4444;       /* red 500 */
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;            /* slate 200 */
   --input: #e2e8f0;
-  --ring: #10b981;
-  --radius: 0.5rem;
+  --ring: #F5C800;
+  --radius: 1rem;               /* Smooth, modern rounded corners */
 }
 
 .dark {
-  --background: #090d16;        /* Deep slate/black */
+  --background: #060911;        /* Ultra dark luxury slate */
   --foreground: #f8fafc;
-  --card: #111827;              /* gray 900 */
+  --card: #0c1220;              /* Deep navy card background */
   --card-foreground: #f8fafc;
-  --primary: #10b981;           /* Emerald 500 */
-  --primary-foreground: #090d16;
-  --secondary: #1f2937;         /* gray 800 */
+  --primary: #F5C800;           /* Luxury Gold */
+  --primary-foreground: #060911;
+  --secondary: #121b2d;         /* Deep slate */
   --secondary-foreground: #f8fafc;
-  --muted: #1f2937;
-  --muted-foreground: #9ca3af;  /* gray 400 */
-  --accent: #10b981;
-  --accent-foreground: #090d16;
+  --muted: #121b2d;
+  --muted-foreground: #94a3b8;  /* slate 400 */
+  --accent: #F5C800;
+  --accent-foreground: #060911;
   --destructive: #b91c1c;       /* red 700 */
   --destructive-foreground: #ffffff;
-  --border: #1f2937;
-  --input: #1f2937;
-  --ring: #10b981;
+  --border: #1a263d;
+  --input: #1a263d;
+  --ring: #F5C800;
 }
 
 @layer base {
@@ -67,22 +67,67 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    @apply bg-background text-foreground antialiased selection:bg-[#F5C800]/30 selection:text-[#F5C800];
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   }
 }
 
-/* Fast scrolling for tables and forms */
+/* --- PREMIUM LUXURY TRANSITIONS & DECORATIONS --- */
+
+/* Frosted glass backdrop utility */
+.premium-glass {
+  background: rgba(12, 18, 32, 0.75);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(245, 200, 0, 0.08);
+}
+
+.premium-glass:hover {
+  border: 1px solid rgba(245, 200, 0, 0.25);
+  box-shadow: 0 10px 30px -10px rgba(245, 200, 0, 0.04);
+}
+
+/* Pulsating golden breath animation */
+@keyframes gold-breath {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.03);
+  }
+}
+
+.animate-gold-breath {
+  animation: gold-breath 6s infinite ease-in-out;
+}
+
+/* Soft gold glow text highlight */
+.gold-text-glow {
+  text-shadow: 0 2px 10px rgba(245, 200, 0, 0.3);
+}
+
+/* Premium Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #060911;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
+  background: rgba(245, 200, 0, 0.15);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/40;
+  background: rgba(245, 200, 0, 0.4);
 }
+
+/* Mobile-first touch enhancements */
+@media (max-width: 640px) {
+  input, select, textarea, button {
+    font-size: 14px !important; /* Prevents iOS auto-zoom on input focus */
+    min-height: 44px; /* Matches high accessibility tap targets */
+  }
+}
+

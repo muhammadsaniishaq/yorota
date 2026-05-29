@@ -7,14 +7,15 @@ import {
   UserX, 
   Activity, 
   CreditCard, 
-  ArrowUpRight,
-  RefreshCw,
-  AlertCircle
+  ArrowUpRight, 
+  RefreshCw, 
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { db } from '../services/db';
 
-export default function Dashboard({ onViewChange, notification }) {
+export default function Dashboard({ currentUser, onViewChange, notification }) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     incomeToday: 0,
@@ -161,83 +162,83 @@ export default function Dashboard({ onViewChange, notification }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         
         {/* Card 1: Today Income */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div className="premium-glass rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Income Today</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <DollarSign className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Income Today</span>
+            <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+              <DollarSign className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-4">
-            <h2 className="text-xl font-black">${stats.incomeToday.toFixed(2)}</h2>
-            <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5">
+            <h2 className="text-xl font-black text-slate-100 gold-text-glow">${stats.incomeToday.toFixed(2)}</h2>
+            <p className="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5 mt-0.5">
               <TrendingUp className="w-3 h-3" /> Live ledger flow
             </p>
           </div>
         </div>
 
         {/* Card 2: Monthly Income */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm">
+        <div className="premium-glass rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">This Month</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <DollarSign className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">This Month</span>
+            <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+              <DollarSign className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-4">
-            <h2 className="text-xl font-black">${stats.incomeThisMonth.toFixed(2)}</h2>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Current billing cycle</p>
+            <h2 className="text-xl font-black text-slate-100 gold-text-glow">${stats.incomeThisMonth.toFixed(2)}</h2>
+            <p className="text-[10px] text-slate-500 mt-0.5">Current billing cycle</p>
           </div>
         </div>
 
         {/* Card 3: Total Registrations */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm">
+        <div className="premium-glass rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Registrations</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <FileSpreadsheet className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Registrations</span>
+            <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+              <FileSpreadsheet className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-4">
-            <h2 className="text-xl font-black">{stats.registrations} <span className="text-xs font-normal text-muted-foreground">units</span></h2>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Rider permits logged</p>
+            <h2 className="text-xl font-black text-slate-100">{stats.registrations} <span className="text-xs font-normal text-slate-400">units</span></h2>
+            <p className="text-[10px] text-slate-500 mt-0.5">Rider permits logged</p>
           </div>
         </div>
 
         {/* Card 4: Renewals */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm">
+        <div className="premium-glass rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Renewals</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <FileSpreadsheet className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Renewals</span>
+            <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+              <FileSpreadsheet className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-4">
-            <h2 className="text-xl font-black">{stats.renewals} <span className="text-xs font-normal text-muted-foreground">units</span></h2>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Permits renewed</p>
+            <h2 className="text-xl font-black text-slate-100">{stats.renewals} <span className="text-xs font-normal text-slate-400">units</span></h2>
+            <p className="text-[10px] text-slate-500 mt-0.5">Permits renewed</p>
           </div>
         </div>
 
         {/* Card 5: Transfers */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm">
+        <div className="premium-glass rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Ownership Transfers</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <FileSpreadsheet className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Ownership Transfers</span>
+            <div className="p-1.5 rounded-lg bg-[#F5C800]/10 text-[#F5C800]">
+              <FileSpreadsheet className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-4">
-            <h2 className="text-xl font-black">{stats.transfers} <span className="text-xs font-normal text-muted-foreground">units</span></h2>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Deeds reassigned</p>
+            <h2 className="text-xl font-black text-slate-100">{stats.transfers} <span className="text-xs font-normal text-slate-400">units</span></h2>
+            <p className="text-[10px] text-slate-500 mt-0.5">Deeds reassigned</p>
           </div>
         </div>
 
         {/* Card 6: Debt */}
-        <div className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div className="premium-glass rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Debtors</span>
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Debtors</span>
             <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
-              <UserX className="w-4 h-4" />
+              <UserX className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-4">
@@ -383,15 +384,25 @@ export default function Dashboard({ onViewChange, notification }) {
           <div className="space-y-3 mt-6">
             <button 
               onClick={() => onViewChange('daily-entry')}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/20 transition text-xs group"
+              className="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/20 transition text-xs group cursor-pointer"
             >
               <span>CREATE DAILY WORK ENTRY</span>
               <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
             </button>
 
+            {currentUser?.role === 'admin' && (
+              <button 
+                onClick={() => onViewChange('services')}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-[#F5C800] font-bold border border-[#F5C800]/20 transition text-xs group text-left cursor-pointer shadow-lg shadow-amber-500/5 hover:border-[#F5C800]/50"
+              >
+                <span>MANAGE SERVICE CATEGORIES (ADD)</span>
+                <Settings className="w-4 h-4 text-[#F5C800] group-hover:rotate-45 transition-transform duration-300" />
+              </button>
+            )}
+
             <button 
               onClick={() => onViewChange('ledger')}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl bg-secondary hover:bg-muted font-bold border border-border transition text-xs group text-left"
+              className="w-full flex items-center justify-between p-3.5 rounded-xl bg-secondary hover:bg-muted font-bold border border-border transition text-xs group text-left cursor-pointer"
             >
               <span>LOG LEDGER TRANSACTION</span>
               <CreditCard className="w-4 h-4 text-muted-foreground group-hover:scale-110 transition" />
@@ -399,7 +410,7 @@ export default function Dashboard({ onViewChange, notification }) {
 
             <button 
               onClick={() => onViewChange('debtors')}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl bg-secondary hover:bg-muted font-bold border border-border transition text-xs group text-left"
+              className="w-full flex items-center justify-between p-3.5 rounded-xl bg-secondary hover:bg-muted font-bold border border-border transition text-xs group text-left cursor-pointer"
             >
               <span>MANAGE OUTSTANDING DEBTS</span>
               <UserX className="w-4 h-4 text-red-500 group-hover:scale-110 transition" />

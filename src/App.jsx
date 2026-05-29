@@ -94,6 +94,7 @@ export default function App() {
       case 'dashboard':
         return (
           <Dashboard 
+            currentUser={currentUser}
             onViewChange={setCurrentView} 
             notification={notification} 
           />
