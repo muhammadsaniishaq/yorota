@@ -12,7 +12,8 @@ import {
   LogOut,
   X,
   Menu,
-  ShieldCheck
+  ShieldCheck,
+  Percent
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -32,6 +33,7 @@ export default function Sidebar({
     { id: 'ledger', label: 'Office Cash Ledger', icon: CreditCard, roles: ['admin', 'officer'] },
     { id: 'debtors', label: 'Outstanding Debts', icon: UserX, roles: ['admin', 'officer'] },
     { id: 'reports', label: 'Reports & Audits', icon: BarChart3, roles: ['admin', 'officer'] },
+    { id: 'surcharges', label: 'Surcharge & Splits', icon: Percent, roles: ['admin', 'officer'] },
     { id: 'services', label: 'Manage Categories', icon: Settings, roles: ['admin', 'officer'] } // Accessible to all roles
   ];
 

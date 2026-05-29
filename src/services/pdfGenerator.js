@@ -422,5 +422,371 @@ export const pdfGenerator = {
     addSignatureBlock(doc, doc.lastAutoTable.finalY + 15, transactions[0]?.collected_by);
 
     doc.save(`ledger-summary-${new Date().toISOString().split('T')[0]}.pdf`);
+  },
+
+  // --- GENERATE YOROTA ICT DAILY PAYOUT FORM ---
+  generateIctPayoutReport: (dateRangeText, records, officerName, commandName) => {
+    const doc = new jsPDF();
+
+    // 1. Premium Government & Safety Border Frame
+    doc.setDrawColor(16, 185, 129); // Forest Green
+    doc.setLineWidth(1.2);
+    doc.rect(5, 5, 200, 287); // Page Frame
+
+    doc.setDrawColor(245, 200, 0); // Gold Accent Line
+    doc.setLineWidth(0.4);
+    doc.rect(6.2, 6.2, 197.6, 284.6);
+
+    // Double Solid Yellow road dividing lines (thematic top accent)
+    doc.setDrawColor(245, 200, 0);
+    doc.setLineWidth(0.8);
+    doc.line(10, 10, 200, 10);
+    doc.line(10, 11.8, 200, 11.8);
+
+    // Hazard warning chevrons in corners for advanced traffic theme
+    doc.setDrawColor(9, 13, 22);
+    doc.setLineWidth(0.5);
+    // Top-Left corner chevrons
+    doc.line(8, 8, 12, 12); doc.line(10, 8, 14, 12);
+    // Top-Right corner chevrons
+    doc.line(202, 8, 198, 12); doc.line(200, 8, 196, 12);
+
+    // 2. Faint Center Watermark (Road safety emblem / traffic lanes)
+    const wcx = 105;
+    const wcy = 150;
+    doc.setDrawColor(242, 248, 245); // Extremely faint green-slate
+    doc.setLineWidth(1.2);
+    doc.circle(wcx, wcy, 45, 'S'); // Outer circle
+    doc.circle(wcx, wcy, 38, 'S'); // Inner circle
+    doc.setLineWidth(0.5);
+    // Dashed road lane dividers
+    doc.setLineDash([3, 3]);
+    doc.line(wcx, wcy - 35, wcx, wcy + 35); // Vertical dividing line
+    doc.line(wcx - 35, wcy, wcx + 35, wcy); // Horizontal dividing line
+    doc.setLineDash([]); // Reset dash pattern
+    
+    // Watermark core shield
+    doc.circle(wcx, wcy, 12, 'S');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(230, 242, 235);
+    doc.text('YOROTA SAFETY', wcx, wcy - 2, { align: 'center' });
+    doc.text('SECURE SEAL', wcx, wcy + 3, { align: 'center' });
+
+    // 3. Vector Traffic Safety Header Emblem (Center-Top)
+    const cx = 105;
+    const cy = 23;
+    
+    // Outer Green circle
+    doc.setFillColor(9, 13, 22); // Deep Brand Background
+    doc.circle(cx, cy, 12, 'F');
+    doc.setFillColor(16, 185, 129); // Forest Green Ring
+    doc.circle(cx, cy, 10.5, 'F');
+    // Inner Gold ring
+    doc.setDrawColor(245, 200, 0);
+    doc.setLineWidth(0.6);
+    doc.circle(cx, cy, 9.2);
+    // White safety triangles (vector star emblem representing road crossings/polygons)
+    doc.setFillColor(255, 255, 255);
+    doc.triangle(cx, cy - 6.5, cx - 5.5, cy + 3.2, cx + 5.5, cy + 3.2, 'F');
+    doc.triangle(cx, cy + 6.5, cx - 5.5, cy - 3.2, cx + 5.5, cy - 3.2, 'F');
+    // Small emerald core
+    doc.setFillColor(16, 185, 129);
+    doc.circle(cx, cy, 2.2, 'F');
+
+    // Circular brand markers
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(4.5);
+    doc.setTextColor(245, 200, 0);
+    doc.text('YOROTA', cx, cy - 13.5, { align: 'center' });
+    doc.setTextColor(16, 185, 129);
+    doc.text('ROAD SAFETY & COMPLIANCE', cx, cy + 15.5, { align: 'center' });
+
+    // 4. Government Official Headings
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(9, 13, 22);
+    doc.text('YOBE STATE ROAD TRAFFIC MANAGEMENT AGENCY (YOROTA)', 105, 48, { align: 'center' });
+    
+    doc.setFontSize(13);
+    doc.setTextColor(16, 185, 129);
+    doc.text('ICT DAILY PAYOUT SHEET', 105, 54, { align: 'center' });
+
+    // Separator Line
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.line(12, 59, 198, 59);
+
+    // 4. Command & Scope Metadata Box
+    doc.setFillColor(248, 250, 252);
+    doc.rect(12, 63, 186, 11, 'F');
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.3);
+    doc.rect(12, 63, 186, 11, 'S');
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(9, 13, 22);
+    doc.text(`COMMAND:  ${commandName.toUpperCase()}`, 16, 70.5);
+    doc.text(`DATE / RANGE:  ${dateRangeText.toUpperCase()}`, 194, 70.5, { align: 'right' });
+
+    // 5. Aggregate Payout Record Columns
+    const data = {
+      tricycle_own_new_qty: 0, tricycle_own_new_amt: 0,
+      tricycle_own_ren_qty: 0, tricycle_own_ren_amt: 0,
+      tricycle_rider_new_qty: 0, tricycle_rider_new_amt: 0,
+      tricycle_rider_ren_qty: 0, tricycle_rider_ren_amt: 0,
+      motorcycle_own_new_qty: 0, motorcycle_own_new_amt: 0,
+      motorcycle_own_ren_qty: 0, motorcycle_own_ren_amt: 0,
+      motorcycle_rider_new_qty: 0, motorcycle_rider_new_amt: 0,
+      motorcycle_rider_ren_qty: 0, motorcycle_rider_ren_amt: 0,
+      taxi_new_qty: 0, taxi_new_amt: 0,
+      taxi_ren_qty: 0, taxi_ren_amt: 0,
+      kurkura_new_qty: 0, kurkura_new_amt: 0,
+      kurkura_ren_qty: 0, kurkura_ren_amt: 0,
+      lost_tricycle_qty: 0, lost_tricycle_amt: 0,
+      lost_motorcycle_qty: 0, lost_motorcycle_amt: 0,
+      lost_taxi_qty: 0, lost_taxi_amt: 0,
+      lost_kurkura_qty: 0, lost_kurkura_amt: 0,
+      change_tricycle_qty: 0, change_tricycle_amt: 0,
+      change_motorcycle_qty: 0, change_motorcycle_amt: 0,
+      change_taxi_qty: 0, change_taxi_amt: 0,
+      change_kurkura_qty: 0, change_kurkura_amt: 0,
+      transfer_tricycle_qty: 0, transfer_tricycle_amt: 0,
+      transfer_motorcycle_qty: 0, transfer_motorcycle_amt: 0,
+      transfer_taxi_qty: 0, transfer_taxi_amt: 0,
+      transfer_kurkura_qty: 0, transfer_kurkura_amt: 0,
+      others_qty: 0, others_amt: 0,
+    };
+
+    records.forEach(r => {
+      const name = (r.service?.name || '').toLowerCase();
+      const qty = r.quantity || 0;
+      const amt = parseFloat(r.amount) || 0;
+
+      if (name.includes('tricycle') || name.includes('napep') || name.includes('jega')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_tricycle_qty += qty; data.lost_tricycle_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_tricycle_qty += qty; data.change_tricycle_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_tricycle_qty += qty; data.transfer_tricycle_amt += amt;
+        } else if (name.includes('rider')) {
+          if (name.includes('new')) {
+            data.tricycle_rider_new_qty += qty; data.tricycle_rider_new_amt += amt;
+          } else {
+            data.tricycle_rider_ren_qty += qty; data.tricycle_rider_ren_amt += amt;
+          }
+        } else {
+          if (name.includes('new')) {
+            data.tricycle_own_new_qty += qty; data.tricycle_own_new_amt += amt;
+          } else {
+            data.tricycle_own_ren_qty += qty; data.tricycle_own_ren_amt += amt;
+          }
+        }
+      } else if (name.includes('motorcycle') || name.includes('bike')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_motorcycle_qty += qty; data.lost_motorcycle_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_motorcycle_qty += qty; data.change_motorcycle_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_motorcycle_qty += qty; data.transfer_motorcycle_amt += amt;
+        } else if (name.includes('rider')) {
+          if (name.includes('new')) {
+            data.motorcycle_rider_new_qty += qty; data.motorcycle_rider_new_amt += amt;
+          } else {
+            data.motorcycle_rider_ren_qty += qty; data.motorcycle_rider_ren_amt += amt;
+          }
+        } else {
+          if (name.includes('new')) {
+            data.motorcycle_own_new_qty += qty; data.motorcycle_own_new_amt += amt;
+          } else {
+            data.motorcycle_own_ren_qty += qty; data.motorcycle_own_ren_amt += amt;
+          }
+        }
+      } else if (name.includes('taxi') || name.includes('cab')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_taxi_qty += qty; data.lost_taxi_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_taxi_qty += qty; data.change_taxi_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_taxi_qty += qty; data.transfer_taxi_amt += amt;
+        } else {
+          if (name.includes('new')) {
+            data.taxi_new_qty += qty; data.taxi_new_amt += amt;
+          } else {
+            data.taxi_ren_qty += qty; data.taxi_ren_amt += amt;
+          }
+        }
+      } else if (name.includes('kurkura') || name.includes('kura')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_kurkura_qty += qty; data.lost_kurkura_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_kurkura_qty += qty; data.change_kurkura_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_kurkura_qty += qty; data.transfer_kurkura_amt += amt;
+        } else {
+          if (name.includes('new')) {
+            data.kurkura_new_qty += qty; data.kurkura_new_amt += amt;
+          } else {
+            data.kurkura_ren_qty += qty; data.kurkura_ren_amt += amt;
+          }
+        }
+      } else {
+        data.others_qty += qty; data.others_amt += amt;
+      }
+    });
+
+    const rows = [
+      // 1. Tricycle
+      ['1.', 'TRICYCLE (NAPEP/JEGA)', '', ''],
+      ['', '  - OWNERSHIP: New (₦10,000)', data.tricycle_own_new_qty > 0 ? data.tricycle_own_new_qty.toString() : '-', data.tricycle_own_new_qty > 0 ? `₦${data.tricycle_own_new_amt.toFixed(2)}` : '-'],
+      ['', '  - OWNERSHIP: Renewal (₦5,000)', data.tricycle_own_ren_qty > 0 ? data.tricycle_own_ren_qty.toString() : '-', data.tricycle_own_ren_qty > 0 ? `₦${data.tricycle_own_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: New (₦1,500)', data.tricycle_rider_new_qty > 0 ? data.tricycle_rider_new_qty.toString() : '-', data.tricycle_rider_new_qty > 0 ? `₦${data.tricycle_rider_new_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: Renewal (₦1,500)', data.tricycle_rider_ren_qty > 0 ? data.tricycle_rider_ren_qty.toString() : '-', data.tricycle_rider_ren_qty > 0 ? `₦${data.tricycle_rider_ren_amt.toFixed(2)}` : '-'],
+      
+      // 2. Motorcycle
+      ['2.', 'MOTORCYCLE', '', ''],
+      ['', '  - OWNERSHIP: New (₦2,500)', data.motorcycle_own_new_qty > 0 ? data.motorcycle_own_new_qty.toString() : '-', data.motorcycle_own_new_qty > 0 ? `₦${data.motorcycle_own_new_amt.toFixed(2)}` : '-'],
+      ['', '  - OWNERSHIP: Renewal (₦2,500)', data.motorcycle_own_ren_qty > 0 ? data.motorcycle_own_ren_qty.toString() : '-', data.motorcycle_own_ren_qty > 0 ? `₦${data.motorcycle_own_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: New (₦1,500)', data.motorcycle_rider_new_qty > 0 ? data.motorcycle_rider_new_qty.toString() : '-', data.motorcycle_rider_new_qty > 0 ? `₦${data.motorcycle_rider_new_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: Renewal (₦1,500)', data.motorcycle_rider_ren_qty > 0 ? data.motorcycle_rider_ren_qty.toString() : '-', data.motorcycle_rider_ren_qty > 0 ? `₦${data.motorcycle_rider_ren_amt.toFixed(2)}` : '-'],
+      
+      // 3. Taxi
+      ['3.', 'TAXI', '', ''],
+      ['', '  - New (₦10,000)', data.taxi_new_qty > 0 ? data.taxi_new_qty.toString() : '-', data.taxi_new_qty > 0 ? `₦${data.taxi_new_amt.toFixed(2)}` : '-'],
+      ['', '  - Renewal (₦5,000)', data.taxi_ren_qty > 0 ? data.taxi_ren_qty.toString() : '-', data.taxi_ren_qty > 0 ? `₦${data.taxi_ren_amt.toFixed(2)}` : '-'],
+      
+      // 4. Kurkura
+      ['4.', 'KURKURA', '', ''],
+      ['', '  - New (₦10,000)', data.kurkura_new_qty > 0 ? data.kurkura_new_qty.toString() : '-', data.kurkura_new_qty > 0 ? `₦${data.kurkura_new_amt.toFixed(2)}` : '-'],
+      ['', '  - Renewal (₦5,000)', data.kurkura_ren_qty > 0 ? data.kurkura_ren_qty.toString() : '-', data.kurkura_ren_qty > 0 ? `₦${data.kurkura_ren_amt.toFixed(2)}` : '-'],
+      
+      // 5. Lost ID
+      ['5.', 'LOST OF ID/STICKER', '', ''],
+      ['', '  - Tricycle (₦2,500)', data.lost_tricycle_qty > 0 ? data.lost_tricycle_qty.toString() : '-', data.lost_tricycle_qty > 0 ? `₦${data.lost_tricycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Motorcycle (₦2,500)', data.lost_motorcycle_qty > 0 ? data.lost_motorcycle_qty.toString() : '-', data.lost_motorcycle_qty > 0 ? `₦${data.lost_motorcycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Taxi (₦2,500)', data.lost_taxi_qty > 0 ? data.lost_taxi_qty.toString() : '-', data.lost_taxi_qty > 0 ? `₦${data.lost_taxi_amt.toFixed(2)}` : '-'],
+      ['', '  - Kurkura (₦2,500)', data.lost_kurkura_qty > 0 ? data.lost_kurkura_qty.toString() : '-', data.lost_kurkura_qty > 0 ? `₦${data.lost_kurkura_amt.toFixed(2)}` : '-'],
+      
+      // 6. Change of Ownership
+      ['6.', 'CHANGE OF OWNERSHIP', '', ''],
+      ['', '  - Tricycle (₦2,000)', data.change_tricycle_qty > 0 ? data.change_tricycle_qty.toString() : '-', data.change_tricycle_qty > 0 ? `₦${data.change_tricycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Motorcycle (₦2,000)', data.change_motorcycle_qty > 0 ? data.change_motorcycle_qty.toString() : '-', data.change_motorcycle_qty > 0 ? `₦${data.change_motorcycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Taxi (₦2,000)', data.change_taxi_qty > 0 ? data.change_taxi_qty.toString() : '-', data.change_taxi_qty > 0 ? `₦${data.change_taxi_amt.toFixed(2)}` : '-'],
+      ['', '  - Kurkura (₦2,000)', data.change_kurkura_qty > 0 ? data.change_kurkura_qty.toString() : '-', data.change_kurkura_qty > 0 ? `₦${data.change_kurkura_amt.toFixed(2)}` : '-'],
+      
+      // 7. Transfer
+      ['7.', 'TRANSFER', '', ''],
+      ['', '  - Tricycle (₦2,000)', data.transfer_tricycle_qty > 0 ? data.transfer_tricycle_qty.toString() : '-', data.transfer_tricycle_qty > 0 ? `₦${data.transfer_tricycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Motorcycle (₦2,000)', data.transfer_motorcycle_qty > 0 ? data.transfer_motorcycle_qty.toString() : '-', data.transfer_motorcycle_qty > 0 ? `₦${data.transfer_motorcycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Taxi (₦2,000)', data.transfer_taxi_qty > 0 ? data.transfer_taxi_qty.toString() : '-', data.transfer_taxi_qty > 0 ? `₦${data.transfer_taxi_amt.toFixed(2)}` : '-'],
+      ['', '  - Kurkura (₦2,000)', data.transfer_kurkura_qty > 0 ? data.transfer_kurkura_qty.toString() : '-', data.transfer_kurkura_qty > 0 ? `₦${data.transfer_kurkura_amt.toFixed(2)}` : '-'],
+    ];
+
+    // Append custom/other classifications if present in records
+    if (data.others_qty > 0) {
+      rows.push(
+        ['8.', 'OTHER SERVICES / REGISTRATIONS', '', ''],
+        ['', '  - Custom Category Registrations', data.others_qty.toString(), `₦${data.others_amt.toFixed(2)}`]
+      );
+    }
+
+    const totalQty = Object.keys(data)
+      .filter(k => k.endsWith('_qty'))
+      .reduce((sum, k) => sum + data[k], 0);
+
+    const totalAmt = Object.keys(data)
+      .filter(k => k.endsWith('_amt'))
+      .reduce((sum, k) => sum + data[k], 0);
+
+    // 6. Render Table (Modern layout)
+    doc.autoTable({
+      startY: 78,
+      head: [['S/N', 'DETAILED REGISTRATION FEE DISCLOSURE', 'TOTAL UNITS', 'TOTAL AMOUNT']],
+      body: rows,
+      headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+      bodyStyles: { fontSize: 7, textColor: [9, 13, 22] },
+      theme: 'grid',
+      styles: { cellPadding: 1.2 },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        1: { fontStyle: 'normal' },
+        2: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
+        3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
+      },
+      didParseCell: (dataCell) => {
+        // Highlight main headings (S/N is not empty)
+        if (dataCell.row.index % 5 === 0 || dataCell.cell.text[0]?.startsWith('1.') || dataCell.cell.text[0]?.startsWith('2.') || dataCell.cell.text[0]?.startsWith('3.') || dataCell.cell.text[0]?.startsWith('4.') || dataCell.cell.text[0]?.startsWith('5.') || dataCell.cell.text[0]?.startsWith('6.') || dataCell.cell.text[0]?.startsWith('7.') || dataCell.cell.text[0]?.startsWith('8.')) {
+          if (dataCell.column.index === 1) {
+            dataCell.cell.styles.fontStyle = 'bold';
+            dataCell.cell.styles.fillColor = [241, 245, 249];
+          }
+        }
+      }
+    });
+
+    // 7. Add Grand Total Row Box below table
+    let yPos = doc.lastAutoTable.finalY + 3;
+    doc.setFillColor(9, 13, 22);
+    doc.rect(12, yPos, 186, 9.5, 'F');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text('GRAND TOTAL SUMS', 16, yPos + 6);
+    doc.text(totalQty.toString(), 155, yPos + 6, { align: 'center' });
+    doc.text(`₦${totalAmt.toFixed(2)}`, 194, yPos + 6, { align: 'right' });
+
+    // 8. Signatures Block (Matching paper layout perfectly)
+    yPos += 18;
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = 30;
+      // Re-apply frame border on new page if signatures pushed over
+      doc.setDrawColor(16, 185, 129);
+      doc.setLineWidth(1.2);
+      doc.rect(5, 5, 200, 287);
+      doc.setDrawColor(245, 200, 0);
+      doc.setLineWidth(0.4);
+      doc.rect(6.2, 6.2, 197.6, 284.6);
+    }
+
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.4);
+
+    // Left Signature: ICT Payout Desk Officer
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(9, 13, 22);
+    doc.text('ICT PAYOUT DESK OFFICER', 15, yPos);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Officer Name:    ${officerName || 'Duty Officer'}`, 15, yPos + 5.5);
+    doc.text('Signature/Date: ............................................', 15, yPos + 12);
+
+    // Right Signature: Unit/Zonal Command
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(9, 13, 22);
+    doc.text('UNIT/ZONAL COMMAND', 115, yPos);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Command Officer Name: .............................', 115, yPos + 5.5);
+    doc.text('Signature/Date:             .............................', 115, yPos + 12);
+
+    // Centered seal
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.6);
+    doc.circle(100, yPos + 6, 8);
+    doc.setFontSize(5);
+    doc.setTextColor(16, 185, 129);
+    doc.text('YOROTA', 100, yPos + 5, { align: 'center' });
+    doc.text('ICT DEPT', 100, yPos + 8, { align: 'center' });
+
+    // Save File
+    doc.save(`YOROTA_ICT_Payout_Sheet_${new Date().toISOString().split('T')[0]}.pdf`);
   }
 };
+

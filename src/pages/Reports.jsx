@@ -9,12 +9,15 @@ import {
   ChevronRight,
   TrendingUp,
   TrendingDown,
-  AlertCircle
+  AlertCircle,
+  Shield,
+  Activity,
+  Award
 } from 'lucide-react';
 import { db } from '../services/db';
 import { pdfGenerator } from '../services/pdfGenerator';
 
-export default function Reports({ setGlobalNotification }) {
+export default function Reports({ currentUser, setGlobalNotification }) {
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -25,13 +28,9 @@ export default function Reports({ setGlobalNotification }) {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
 
-  // Interactive splits actions modals states
-  const [hqModalOpen, setHqModalOpen] = useState(false);
-  const [officeModalOpen, setOfficeModalOpen] = useState(false);
-  const [remitAmount, setRemitAmount] = useState('');
-  const [disburseAmount, setDisburseAmount] = useState('');
-  const [modalError, setModalError] = useState('');
-  const [modalLoading, setModalLoading] = useState(false);
+  // Custom visual tab and command routing states
+  const [activeTab, setActiveTab] = useState('general'); 
+  const [commandName, setCommandName] = useState('Damaturu Zonal Command');
 
   const loadData = async () => {
     setLoading(true);
@@ -165,59 +164,146 @@ export default function Reports({ setGlobalNotification }) {
     }
   };
 
-  const handleRecordHQRemittance = async (e) => {
-    e.preventDefault();
-    if (!remitAmount || isNaN(parseFloat(remitAmount)) || parseFloat(remitAmount) <= 0) {
-      setModalError('Please enter a valid amount.');
-      return;
-    }
-    setModalLoading(true);
-    setModalError('');
+
+
+  const handleExportIctPayout = () => {
     try {
-      await db.transactions.create({
-        type: 'expense',
-        amount: parseFloat(remitAmount),
-        purpose: 'HQ Remittance',
-        collected_by: 'Authorized Officer'
-      });
-      setHqModalOpen(false);
-      setRemitAmount('');
-      setGlobalNotification({ message: `HQ Remittance of ₦${parseFloat(remitAmount).toFixed(2)} logged successfully!`, type: 'success' });
-      loadData();
+      pdfGenerator.generateIctPayoutReport(dateRangeText, filteredRecords, currentUser?.name, commandName);
+      setGlobalNotification({ message: 'ICT Daily Payout Sheet printed successfully', type: 'success' });
     } catch (err) {
       console.error(err);
-      setModalError(err.message || 'Error occurred while saving remittance.');
-    } finally {
-      setModalLoading(false);
+      setGlobalNotification({ message: 'Failed to compile official payout sheet', type: 'error' });
     }
   };
 
-  const handleRecordOfficeDisbursal = async (e) => {
-    e.preventDefault();
-    if (!disburseAmount || isNaN(parseFloat(disburseAmount)) || parseFloat(disburseAmount) <= 0) {
-      setModalError('Please enter a valid amount.');
-      return;
-    }
-    setModalLoading(true);
-    setModalError('');
-    try {
-      await db.transactions.create({
-        type: 'expense',
-        amount: parseFloat(disburseAmount),
-        purpose: 'Office Disbursal',
-        collected_by: 'Authorized Officer'
-      });
-      setOfficeModalOpen(false);
-      setDisburseAmount('');
-      setGlobalNotification({ message: `Office Disbursal of ₦${parseFloat(disburseAmount).toFixed(2)} logged successfully!`, type: 'success' });
-      loadData();
-    } catch (err) {
-      console.error(err);
-      setModalError(err.message || 'Error occurred while saving disbursal.');
-    } finally {
-      setModalLoading(false);
-    }
+  // Aggregate record categories for the payout form grid dynamically
+  const getPayoutData = () => {
+    const data = {
+      // 1. Tricycle
+      tricycle_own_new_qty: 0, tricycle_own_new_amt: 0,
+      tricycle_own_ren_qty: 0, tricycle_own_ren_amt: 0,
+      tricycle_rider_new_qty: 0, tricycle_rider_new_amt: 0,
+      tricycle_rider_ren_qty: 0, tricycle_rider_ren_amt: 0,
+      // 2. Motorcycle
+      motorcycle_own_new_qty: 0, motorcycle_own_new_amt: 0,
+      motorcycle_own_ren_qty: 0, motorcycle_own_ren_amt: 0,
+      motorcycle_rider_new_qty: 0, motorcycle_rider_new_amt: 0,
+      motorcycle_rider_ren_qty: 0, motorcycle_rider_ren_amt: 0,
+      // 3. Taxi
+      taxi_new_qty: 0, taxi_new_amt: 0,
+      taxi_ren_qty: 0, taxi_ren_amt: 0,
+      // 4. Kurkura
+      kurkura_new_qty: 0, kurkura_new_amt: 0,
+      kurkura_ren_qty: 0, kurkura_ren_amt: 0,
+      // 5. Lost ID
+      lost_tricycle_qty: 0, lost_tricycle_amt: 0,
+      lost_motorcycle_qty: 0, lost_motorcycle_amt: 0,
+      lost_taxi_qty: 0, lost_taxi_amt: 0,
+      lost_kurkura_qty: 0, lost_kurkura_amt: 0,
+      // 6. Change of Ownership
+      change_tricycle_qty: 0, change_tricycle_amt: 0,
+      change_motorcycle_qty: 0, change_motorcycle_amt: 0,
+      change_taxi_qty: 0, change_taxi_amt: 0,
+      change_kurkura_qty: 0, change_kurkura_amt: 0,
+      // 7. Transfer
+      transfer_tricycle_qty: 0, transfer_tricycle_amt: 0,
+      transfer_motorcycle_qty: 0, transfer_motorcycle_amt: 0,
+      transfer_taxi_qty: 0, transfer_taxi_amt: 0,
+      transfer_kurkura_qty: 0, transfer_kurkura_amt: 0,
+      // Others
+      others_qty: 0, others_amt: 0,
+    };
+
+    filteredRecords.forEach(r => {
+      const name = (r.service?.name || '').toLowerCase();
+      const qty = r.quantity || 0;
+      const amt = parseFloat(r.amount) || 0;
+
+      if (name.includes('tricycle') || name.includes('napep') || name.includes('jega')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_tricycle_qty += qty; data.lost_tricycle_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_tricycle_qty += qty; data.change_tricycle_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_tricycle_qty += qty; data.transfer_tricycle_amt += amt;
+        } else if (name.includes('rider')) {
+          if (name.includes('new')) {
+            data.tricycle_rider_new_qty += qty; data.tricycle_rider_new_amt += amt;
+          } else {
+            data.tricycle_rider_ren_qty += qty; data.tricycle_rider_ren_amt += amt;
+          }
+        } else { // ownership
+          if (name.includes('new')) {
+            data.tricycle_own_new_qty += qty; data.tricycle_own_new_amt += amt;
+          } else {
+            data.tricycle_own_ren_qty += qty; data.tricycle_own_ren_amt += amt;
+          }
+        }
+      } else if (name.includes('motorcycle') || name.includes('bike')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_motorcycle_qty += qty; data.lost_motorcycle_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_motorcycle_qty += qty; data.change_motorcycle_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_motorcycle_qty += qty; data.transfer_motorcycle_amt += amt;
+        } else if (name.includes('rider')) {
+          if (name.includes('new')) {
+            data.motorcycle_rider_new_qty += qty; data.motorcycle_rider_new_amt += amt;
+          } else {
+            data.motorcycle_rider_ren_qty += qty; data.motorcycle_rider_ren_amt += amt;
+          }
+        } else { // ownership
+          if (name.includes('new')) {
+            data.motorcycle_own_new_qty += qty; data.motorcycle_own_new_amt += amt;
+          } else {
+            data.motorcycle_own_ren_qty += qty; data.motorcycle_own_ren_amt += amt;
+          }
+        }
+      } else if (name.includes('taxi') || name.includes('car')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_taxi_qty += qty; data.lost_taxi_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_taxi_qty += qty; data.change_taxi_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_taxi_qty += qty; data.transfer_taxi_amt += amt;
+        } else {
+          if (name.includes('new')) {
+            data.taxi_new_qty += qty; data.taxi_new_amt += amt;
+          } else {
+            data.taxi_ren_qty += qty; data.taxi_ren_amt += amt;
+          }
+        }
+      } else if (name.includes('kurkura') || name.includes('kura')) {
+        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+          data.lost_kurkura_qty += qty; data.lost_kurkura_amt += amt;
+        } else if (name.includes('change') || name.includes('ownership')) {
+          data.change_kurkura_qty += qty; data.change_kurkura_amt += amt;
+        } else if (name.includes('transfer')) {
+          data.transfer_kurkura_qty += qty; data.transfer_kurkura_amt += amt;
+        } else {
+          if (name.includes('new')) {
+            data.kurkura_new_qty += qty; data.kurkura_new_amt += amt;
+          } else {
+            data.kurkura_ren_qty += qty; data.kurkura_ren_amt += amt;
+          }
+        }
+      } else {
+        data.others_qty += qty; data.others_amt += amt;
+      }
+    });
+
+    return data;
   };
+
+  const pData = getPayoutData();
+
+  const totalPayoutQty = Object.keys(pData)
+    .filter(k => k.endsWith('_qty'))
+    .reduce((sum, k) => sum + pData[k], 0);
+
+  const totalPayoutAmt = Object.keys(pData)
+    .filter(k => k.endsWith('_amt'))
+    .reduce((sum, k) => sum + pData[k], 0);
 
   return (
     <div className="space-y-4 px-1 sm:px-4">
@@ -290,11 +376,35 @@ export default function Reports({ setGlobalNotification }) {
         )}
       </div>
 
+      {/* Premium Glassmorphic Segmented Tabs Toggle */}
+      <div className="flex border-b border-slate-800/80 gap-1.5 pb-1 mt-2">
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`pb-2.5 px-4 font-extrabold text-[10px] sm:text-xs tracking-wider uppercase border-b-2 transition-all duration-300 cursor-pointer select-none ${
+            activeTab === 'general'
+              ? 'border-[#F5C800] text-slate-100 gold-text-glow'
+              : 'border-transparent text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          General Audit Summary
+        </button>
+        <button
+          onClick={() => setActiveTab('payout')}
+          className={`pb-2.5 px-4 font-extrabold text-[10px] sm:text-xs tracking-wider uppercase border-b-2 transition-all duration-300 cursor-pointer select-none ${
+            activeTab === 'payout'
+              ? 'border-[#F5C800] text-slate-100 gold-text-glow'
+              : 'border-transparent text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          Official ICT Payout Sheet 📋
+        </button>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-4 border-[#F5C800] border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : (
+      ) : activeTab === 'general' ? (
         <div className="space-y-4">
           
           {/* Summary Audit Metric Grid - Highly compact 2x2 layout on mobile */}
@@ -320,134 +430,6 @@ export default function Reports({ setGlobalNotification }) {
               <h3 className={`text-xs sm:text-lg font-black mt-1 ${ledgerNet >= 0 ? 'text-emerald-400' : 'text-red-550'}`}>
                 ₦{ledgerNet.toFixed(2)}
               </h3>
-            </div>
-
-          </div>
-
-          {/* Revenue Share Split Gauge Widget */}
-          <div className="premium-glass border border-slate-800 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-4">
-            
-            {/* Widget Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 className="text-xs sm:text-sm font-black tracking-tight text-[#F5C800] uppercase gold-text-glow">
-                  Revenue Share & Retention Audit
-                </h3>
-                <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-                  A flat ₦500 administrative surcharge is set aside per unit and split: 70% to Headquarters / 30% retained locally.
-                  <span className="text-emerald-450 font-bold block mt-0.5">
-                    * Surcharge Separation: Base category fees (e.g. Registry Value above) are kept 100% separate and do not include this surcharge.
-                  </span>
-                </p>
-              </div>
-              <div className="bg-slate-950/40 border border-slate-800 rounded-lg px-3 py-1 text-[10px] font-black text-slate-400 uppercase shrink-0">
-                Surcharge: ₦500 / unit
-              </div>
-            </div>
-
-            {/* Split Proportion Progress Bar Gauge */}
-            <div className="space-y-1.5">
-              <div className="h-2.5 w-full bg-slate-950 rounded-full overflow-hidden flex border border-slate-900">
-                <div 
-                  className="bg-gradient-to-r from-emerald-500 to-[#F5C800] h-full shadow-md shadow-emerald-500/10 transition-all duration-500" 
-                  style={{ width: '70%' }}
-                  title="Headquarters Portion: 70%"
-                />
-                <div 
-                  className="bg-[#CA8A04]/45 h-full transition-all duration-500" 
-                  style={{ width: '30%' }}
-                  title="Local Office Portion: 30%"
-                />
-              </div>
-              <div className="flex justify-between text-[9px] font-extrabold uppercase text-slate-400 px-0.5">
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Headquarters Share (70%)
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#CA8A04]" />
-                  Local Office Share (30%)
-                </span>
-              </div>
-            </div>
-
-            {/* Shares Split Metrics Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              
-              {/* Column 1: Headquarters Split */}
-              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-emerald-500/30 space-y-3">
-                <div className="space-y-1.5">
-                  <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-wider block">Headquarters Share (70%)</span>
-                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-850/40">
-                    <span className="text-slate-500">Total Generated:</span>
-                    <span className="font-bold text-slate-200">₦{setAsideHQ.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-500 text-red-400">Total Paid (Remitted):</span>
-                    <span className="font-bold text-red-400">₦{hqRemitted.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] font-extrabold border-t border-slate-850/30 pt-1">
-                    <span className="text-emerald-450">Outstanding Due:</span>
-                    <span className="font-black text-emerald-400">₦{hqOutstanding.toFixed(2)}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setModalError(''); setRemitAmount(''); setHqModalOpen(true); }}
-                  disabled={hqOutstanding <= 0}
-                  className="w-full py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 transition cursor-pointer select-none disabled:opacity-50"
-                >
-                  Record HQ Remittance
-                </button>
-              </div>
-
-              {/* Column 2: Local Office Split */}
-              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-l-2 border-l-[#CA8A04]/40 space-y-3">
-                <div className="space-y-1.5">
-                  <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-wider block">Local Office Share (30%)</span>
-                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-850/40">
-                    <span className="text-slate-500">Total Generated:</span>
-                    <span className="font-bold text-slate-200">₦{setAsideOffice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-500 text-red-400">Total Disbursed:</span>
-                    <span className="font-bold text-red-400">₦{officeDisbursed.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] font-extrabold border-t border-slate-850/30 pt-1">
-                    <span className="text-[#F5C800]">Retained Balance:</span>
-                    <span className="font-black text-[#F5C800]">₦{officeBalance.toFixed(2)}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setModalError(''); setDisburseAmount(''); setOfficeModalOpen(true); }}
-                  disabled={officeBalance <= 0}
-                  className="w-full py-1.5 rounded-lg bg-[#CA8A04]/10 border border-[#CA8A04]/20 text-[9px] font-black uppercase text-[#F5C800] hover:bg-[#CA8A04] hover:text-slate-950 transition cursor-pointer select-none disabled:opacity-50"
-                >
-                  Record Office Disbursal
-                </button>
-              </div>
-
-              {/* Column 3: Set-aside Surcharge Audit (100%) */}
-              <div className="bg-slate-950/20 border border-slate-850/60 rounded-xl p-3 flex flex-col justify-between border-slate-800 space-y-3">
-                <div className="space-y-1.5">
-                  <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-wider block">Surcharge Audit (100%)</span>
-                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-850/40">
-                    <span className="text-slate-500">Cumulative Generated:</span>
-                    <span className="font-bold text-slate-200">₦{setAsideTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-500">Total Outflow:</span>
-                    <span className="font-bold text-red-400">₦{(hqRemitted + officeDisbursed).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] font-extrabold border-t border-slate-850/30 pt-1">
-                    <span className="text-slate-350">Remaining Vault:</span>
-                    <span className="font-black text-slate-200">₦{(hqOutstanding + officeBalance).toFixed(2)}</span>
-                  </div>
-                </div>
-                <div className="text-[8.5px] font-bold text-slate-500 text-center py-1 bg-slate-950/40 border border-slate-850/80 rounded-lg">
-                  Formula: ₦500 × {totalCount} units
-                </div>
-              </div>
-
             </div>
           </div>
 
@@ -574,107 +556,485 @@ export default function Reports({ setGlobalNotification }) {
           </div>
 
         </div>
-      )}
+      ) : (
+        /* Modernized ICT Daily Payout Sheet View */
+        <div className="premium-glass border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-sm space-y-6 max-w-4xl mx-auto relative overflow-hidden">
+          
+          {/* Top Gold/Emerald Stripe Accent */}
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 via-[#F5C800] to-emerald-500" />
+          
+          {/* Sheet Actions Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+            <div>
+              <h3 className="text-xs sm:text-sm font-black tracking-tight text-[#F5C800] uppercase gold-text-glow">
+                Official Payout Sheet Preview
+              </h3>
+              <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 leading-relaxed">
+                This preview mirrors your official YOROTA paper form, modernized with road safety accents and populated by live database metrics.
+              </p>
+            </div>
+            
+            <button
+              onClick={handleExportIctPayout}
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-[#10b981] text-slate-950 font-black text-xs transition shadow-lg shadow-emerald-500/10 hover:scale-[1.01] active:scale-[0.99] select-none cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              PRINT MODERNIZED OFFICIAL PDF
+            </button>
+          </div>
 
-      {/* HQ Remittance Modal */}
-      {hqModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 relative text-xs text-slate-100">
-            <h2 className="text-xs font-black text-[#F5C800] mb-3.5 uppercase tracking-wide">
-              Record Headquarters Remittance
-            </h2>
-            {modalError && (
-              <div className="mb-3.5 p-2 rounded bg-red-950/40 border border-red-500/20 text-red-200 text-[10px]">
-                {modalError}
-              </div>
-            )}
-            <form onSubmit={handleRecordHQRemittance} className="space-y-3.5">
+          {/* Interactive Document Header Box */}
+          <div className="bg-slate-950/40 border border-slate-850 rounded-2xl p-3 sm:p-4 space-y-3">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Configure Print Parameters</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
-                  HQ Remittance Amount (₦ Naira) *
-                </label>
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Unit/Zonal Command Name</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  max={hqOutstanding}
-                  value={remitAmount}
-                  onChange={(e) => setRemitAmount(e.target.value)}
-                  placeholder="0.00"
-                  required
-                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5C800] transition font-bold"
+                  type="text"
+                  value={commandName}
+                  onChange={(e) => setCommandName(e.target.value)}
+                  placeholder="e.g. Damaturu Zonal Command"
+                  className="w-full bg-slate-900/60 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5C800] transition font-bold"
                 />
               </div>
-              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
-                <button
-                  type="button"
-                  onClick={() => { setHqModalOpen(false); setModalError(''); }}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 hover:bg-slate-950 transition font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={modalLoading}
-                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-[10px] uppercase shadow-md shadow-[#F5C800]/10 transition cursor-pointer"
-                >
-                  {modalLoading ? 'Logging...' : 'Record Payment'}
-                </button>
+              <div>
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Scope Period Date</label>
+                <div className="w-full bg-slate-950/60 border border-slate-850/80 rounded-xl py-2 px-3 text-xs text-slate-450 font-bold border-dashed select-none">
+                  {dateRangeText}
+                </div>
               </div>
-            </form>
+            </div>
           </div>
+
+          {/* Modernized Paper Form Core Sheet replica */}
+          <div className="bg-[#05080f]/90 border border-slate-850 rounded-3xl p-4 sm:p-8 relative border-t-4 border-t-emerald-500 shadow-inner">
+            
+            {/* Visual Vector Road Safety Badge Background watermark */}
+            <div className="absolute inset-0 opacity-[0.02] flex items-center justify-center pointer-events-none select-none">
+              <Shield className="w-96 h-96 text-slate-100" />
+            </div>
+
+            {/* Form Sheet Content */}
+            <div className="space-y-6 relative z-10">
+              
+              {/* Official Headings */}
+              <div className="text-center space-y-2 border-b border-slate-850 pb-5">
+                <div className="flex justify-center mb-3">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/5 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-[#F5C800]/10" />
+                    <Shield className="w-8 h-8 text-emerald-400 filter drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]" />
+                  </div>
+                </div>
+                <h2 className="text-xs sm:text-sm font-black text-slate-200 uppercase tracking-wider">
+                  Yobe State Road Traffic Management Agency (YOROTA)
+                </h2>
+                <h3 className="text-[10px] sm:text-xs text-emerald-400 font-extrabold uppercase tracking-widest leading-none">
+                  Road Safety & Compliance Operations Department
+                </h3>
+                <h1 className="text-sm sm:text-lg font-black text-slate-100 uppercase tracking-[0.1em] gold-text-glow pt-1">
+                  ICT DAILY PAYOUT SHEET
+                </h1>
+              </div>
+
+              {/* Sheet Metadata Row */}
+              <div className="flex flex-col sm:flex-row justify-between gap-3 text-[10px] font-black uppercase text-slate-400 bg-slate-950/40 border border-slate-850 rounded-xl px-4 py-2.5">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-bold">Command:</span>
+                  <span className="text-slate-200 tracking-wide">{commandName || '................................'}</span>
+                </span>
+                <span className="flex items-center gap-1.5 sm:text-right">
+                  <span className="text-slate-500 font-bold">Date Scope:</span>
+                  <span className="text-[#F5C800] tracking-wide">{dateRangeText}</span>
+                </span>
+              </div>
+
+              {/* Modernized Grid Table replica */}
+              <div className="overflow-x-auto border border-slate-850 rounded-2xl shadow-inner">
+                <table className="w-full text-left border-collapse text-[10px] sm:text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-gradient-to-r from-emerald-600 to-emerald-500 text-slate-950 font-black uppercase text-[10px] tracking-wider">
+                      <th className="py-3 px-3 text-center w-12 border border-slate-850">S/N</th>
+                      <th className="py-3 px-4 border border-slate-850">DETAILED FEE CATEGORY BREAKDOWNS</th>
+                      <th className="py-3 px-4 text-right w-32 sm:w-44 border border-slate-850">TOTAL AMOUNT</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800 text-slate-300 font-medium bg-slate-950/20">
+                    
+                    {/* 1. Tricycle */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">1.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">TRICYCLE (NAPEP/JEGA)</span>
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                        </div>
+                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center">
+                          <div className="border-r border-slate-800 flex flex-col">
+                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">OWNERSHIP</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1">
+                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦10k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_own_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_own_new_qty > 0 ? `₦${pData.tricycle_own_new_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_own_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_own_ren_qty > 0 ? `₦${pData.tricycle_own_ren_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">RIDER</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1">
+                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_rider_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_rider_new_qty > 0 ? `₦${pData.tricycle_rider_new_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_rider_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_rider_ren_qty > 0 ? `₦${pData.tricycle_rider_ren_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Tricycle Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.tricycle_own_new_amt + pData.tricycle_own_ren_amt + pData.tricycle_rider_new_amt + pData.tricycle_rider_ren_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.tricycle_own_new_qty || 0) + (pData.tricycle_own_ren_qty || 0) + (pData.tricycle_rider_new_qty || 0) + (pData.tricycle_rider_ren_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 2. Motorcycle */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">2.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">MOTORCYCLE</span>
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                        </div>
+                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center">
+                          <div className="border-r border-slate-800 flex flex-col">
+                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">OWNERSHIP</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1 bg-slate-900/5">
+                              <div className="flex flex-col justify-between h-full">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦2.5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_own_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_own_new_qty > 0 ? `₦${pData.motorcycle_own_new_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                              <div className="flex flex-col justify-between h-full">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦2.5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_own_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_own_ren_qty > 0 ? `₦${pData.motorcycle_own_ren_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">RIDER</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1 bg-slate-900/5">
+                              <div className="flex flex-col justify-between h-full">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_rider_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_rider_new_qty > 0 ? `₦${pData.motorcycle_rider_new_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                              <div className="flex flex-col justify-between h-full">
+                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_rider_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_rider_ren_qty > 0 ? `₦${pData.motorcycle_rider_ren_amt.toLocaleString()}` : '-'}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Motorcycle Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.motorcycle_own_new_amt + pData.motorcycle_own_ren_amt + pData.motorcycle_rider_new_amt + pData.motorcycle_rider_ren_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.motorcycle_own_new_qty || 0) + (pData.motorcycle_own_ren_qty || 0) + (pData.motorcycle_rider_new_qty || 0) + (pData.motorcycle_rider_ren_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 3. Taxi */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">3.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">TAXI</span>
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                        </div>
+                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center bg-slate-900/5">
+                          <div className="flex flex-col justify-between h-full border-r border-slate-800">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦10,000)</div>
+                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.taxi_new_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.taxi_new_qty > 0 ? `₦${pData.taxi_new_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦5,000)</div>
+                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.taxi_ren_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.taxi_ren_qty > 0 ? `₦${pData.taxi_ren_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Taxi Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.taxi_new_amt + pData.taxi_ren_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.taxi_new_qty || 0) + (pData.taxi_ren_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 4. Kurkura */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">4.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">KURKURA</span>
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                        </div>
+                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center bg-slate-900/5">
+                          <div className="flex flex-col justify-between h-full border-r border-slate-800">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦10,000)</div>
+                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.kurkura_new_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.kurkura_new_qty > 0 ? `₦${pData.kurkura_new_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦5,000)</div>
+                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.kurkura_ren_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.kurkura_ren_qty > 0 ? `₦${pData.kurkura_ren_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Kurkura Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.kurkura_new_amt + pData.kurkura_ren_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.kurkura_new_qty || 0) + (pData.kurkura_ren_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 5. Lost of ID */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">5.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">LOST OF ID / STICKER</span>
+                          <span className="text-[8px] bg-red-500/10 text-red-400 py-0.5 px-2 rounded-full font-black border border-red-500/20">REPLACEMENT FEES</span>
+                        </div>
+                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-800 bg-slate-900/5">
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Tricycle (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_tricycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_tricycle_qty > 0 ? `₦${pData.lost_tricycle_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Motor (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_motorcycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_motorcycle_qty > 0 ? `₦${pData.lost_motorcycle_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Taxi (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_taxi_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_taxi_qty > 0 ? `₦${pData.lost_taxi_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Kurkura (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_kurkura_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_kurkura_qty > 0 ? `₦${pData.lost_kurkura_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Lost ID Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.lost_tricycle_amt + pData.lost_motorcycle_amt + pData.lost_taxi_amt + pData.lost_kurkura_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.lost_tricycle_qty || 0) + (pData.lost_motorcycle_qty || 0) + (pData.lost_taxi_qty || 0) + (pData.lost_kurkura_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 6. Change of Ownership */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">6.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">CHANGE OF OWNERSHIP</span>
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRY AUDIT</span>
+                        </div>
+                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-800 bg-slate-900/5">
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Tricycle (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_tricycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_tricycle_qty > 0 ? `₦${pData.change_tricycle_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Motor (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_motorcycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_motorcycle_qty > 0 ? `₦${pData.change_motorcycle_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Taxi (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_taxi_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_taxi_qty > 0 ? `₦${pData.change_taxi_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Kurkura (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_kurkura_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_kurkura_qty > 0 ? `₦${pData.change_kurkura_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Change Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.change_tricycle_amt + pData.change_motorcycle_amt + pData.change_taxi_amt + pData.change_kurkura_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.change_tricycle_qty || 0) + (pData.change_motorcycle_qty || 0) + (pData.change_taxi_qty || 0) + (pData.change_kurkura_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 7. Transfer */}
+                    <tr>
+                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">7.</td>
+                      <td className="p-0 border border-slate-800">
+                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                          <span className="tracking-wide uppercase">TRANSFER FEES</span>
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRY AUDIT</span>
+                        </div>
+                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-800 bg-slate-900/5">
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Tricycle (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_tricycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_tricycle_qty > 0 ? `₦${pData.transfer_tricycle_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Motor (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_motorcycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_motorcycle_qty > 0 ? `₦${pData.transfer_motorcycle_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Taxi (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_taxi_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_taxi_qty > 0 ? `₦${pData.transfer_taxi_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Kurkura (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_kurkura_qty || '-'}</div>
+                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_kurkura_qty > 0 ? `₦${pData.transfer_kurkura_amt.toLocaleString()}` : '-'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Transfer Total</span>
+                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            ₦{(pData.transfer_tricycle_amt + pData.transfer_motorcycle_amt + pData.transfer_taxi_amt + pData.transfer_kurkura_amt).toFixed(2)}
+                          </span>
+                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            {((pData.transfer_tricycle_qty || 0) + (pData.transfer_motorcycle_qty || 0) + (pData.transfer_taxi_qty || 0) + (pData.transfer_kurkura_qty || 0))} Units
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 8. Other Classifications */}
+                    {pData.others_qty > 0 && (
+                      <tr>
+                        <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">8.</td>
+                        <td className="p-0 border border-slate-800">
+                          <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                            <span className="tracking-wide uppercase">OTHER UNCLASSIFIED REGISTRATIONS</span>
+                            <span className="text-[8px] bg-yellow-500/10 text-yellow-400 py-0.5 px-2 rounded-full font-black border border-yellow-500/20">MISCELLANEOUS</span>
+                          </div>
+                          <div className="p-4 text-xs font-bold text-slate-450 bg-slate-950/10">
+                            Unclassified customized categories processed under different rates.
+                          </div>
+                        </td>
+                        <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
+                          <div className="h-full flex flex-col justify-center px-4 py-4">
+                            <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Others Total</span>
+                            <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                              ₦{pData.others_amt.toFixed(2)}
+                            </span>
+                            <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                              {pData.others_qty} Units
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Grand Totals */}
+                    <tr className="bg-slate-950 text-slate-100 font-black text-xs sm:text-sm border border-slate-800">
+                      <td className="py-3.5 px-3 text-center font-black border-r border-slate-800 text-[#F5C800]">★</td>
+                      <td className="py-3.5 px-4 uppercase text-[#F5C800] tracking-wider border-r border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <span>GRAND TOTAL SUMS</span>
+                        <span className="text-[10px] text-slate-400 font-bold bg-slate-900/60 px-3 py-1 rounded border border-slate-800">TOTAL UNITS: {totalPayoutQty} UNITS</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-emerald-400 bg-slate-900/40 font-black text-sm sm:text-base">
+                        ₦{totalPayoutAmt.toFixed(2)}
+                      </td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Signature Blocks preview */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-850 text-slate-400">
+                <div className="p-4 bg-slate-950/40 border border-slate-850/80 rounded-2xl space-y-2">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Prepared By</span>
+                  <div className="text-xs font-black text-slate-200">ICT PAYOUT DESK OFFICER</div>
+                  <div className="text-[10px] text-slate-400 mt-1 font-semibold">Name: {currentUser?.name || 'Authorized Officer'}</div>
+                  <div className="text-[10px] text-slate-500 mt-1">Status: Signature & Timestamp appended dynamically on PDF</div>
+                </div>
+                <div className="p-4 bg-slate-950/40 border border-slate-850/80 rounded-2xl space-y-2">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Approval Authority</span>
+                  <div className="text-xs font-black text-slate-200">UNIT/ZONAL COMMAND</div>
+                  <div className="text-[10px] text-slate-500 mt-1">Name: ..............................................................</div>
+                  <div className="text-[10px] text-slate-500 mt-1">Sign/Date: ........................................................</div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
       )}
 
-      {/* Office Disbursal Modal */}
-      {officeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 relative text-xs text-slate-100">
-            <h2 className="text-xs font-black text-[#F5C800] mb-3.5 uppercase tracking-wide">
-              Record Office Retention Disbursal
-            </h2>
-            {modalError && (
-              <div className="mb-3.5 p-2 rounded bg-red-950/40 border border-red-500/20 text-red-200 text-[10px]">
-                {modalError}
-              </div>
-            )}
-            <form onSubmit={handleRecordOfficeDisbursal} className="space-y-3.5">
-              <div>
-                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">
-                  Disbursal Amount (₦ Naira) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  max={officeBalance}
-                  value={disburseAmount}
-                  onChange={(e) => setDisburseAmount(e.target.value)}
-                  placeholder="0.00"
-                  required
-                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5C800] transition font-bold"
-                />
-              </div>
-              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
-                <button
-                  type="button"
-                  onClick={() => { setOfficeModalOpen(false); setModalError(''); }}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 hover:bg-slate-950 transition font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={modalLoading}
-                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-[10px] uppercase shadow-md shadow-[#F5C800]/10 transition cursor-pointer"
-                >
-                  {modalLoading ? 'Logging...' : 'Record Disbursal'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
     </div>
   );

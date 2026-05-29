@@ -15,6 +15,7 @@ import DailyEntries from './pages/DailyEntries';
 import Ledger from './pages/Ledger';
 import Debtors from './pages/Debtors';
 import Reports from './pages/Reports';
+import Surcharges from './pages/Surcharges';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -126,7 +127,9 @@ export default function App() {
           />
         );
       case 'reports':
-        return <Reports setGlobalNotification={triggerNotification} />;
+        return <Reports currentUser={currentUser} setGlobalNotification={triggerNotification} />;
+      case 'surcharges':
+        return <Surcharges setGlobalNotification={triggerNotification} />;
       default:
         return (
           <div className="text-center py-20">
