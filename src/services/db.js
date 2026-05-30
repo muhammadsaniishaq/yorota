@@ -317,6 +317,33 @@ export const db = {
       return updated;
     },
 
+    increaseDebt: async (id, amount, reason, officerName) => {
+      const { data: debtor, error: dError } = await supabase
+        .from('debtors')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (dError) throw dError;
+
+      const newOwed = parseFloat((debtor.amount_owed + amount).toFixed(2));
+      const status = newOwed === 0 ? 'paid' : 'unpaid';
+      const history = [...debtor.payment_history, {
+        date: new Date().toISOString().split('T')[0],
+        amount_added: amount,
+        reason: reason || 'Accumulated additional credit',
+        received_by: officerName
+      }];
+
+      const { data: updated, error } = await supabase
+        .from('debtors')
+        .update({ amount_owed: newOwed, status, payment_history: history })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return updated;
+    },
+
     getSummary: async () => {
       const { data, error } = await supabase
         .from('debtors')
