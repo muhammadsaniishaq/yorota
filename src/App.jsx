@@ -16,6 +16,7 @@ import Ledger from './pages/Ledger';
 import Debtors from './pages/Debtors';
 import Reports from './pages/Reports';
 import Surcharges from './pages/Surcharges';
+import PendingDrafts from './pages/PendingDrafts';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -112,6 +113,13 @@ export default function App() {
         );
       case 'daily-records':
         return <DailyEntries setGlobalNotification={triggerNotification} />;
+      case 'pending-drafts':
+        return (
+          <PendingDrafts 
+            currentUser={currentUser} 
+            setGlobalNotification={triggerNotification} 
+          />
+        );
       case 'ledger':
         return (
           <Ledger 

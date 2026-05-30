@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   FilePlus, 
   FileSpreadsheet, 
+  FileClock,
   CreditCard, 
   UserX, 
   BarChart3, 
@@ -30,6 +31,7 @@ export default function Sidebar({
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'officer'] },
     { id: 'daily-entry', label: 'Create Daily Entry', icon: FilePlus, roles: ['admin', 'officer'] },
+    { id: 'pending-drafts', label: 'Overnight Drafts', icon: FileClock, roles: ['admin', 'officer'] },
     { id: 'daily-records', label: 'Registry Logs', icon: FileSpreadsheet, roles: ['admin', 'officer'] },
     { id: 'ledger', label: 'Office Cash Ledger', icon: CreditCard, roles: ['admin', 'officer'] },
     { id: 'debtors', label: 'Outstanding Debts', icon: UserX, roles: ['admin', 'officer'] },
