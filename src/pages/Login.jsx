@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Shield, KeyRound, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { db } from '../services/db';
+import YorotaLogo from '../components/YorotaLogo';
 
 export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -81,21 +82,8 @@ export default function Login({ onLoginSuccess }) {
             {/* Background Glow inside logo */}
             <div className="absolute inset-0 bg-gradient-to-tr from-[#F5C800]/10 to-[#10b981]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
-            <img 
-              src="/logo.png" 
-              alt="YOROTA Logo" 
-              className="w-18 h-18 object-contain filter drop-shadow-[0_2px_12px_rgba(245,200,0,0.25)] transition-all duration-500 group-hover:scale-105"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                const parent = e.target.parentNode;
-                if (!parent.querySelector('.fallback-logo')) {
-                  const fallback = document.createElement('div');
-                  fallback.className = "fallback-logo text-[#F5C800] font-black text-3xl tracking-wider select-none";
-                  fallback.innerText = "Y";
-                  parent.appendChild(fallback);
-                }
-              }}
-            />
+            <YorotaLogo className="w-16 h-16 justify-center" showText={false} />
+
           </div>
           
           <h1 className="text-[26px] font-extrabold text-slate-100 tracking-tight text-center flex items-center gap-1.5 select-none">

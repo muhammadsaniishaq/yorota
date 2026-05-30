@@ -15,50 +15,99 @@ import {
   Activity
 } from 'lucide-react';
 import { db } from '../services/db';
+import YorotaLogo from '../components/YorotaLogo';
 
-// Custom high-resolution vector circular progress gauge representing premium traffic speedometers
+// High-fidelity vector compliance speedometer dial with mathematical pointer needle
 const SurchargeCircularGauge = ({ value, maxValue, colorClass = "text-[#10b981]", label = "Remitted", glowColor = "rgba(16,185,129,0.25)" }) => {
   const percent = maxValue > 0 ? Math.min(100, Math.max(0, (value / maxValue) * 100)) : 0;
   const radius = 30;
-  const strokeWidth = 5;
+  const strokeWidth = 4.5;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percent / 100) * circumference;
 
+  // Live vector pointer angle calculations (Starts straight up at 0rad in rotated -90deg coordinate system)
+  const angle = (percent / 100) * 2 * Math.PI;
+  const needleLength = 22;
+  const needleX = 40 + needleLength * Math.cos(angle);
+  const needleY = 40 + needleLength * Math.sin(angle);
+
   return (
-    <div className="relative flex flex-col items-center justify-center p-2.5 bg-slate-950/60 border border-slate-850 rounded-2xl shadow-inner group transition-all duration-300 hover:border-slate-750">
-      <svg className="w-20 h-20 transform -rotate-90">
-        {/* Background track circle */}
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          stroke="rgba(148, 163, 184, 0.05)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        {/* Foreground active arc */}
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          fill="transparent"
-          className={`${colorClass} transition-all duration-1000 ease-out`}
-          style={{ filter: `drop-shadow(0 0 3px ${glowColor})` }}
-        />
-      </svg>
-      {/* Center values panel */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center -translate-y-1.5 mt-3 select-none">
-        <span className="text-[11px] font-black text-slate-100 group-hover:scale-105 transition-transform duration-300">{percent.toFixed(0)}%</span>
-        <span className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider">{label}</span>
+    <div className="relative flex flex-col items-center justify-center p-3.5 bg-[#090d16]/90 border border-slate-800/80 rounded-2xl shadow-2xl group transition-all duration-500 hover:border-[#F5C800]/40 hover:shadow-emerald-500/5">
+      <div className="relative w-22 h-22">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+          {/* Subtle outer tech frame ring */}
+          <circle
+            cx="40"
+            cy="40"
+            r="38"
+            stroke="rgba(245, 200, 0, 0.05)"
+            strokeWidth="0.8"
+            fill="transparent"
+          />
+          {/* Speedometer radial ticks */}
+          <circle
+            cx="40"
+            cy="40"
+            r="34"
+            stroke="rgba(255, 255, 255, 0.04)"
+            strokeWidth="3.2"
+            strokeDasharray="2 3"
+            fill="transparent"
+          />
+          {/* Track background */}
+          <circle
+            cx="40"
+            cy="40"
+            r={radius}
+            stroke="rgba(148, 163, 184, 0.04)"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+          {/* Active compliant arc */}
+          <circle
+            cx="40"
+            cy="40"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            fill="transparent"
+            className={`${colorClass} transition-all duration-1000 ease-out`}
+            style={{ filter: `drop-shadow(0 0 4px ${glowColor})` }}
+          />
+          {/* Live Needle pointer indicator */}
+          <line
+            x1="40"
+            y1="40"
+            x2={needleX}
+            y2={needleY}
+            stroke="#F5C800"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            className="transition-all duration-1000 ease-out"
+            style={{ filter: 'drop-shadow(0 0 3px rgba(245, 200, 0, 0.6))' }}
+          />
+          {/* Tech pivot center button */}
+          <circle cx="40" cy="40" r="3.8" fill="#090d16" stroke="#F5C800" strokeWidth="1.5" />
+          <circle cx="40" cy="40" r="1.5" fill="#ffffff" />
+        </svg>
+        {/* Soft neon backing ring */}
+        <div className="absolute inset-2 rounded-full bg-emerald-500/5 blur-[4px] pointer-events-none animate-pulse" />
+      </div>
+      <div className="mt-2 text-center select-none z-10">
+        <span className="text-[12px] font-black text-slate-100 block tracking-tight group-hover:scale-105 transition-transform duration-300 leading-none">
+          {percent.toFixed(0)}%
+        </span>
+        <span className="text-[7px] text-[#F5C800] font-black uppercase tracking-[0.15em] block mt-1 leading-none">
+          {label}
+        </span>
       </div>
     </div>
   );
 };
+
 
 
 export default function Surcharges({ setGlobalNotification }) {
@@ -217,26 +266,47 @@ export default function Surcharges({ setGlobalNotification }) {
   return (
     <div className="space-y-6 px-2 sm:px-6 py-2 max-w-7xl mx-auto relative overflow-hidden">
       
+      {/* Premium Sliding Hazard Keyframes */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes hazardSlide {
+          0% { background-position: 0 0; }
+          100% { background-position: 34px 0; }
+        }
+        .animated-hazard-stripe {
+          background-image: repeating-linear-gradient(45deg, 
+            #F5C800 0px, 
+            #F5C800 12px, 
+            #070a13 12px, 
+            #070a13 24px
+          );
+          background-size: 34px 34px;
+          animation: hazardSlide 1.2s linear infinite;
+        }
+        .animated-hazard-stripe-emerald {
+          background-image: repeating-linear-gradient(45deg, 
+            #10b981 0px, 
+            #10b981 12px, 
+            #070a13 12px, 
+            #070a13 24px
+          );
+          background-size: 34px 34px;
+          animation: hazardSlide 1.2s linear infinite;
+        }
+      `}} />
+
       {/* Header section with Premium Road Safety Styling */}
-      <div className="relative bg-[#070a13]/90 border border-slate-850 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 shadow-2xl overflow-hidden border-t-4 border-t-emerald-500">
+      <div className="relative bg-[#070a13]/90 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 shadow-2xl overflow-hidden border-t-4 border-t-emerald-500">
         
-        {/* Repeating caution hazard stripe banner background (very subtle opacity) */}
-        <div 
-          className="absolute inset-x-0 bottom-0 h-1 opacity-60" 
-          style={{
-            backgroundImage: 'repeating-linear-gradient(45deg, #F5C800 0px, #F5C800 10px, #070a13 10px, #070a13 20px)'
-          }}
-        />
+        {/* Repeating caution hazard stripe banner background (continuously animated) */}
+        <div className="absolute inset-x-0 bottom-0 h-1.5 opacity-80 animated-hazard-stripe" />
         
-        <div className="flex items-start gap-4 z-10">
-          <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/5 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-[#F5C800]/15" />
-            <Coins className="w-7 h-7 text-[#F5C800] filter drop-shadow-[0_2px_8px_rgba(245,200,0,0.4)] animate-pulse" />
-          </div>
+        <div className="flex items-center gap-4.5 z-10">
+          <YorotaLogo className="w-14 h-14 shrink-0" showText={false} />
           <div>
             <h1 className="text-xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-slate-100 via-[#F5C800] to-emerald-400 bg-clip-text text-transparent flex items-center gap-2">
               Surcharges & Splits Vault
             </h1>
+
             <p className="text-[10px] sm:text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
               Audit the flat ₦500 administrative set-aside surcharge, manage Headquarters (70%) and Local Office (30%) split accounts, and review dynamic logs.
             </p>
@@ -426,15 +496,11 @@ export default function Surcharges({ setGlobalNotification }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Column 1: Headquarters Split */}
-            <div className="bg-[#070a13]/90 border border-slate-850 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-emerald-500 hover:border-emerald-500/60 transition-all duration-300 hover:-translate-y-1">
+            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-emerald-500 hover:border-emerald-500/50 hover:shadow-emerald-500/5 transition-all duration-500 hover:-translate-y-1 group">
               
               {/* Caution hazard chevrons header decoration */}
-              <div 
-                className="h-1.5 w-full" 
-                style={{
-                  backgroundImage: 'repeating-linear-gradient(45deg, #10b981 0px, #10b981 10px, #070a13 10px, #070a13 20px)'
-                }} 
-              />
+              <div className="h-1.5 w-full animated-hazard-stripe-emerald opacity-90" />
+
               
               <div className="p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-850 pb-3">
@@ -470,15 +536,11 @@ export default function Surcharges({ setGlobalNotification }) {
             </div>
 
             {/* Column 2: Local Office Split */}
-            <div className="bg-[#070a13]/90 border border-slate-850 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-[#F5C800] hover:border-[#F5C800]/60 transition-all duration-300 hover:-translate-y-1">
+            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-[#F5C800] hover:border-[#F5C800]/50 hover:shadow-[#F5C800]/5 transition-all duration-500 hover:-translate-y-1 group">
               
               {/* Caution hazard chevrons header decoration */}
-              <div 
-                className="h-1.5 w-full" 
-                style={{
-                  backgroundImage: 'repeating-linear-gradient(45deg, #F5C800 0px, #F5C800 10px, #070a13 10px, #070a13 20px)'
-                }} 
-              />
+              <div className="h-1.5 w-full animated-hazard-stripe opacity-90" />
+
               
               <div className="p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-850 pb-3">
@@ -514,9 +576,10 @@ export default function Surcharges({ setGlobalNotification }) {
             </div>
 
             {/* Column 3: Cumulative Surcharge Audit (100%) */}
-            <div className="bg-[#070a13]/90 border border-slate-850 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-slate-750 hover:border-slate-700 transition-all duration-300 hover:-translate-y-1">
+            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-slate-700 hover:border-slate-600 hover:shadow-white/2 transition-all duration-500 hover:-translate-y-1 group">
               
-              <div className="h-1.5 w-full bg-slate-950" />
+              <div className="h-1.5 w-full bg-slate-900 border-b border-slate-800" />
+
               
               <div className="p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-850 pb-3">

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { db } from '../services/db';
+import YorotaLogo from '../components/YorotaLogo';
 
 export default function Dashboard({ currentUser, onViewChange, notification }) {
   const [loading, setLoading] = useState(true);
@@ -144,10 +145,14 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
       
       {/* Top Banner section */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Executive Dashboard</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 hidden sm:block">Real-time revenue monitoring and activity center.</p>
+        <div className="flex items-center gap-3">
+          <YorotaLogo className="w-12 h-12 shrink-0" showText={false} />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Executive Dashboard</h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-0.5 hidden sm:block">Real-time revenue monitoring and activity center.</p>
+          </div>
         </div>
+
         <button 
           onClick={loadData}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-800 bg-[#0c1220] text-[10px] sm:text-xs font-semibold hover:bg-slate-900 transition cursor-pointer"

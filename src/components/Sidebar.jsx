@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Percent
 } from 'lucide-react';
+import YorotaLogo from './YorotaLogo';
 
 export default function Sidebar({ 
   currentView, 
@@ -60,15 +61,7 @@ export default function Sidebar({
             {/* Glowing gold background indicator in header */}
             <div className="absolute -top-10 -left-10 w-24 h-24 rounded-full bg-[#F5C800]/5 blur-xl group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
             
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#F5C800]/10 border border-[#F5C800]/30 flex items-center justify-center shadow-lg shadow-[#F5C800]/5 group-hover:border-[#F5C800]/60 transition duration-300">
-                <Landmark className="w-4.5 h-4.5 text-[#F5C800]" />
-              </div>
-              <div>
-                <span className="font-black text-sm tracking-widest text-slate-100 block gold-text-glow">YOROTA</span>
-                <span className="text-[9px] text-[#F5C800] font-black tracking-[0.2em] block uppercase">Smart Office</span>
-              </div>
-            </div>
+            <YorotaLogo className="h-9" showText={true} />
             {/* Mobile close button */}
             <button 
               onClick={() => setIsOpen(false)}
