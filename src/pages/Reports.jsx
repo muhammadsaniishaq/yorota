@@ -136,7 +136,7 @@ export default function Reports({ currentUser, setGlobalNotification }) {
     ? `${start.toLocaleDateString()} to ${end.toLocaleDateString()}`
     : `${start.toLocaleDateString()} to Present`;
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
       const typeText = 
         filterType === 'daily' ? 'Daily Summary' :
@@ -157,7 +157,7 @@ export default function Reports({ currentUser, setGlobalNotification }) {
         officeBalance
       };
 
-      pdfGenerator.generateReport(typeText, dateRangeText, filteredRecords, summaryPayload, filteredTransactions);
+      await pdfGenerator.generateReport(typeText, dateRangeText, filteredRecords, summaryPayload, filteredTransactions);
       setGlobalNotification({ message: `Audit Report exported successfully`, type: 'success' });
     } catch (err) {
       console.error(err);
@@ -167,9 +167,9 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
 
 
-  const handleExportIctPayout = () => {
+  const handleExportIctPayout = async () => {
     try {
-      pdfGenerator.generateIctPayoutReport(dateRangeText, filteredRecords, currentUser?.name, commandName);
+      await pdfGenerator.generateIctPayoutReport(dateRangeText, filteredRecords, currentUser?.name, commandName);
       setGlobalNotification({ message: 'ICT Daily Payout Sheet printed successfully', type: 'success' });
     } catch (err) {
       console.error(err);
@@ -611,7 +611,24 @@ export default function Reports({ currentUser, setGlobalNotification }) {
           <div className="bg-white text-slate-800 border border-slate-300 p-6 sm:p-12 relative shadow-[0_15px_50px_rgba(0,0,0,0.5)] max-w-[820px] w-full mx-auto relative overflow-hidden text-left border-t-8 border-t-emerald-600 rounded-lg font-sans">
             
             {/* Official A4 Page Double Borders */}
-            <div className="absolute inset-4 border-2 border-double border-emerald-600/25 pointer-events-none rounded-sm" />
+            <div className="absolute inset-4 border-2 border-double border-emerald-600/20 pointer-events-none rounded-sm" />
+
+            {/* Luxury Interlocking Corner Brackets - Redesigned Premium Decorations */}
+            {/* Top-Left */}
+            <div className="absolute top-6 left-6 w-6 h-6 border-t-[3px] border-l-[3px] border-emerald-600 pointer-events-none" />
+            <div className="absolute top-8 left-8 w-4 h-4 border-t-[1.5px] border-l-[1.5px] border-[#F5C800] pointer-events-none" />
+            
+            {/* Top-Right */}
+            <div className="absolute top-6 right-6 w-6 h-6 border-t-[3px] border-r-[3px] border-emerald-600 pointer-events-none" />
+            <div className="absolute top-8 right-8 w-4 h-4 border-t-[1.5px] border-r-[1.5px] border-[#F5C800] pointer-events-none" />
+            
+            {/* Bottom-Left */}
+            <div className="absolute bottom-6 left-6 w-6 h-6 border-b-[3px] border-l-[3px] border-emerald-600 pointer-events-none" />
+            <div className="absolute bottom-8 left-8 w-4 h-4 border-b-[1.5px] border-l-[1.5px] border-[#F5C800] pointer-events-none" />
+            
+            {/* Bottom-Right */}
+            <div className="absolute bottom-6 right-6 w-6 h-6 border-b-[3px] border-r-[3px] border-emerald-600 pointer-events-none" />
+            <div className="absolute bottom-8 right-8 w-4 h-4 border-b-[1.5px] border-r-[1.5px] border-[#F5C800] pointer-events-none" />
 
             {/* Visual Vector Road Safety Badge Background watermark */}
             <div className="absolute inset-0 opacity-[0.025] flex items-center justify-center pointer-events-none select-none">
@@ -638,9 +655,6 @@ export default function Reports({ currentUser, setGlobalNotification }) {
                 <h2 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">
                   Yobe State Road Traffic Management Agency (YOROTA)
                 </h2>
-                <h3 className="text-[10px] sm:text-xs text-emerald-700 font-extrabold uppercase tracking-widest leading-none">
-                  Road Safety & Compliance Operations Department
-                </h3>
                 
                 <div className="pt-2 flex justify-center">
                   <h1 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-[0.15em] bg-slate-50 border border-slate-200 py-1.5 px-4 rounded-lg shadow-xs select-none">

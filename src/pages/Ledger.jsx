@@ -96,9 +96,9 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
     }
   };
 
-  const handlePrintLedger = () => {
+  const handlePrintLedger = async () => {
     try {
-      pdfGenerator.generateFinancialSummary(summary, filteredTransactions);
+      await pdfGenerator.generateFinancialSummary(summary, filteredTransactions);
       setGlobalNotification({ message: 'Office Ledger PDF summary downloaded.', type: 'success' });
     } catch (err) {
       console.error(err);

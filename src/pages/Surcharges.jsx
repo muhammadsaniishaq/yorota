@@ -17,66 +17,120 @@ import {
 import { db } from '../services/db';
 import YorotaLogo from '../components/YorotaLogo';
 
-// High-fidelity vector compliance speedometer dial with mathematical pointer needle
-const SurchargeCircularGauge = ({ value, maxValue, colorClass = "text-[#10b981]", label = "Remitted", glowColor = "rgba(16,185,129,0.25)" }) => {
+// High-fidelity vector compliance speedometer dial with 270-degree math arc and pointer needle
+const SurchargeCircularGauge = ({ value, maxValue, label = "Remitted", colorClass = "text-[#10b981]", gradientId = "activeGrad" }) => {
   const percent = maxValue > 0 ? Math.min(100, Math.max(0, (value / maxValue) * 100)) : 0;
-  const radius = 30;
-  const strokeWidth = 4.5;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
 
-  // Live vector pointer angle calculations (Starts straight up at 0rad in rotated -90deg coordinate system)
-  const angle = (percent / 100) * 2 * Math.PI;
+  // Speedometer spans 270 degrees, starting at -225deg (bottom-left) and ending at +45deg (bottom-right)
+  const startAngle = -225;
+  const angleSpan = 270;
+  const currentAngle = startAngle + (percent / 100) * angleSpan;
+  const currentAngleRad = (currentAngle * Math.PI) / 180;
+
+  const radius = 28;
+  const strokeWidth = 4.2;
+  const cx = 40;
+  const cy = 40;
+
+  // Cartesian coordinates helper
+  const polarToCartesian = (centerX, centerY, r, angleInDegrees) => {
+    const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
+    return {
+      x: centerX + r * Math.cos(angleInRadians),
+      y: centerY + r * Math.sin(angleInRadians)
+    };
+  };
+
+  const trackStart = polarToCartesian(cx, cy, radius, startAngle);
+  const trackEnd = polarToCartesian(cx, cy, radius, startAngle + angleSpan);
+  const activeEnd = polarToCartesian(cx, cy, radius, currentAngle);
+
+  // 270-deg static background track path
+  const trackPath = `M ${trackStart.x} ${trackStart.y} A ${radius} ${radius} 0 1 1 ${trackEnd.x} ${trackEnd.y}`;
+
+  // Dynamic active path (large arc flag set to 1 if span > 180 degrees)
+  const largeArcFlag = (percent / 100) * angleSpan > 180 ? 1 : 0;
+  const activePath = percent > 0
+    ? `M ${trackStart.x} ${trackStart.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${activeEnd.x} ${activeEnd.y}`
+    : "";
+
+  // Pointer needle endpoint
   const needleLength = 22;
-  const needleX = 40 + needleLength * Math.cos(angle);
-  const needleY = 40 + needleLength * Math.sin(angle);
+  const needleX = cx + needleLength * Math.cos(currentAngleRad);
+  const needleY = cy + needleLength * Math.sin(currentAngleRad);
+
+  // Generate glowing tech ticks along the speedometer arc
+  const ticks = [0, 20, 40, 60, 80, 100].map(p => {
+    const a = startAngle + (p / 100) * angleSpan;
+    const rad = (a * Math.PI) / 180;
+    const innerR = radius - 3.5;
+    const outerR = radius;
+    const x1 = cx + innerR * Math.cos(rad);
+    const y1 = cy + innerR * Math.sin(rad);
+    const x2 = cx + outerR * Math.cos(rad);
+    const y2 = cy + outerR * Math.sin(rad);
+    return (
+      <line
+        key={p}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke="rgba(255, 255, 255, 0.12)"
+        strokeWidth="0.8"
+      />
+    );
+  });
 
   return (
-    <div className="relative flex flex-col items-center justify-center p-3.5 bg-[#090d16]/90 border border-slate-800/80 rounded-2xl shadow-2xl group transition-all duration-500 hover:border-[#F5C800]/40 hover:shadow-emerald-500/5">
+    <div className="relative flex flex-col items-center justify-center p-3.5 bg-[#090d16]/95 border border-slate-800/85 rounded-2xl shadow-2xl group transition-all duration-500 hover:border-[#F5C800]/30 hover:shadow-emerald-500/5 min-w-[105px] flex-1">
       <div className="relative w-22 h-22">
-        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
-          {/* Subtle outer tech frame ring */}
+        <svg className="w-full h-full" viewBox="0 0 80 80">
+          <defs>
+            <linearGradient id="activeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#34d399" />
+            </linearGradient>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#D97706" />
+              <stop offset="100%" stopColor="#F5C800" />
+            </linearGradient>
+          </defs>
+
+          {/* Speedometer radial ticks */}
+          {ticks}
+
+          {/* Outer tech frame ring */}
           <circle
             cx="40"
             cy="40"
             r="38"
-            stroke="rgba(245, 200, 0, 0.05)"
-            strokeWidth="0.8"
+            stroke="rgba(255, 255, 255, 0.03)"
+            strokeWidth="0.5"
             fill="transparent"
           />
-          {/* Speedometer radial ticks */}
-          <circle
-            cx="40"
-            cy="40"
-            r="34"
-            stroke="rgba(255, 255, 255, 0.04)"
-            strokeWidth="3.2"
-            strokeDasharray="2 3"
-            fill="transparent"
-          />
+
           {/* Track background */}
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            stroke="rgba(148, 163, 184, 0.04)"
-            strokeWidth={strokeWidth}
+          <path
+            d={trackPath}
             fill="transparent"
-          />
-          {/* Active compliant arc */}
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            stroke="currentColor"
+            stroke="rgba(148, 163, 184, 0.05)"
             strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
             strokeLinecap="round"
-            fill="transparent"
-            className={`${colorClass} transition-all duration-1000 ease-out`}
-            style={{ filter: `drop-shadow(0 0 4px ${glowColor})` }}
           />
+
+          {/* Active compliant arc */}
+          {percent > 0 && (
+            <path
+              d={activePath}
+              fill="transparent"
+              stroke={`url(#${gradientId})`}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              className="transition-all duration-1000 ease-out"
+            />
+          )}
+
           {/* Live Needle pointer indicator */}
           <line
             x1="40"
@@ -84,14 +138,15 @@ const SurchargeCircularGauge = ({ value, maxValue, colorClass = "text-[#10b981]"
             x2={needleX}
             y2={needleY}
             stroke="#F5C800"
-            strokeWidth="1.8"
+            strokeWidth="1.6"
             strokeLinecap="round"
             className="transition-all duration-1000 ease-out"
-            style={{ filter: 'drop-shadow(0 0 3px rgba(245, 200, 0, 0.6))' }}
+            style={{ filter: 'drop-shadow(0 0 2px rgba(245, 200, 0, 0.6))' }}
           />
+
           {/* Tech pivot center button */}
-          <circle cx="40" cy="40" r="3.8" fill="#090d16" stroke="#F5C800" strokeWidth="1.5" />
-          <circle cx="40" cy="40" r="1.5" fill="#ffffff" />
+          <circle cx="40" cy="40" r="3.2" fill="#090d16" stroke="#F5C800" strokeWidth="1.2" />
+          <circle cx="40" cy="40" r="1.2" fill="#ffffff" />
         </svg>
         {/* Soft neon backing ring */}
         <div className="absolute inset-2 rounded-full bg-emerald-500/5 blur-[4px] pointer-events-none animate-pulse" />
@@ -264,33 +319,75 @@ export default function Surcharges({ setGlobalNotification }) {
   };
 
   return (
-    <div className="space-y-6 px-2 sm:px-6 py-2 max-w-7xl mx-auto relative overflow-hidden">
+    <div className="space-y-6 px-2 sm:px-6 py-4 max-w-7xl mx-auto relative overflow-hidden grid-bg-overlay rounded-3xl min-h-[calc(100vh-120px)]">
       
       {/* Premium Sliding Hazard Keyframes */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes hazardSlide {
           0% { background-position: 0 0; }
-          100% { background-position: 34px 0; }
+          100% { background-position: 28px 0; }
         }
         .animated-hazard-stripe {
           background-image: repeating-linear-gradient(45deg, 
-            #F5C800 0px, 
-            #F5C800 12px, 
-            #070a13 12px, 
-            #070a13 24px
+            rgba(245, 200, 0, 0.15) 0px, 
+            rgba(245, 200, 0, 0.15) 10px, 
+            transparent 10px, 
+            transparent 20px
           );
-          background-size: 34px 34px;
-          animation: hazardSlide 1.2s linear infinite;
+          background-size: 28px 28px;
+          animation: hazardSlide 1.5s linear infinite;
         }
         .animated-hazard-stripe-emerald {
           background-image: repeating-linear-gradient(45deg, 
-            #10b981 0px, 
-            #10b981 12px, 
-            #070a13 12px, 
-            #070a13 24px
+            rgba(16, 185, 129, 0.15) 0px, 
+            rgba(16, 185, 129, 0.15) 10px, 
+            transparent 10px, 
+            transparent 20px
           );
-          background-size: 34px 34px;
-          animation: hazardSlide 1.2s linear infinite;
+          background-size: 28px 28px;
+          animation: hazardSlide 1.5s linear infinite;
+        }
+        .grid-bg-overlay {
+          background-image: radial-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+          background-size: 20px 20px;
+        }
+        .premium-glow-card {
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-glow-card:hover {
+          border-color: rgba(245, 200, 0, 0.25) !important;
+          box-shadow: 0 10px 30px rgba(245, 200, 0, 0.05), inset 0 1px 0 rgba(255,255,255,0.05);
+          transform: translateY(-2px);
+        }
+        .premium-glow-card-emerald {
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-glow-card-emerald:hover {
+          border-color: rgba(16, 185, 129, 0.25) !important;
+          box-shadow: 0 10px 30px rgba(16, 185, 129, 0.05), inset 0 1px 0 rgba(255,255,255,0.05);
+          transform: translateY(-2px);
+        }
+        .premium-glow-card-slate {
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-glow-card-slate:hover {
+          border-color: rgba(148, 163, 184, 0.25) !important;
+          box-shadow: 0 10px 30px rgba(255, 255, 255, 0.02), inset 0 1px 0 rgba(255,255,255,0.05);
+          transform: translateY(-2px);
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-scale-up {
+          animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+          from { transform: scale(0.96); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
         }
       `}} />
 
@@ -428,13 +525,12 @@ export default function Surcharges({ setGlobalNotification }) {
                     value={hqRemitted} 
                     maxValue={setAsideHQ} 
                     label="Remitted" 
-                    colorClass="text-emerald-450" 
-                    glowColor="rgba(52,211,153,0.3)" 
+                    gradientId="activeGrad" 
                   />
                   <div>
                     <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-wider">HQ Status</h4>
                     <span className="text-[11px] font-black text-slate-200 block mt-0.5">Remitted Share</span>
-                    <span className="text-[10px] font-black text-emerald-400 block mt-1">₦{hqRemitted.toLocaleString()}</span>
+                    <span className="text-[10px] font-black text-emerald-450 block mt-1">₦{hqRemitted.toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -443,8 +539,7 @@ export default function Surcharges({ setGlobalNotification }) {
                     value={officeBalance} 
                     maxValue={setAsideOffice} 
                     label="Vault" 
-                    colorClass="text-[#F5C800]" 
-                    glowColor="rgba(245,200,0,0.3)" 
+                    gradientId="goldGrad" 
                   />
                   <div>
                     <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-wider">Office Status</h4>
@@ -496,7 +591,7 @@ export default function Surcharges({ setGlobalNotification }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Column 1: Headquarters Split */}
-            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-emerald-500 hover:border-emerald-500/50 hover:shadow-emerald-500/5 transition-all duration-500 hover:-translate-y-1 group">
+            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-emerald-500 premium-glow-card-emerald group">
               
               {/* Caution hazard chevrons header decoration */}
               <div className="h-1.5 w-full animated-hazard-stripe-emerald opacity-90" />
@@ -504,7 +599,7 @@ export default function Surcharges({ setGlobalNotification }) {
               
               <div className="p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-850 pb-3">
-                  <span className="text-[10px] font-black text-slate-350 uppercase tracking-widest">Headquarters Account</span>
+                  <span className="text-[10px] font-black text-slate-355 uppercase tracking-widest">Headquarters Account</span>
                   <ArrowUpRight className="w-4 h-4 text-emerald-450 animate-bounce" />
                 </div>
 
@@ -536,7 +631,7 @@ export default function Surcharges({ setGlobalNotification }) {
             </div>
 
             {/* Column 2: Local Office Split */}
-            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-[#F5C800] hover:border-[#F5C800]/50 hover:shadow-[#F5C800]/5 transition-all duration-500 hover:-translate-y-1 group">
+            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-[#F5C800] premium-glow-card group">
               
               {/* Caution hazard chevrons header decoration */}
               <div className="h-1.5 w-full animated-hazard-stripe opacity-90" />
@@ -544,7 +639,7 @@ export default function Surcharges({ setGlobalNotification }) {
               
               <div className="p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-850 pb-3">
-                  <span className="text-[10px] font-black text-slate-350 uppercase tracking-widest">Local Office Account</span>
+                  <span className="text-[10px] font-black text-slate-355 uppercase tracking-widest">Local Office Account</span>
                   <ArrowDownRight className="w-4 h-4 text-[#F5C800] animate-bounce" />
                 </div>
 
@@ -575,8 +670,8 @@ export default function Surcharges({ setGlobalNotification }) {
               </div>
             </div>
 
-            {/* Column 3: Cumulative Surcharge Audit (100%) */}
-            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-slate-700 hover:border-slate-600 hover:shadow-white/2 transition-all duration-500 hover:-translate-y-1 group">
+            {/* Column 3: Cumulative Surcharge Vault (100%) */}
+            <div className="bg-[#0c1220]/80 backdrop-blur-3xl border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl relative border-t-4 border-t-slate-700 premium-glow-card-slate group">
               
               <div className="h-1.5 w-full bg-slate-900 border-b border-slate-800" />
 
@@ -588,12 +683,12 @@ export default function Surcharges({ setGlobalNotification }) {
                 </div>
 
                 <div className="space-y-2.5">
-                  <div className="flex justify-between text-xs py-2 px-3 bg-slate-950/40 rounded-xl border border-slate-850/40">
-                    <span className="text-slate-500 font-bold">Total Generated:</span>
+                  <div className="flex justify-between text-xs py-2 px-3 bg-slate-950/40 rounded-xl border border-slate-850/40 font-bold">
+                    <span className="text-slate-500">Total Generated:</span>
                     <span className="font-extrabold text-slate-200">₦{setAsideTotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-xs py-2 px-3 bg-slate-950/40 rounded-xl border border-slate-850/40">
-                    <span className="text-slate-500 font-bold text-red-400">Total Outflow:</span>
+                  <div className="flex justify-between text-xs py-2 px-3 bg-slate-950/40 rounded-xl border border-slate-850/40 font-bold">
+                    <span className="text-slate-500">Total Outflow:</span>
                     <span className="font-extrabold text-red-400">₦{(hqRemitted + officeDisbursed).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs py-2.5 px-3 bg-slate-950/60 rounded-xl border border-slate-850 font-black">
@@ -609,7 +704,6 @@ export default function Surcharges({ setGlobalNotification }) {
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Surcharge splits ledger feed logs */}

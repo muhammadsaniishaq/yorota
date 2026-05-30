@@ -9,7 +9,47 @@ const BRAND_GREEN = [16, 185, 129]; // RGB: #10b981
 const BRAND_DARK = [9, 13, 22]; // RGB: #090d16
 const SECONDARY_GRAY = [241, 245, 249];
 
-const addGovernmentHeader = (doc, title) => {
+// Helper to pre-load image for jsPDF synchronously using HTML Image Element
+const loadImage = (src) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+  });
+};
+
+
+const drawPremiumPageBorders = (doc) => {
+  // 1. Premium Government & Safety Border Frame
+  doc.setDrawColor(16, 185, 129); // Forest Green
+  doc.setLineWidth(1.2);
+  doc.rect(5, 5, 200, 287); // Page Frame
+
+  doc.setDrawColor(245, 200, 0); // Gold Accent Line
+  doc.setLineWidth(0.4);
+  doc.rect(6.2, 6.2, 197.6, 284.6);
+
+  // Redesigned Premium Decorations: Interlocking Executive Corner Brackets representing highway frames
+  doc.setFillColor(16, 185, 129); // Green blocks
+  // Top-Left Corner
+  doc.rect(5, 5, 12, 2.5, 'F'); doc.rect(5, 5, 2.5, 12, 'F');
+  // Top-Right Corner
+  doc.rect(193, 5, 12, 2.5, 'F'); doc.rect(202.5, 5, 2.5, 12, 'F');
+  // Bottom-Left Corner
+  doc.rect(5, 289.5, 12, 2.5, 'F'); doc.rect(5, 280, 2.5, 12, 'F');
+  // Bottom-Right Corner
+  doc.rect(193, 289.5, 12, 2.5, 'F'); doc.rect(202.5, 280, 2.5, 12, 'F');
+
+  doc.setFillColor(245, 200, 0); // Gold blocks
+  // Inner Golden brackets
+  doc.rect(7.5, 7.5, 8, 1.2, 'F'); doc.rect(7.5, 7.5, 1.2, 8, 'F');
+  doc.rect(194.5, 7.5, 8, 1.2, 'F'); doc.rect(201.3, 7.5, 1.2, 8, 'F');
+  doc.rect(7.5, 288.3, 8, 1.2, 'F'); doc.rect(7.5, 282, 1.2, 8, 'F');
+  doc.rect(194.5, 288.3, 8, 1.2, 'F'); doc.rect(201.3, 282, 1.2, 8, 'F');
+};
+
+const addGovernmentHeader = (doc, title, logoImg) => {
   // Official green decorative bar
   doc.setFillColor(...BRAND_GREEN);
   doc.rect(0, 0, 210, 8, 'F');
@@ -25,6 +65,18 @@ const addGovernmentHeader = (doc, title) => {
   doc.setTextColor(100, 116, 139); // Slate 500
   doc.text('ROAD TRAFFIC OFFICE MANAGEMENT & REVENUE DEPT', 105, 26, { align: 'center' });
   doc.text('YOROTA Smart Office - Official Document', 105, 31, { align: 'center' });
+
+  // Optional Left side Logo image for high-end feel, perfectly matching margins
+  if (logoImg) {
+    const boxX = 15;
+    const boxY = 12;
+    const boxSize = 18;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(boxX, boxY, boxSize, boxSize, 2, 2, 'FD');
+    doc.addImage(logoImg, 'PNG', boxX + 1.5, boxY + 1.5, boxSize - 3, boxSize - 3);
+  }
 
   // Thin separator line
   doc.setDrawColor(226, 232, 240); // Slate 200
@@ -210,11 +262,13 @@ export const pdfGenerator = {
   },
 
   // --- GENERATE REPORT (DAILY/MONTHLY/CUSTOM RANGE) ---
-  generateReport: (type, dateRangeText, records, summary, transactions) => {
+  generateReport: async (type, dateRangeText, records, summary, transactions) => {
     const doc = new jsPDF();
     
+    // Preload logo
+    const logoImg = await loadImage('/logo.png');
     // Add Header
-    addGovernmentHeader(doc, `${type} Activity & Audit Report`);
+    addGovernmentHeader(doc, `${type} Activity & Audit Report`, logoImg);
 
     // Date Range Meta Info
     doc.setFont('Helvetica', 'bold');
@@ -341,11 +395,13 @@ export const pdfGenerator = {
   },
 
   // --- GENERATE OFFICE FINANCIAL LEDGER SUMMARY ---
-  generateFinancialSummary: (summary, transactions) => {
+  generateFinancialSummary: async (summary, transactions) => {
     const doc = new jsPDF();
     
+    // Preload logo
+    const logoImg = await loadImage('/logo.png');
     // Add Header
-    addGovernmentHeader(doc, 'Office Financial Ledger Summary');
+    addGovernmentHeader(doc, 'Office Financial Ledger Summary', logoImg);
 
     // Date Meta Info
     doc.setFont('Helvetica', 'bold');
@@ -425,31 +481,18 @@ export const pdfGenerator = {
   },
 
   // --- GENERATE YOROTA ICT DAILY PAYOUT FORM ---
-  generateIctPayoutReport: (dateRangeText, records, officerName, commandName) => {
+  generateIctPayoutReport: async (dateRangeText, records, officerName, commandName) => {
     const doc = new jsPDF();
 
-    // 1. Premium Government & Safety Border Frame
-    doc.setDrawColor(16, 185, 129); // Forest Green
-    doc.setLineWidth(1.2);
-    doc.rect(5, 5, 200, 287); // Page Frame
-
-    doc.setDrawColor(245, 200, 0); // Gold Accent Line
-    doc.setLineWidth(0.4);
-    doc.rect(6.2, 6.2, 197.6, 284.6);
+    // 1. Premium Government & Safety Border Frame with Corner Brackets
+    drawPremiumPageBorders(doc);
 
     // Double Solid Yellow road dividing lines (thematic top accent)
     doc.setDrawColor(245, 200, 0);
     doc.setLineWidth(0.8);
-    doc.line(10, 10, 200, 10);
-    doc.line(10, 11.8, 200, 11.8);
+    doc.line(15, 11, 195, 11);
+    doc.line(15, 12.8, 195, 12.8);
 
-    // Hazard warning chevrons in corners for advanced traffic theme
-    doc.setDrawColor(9, 13, 22);
-    doc.setLineWidth(0.5);
-    // Top-Left corner chevrons
-    doc.line(8, 8, 12, 12); doc.line(10, 8, 14, 12);
-    // Top-Right corner chevrons
-    doc.line(202, 8, 198, 12); doc.line(200, 8, 196, 12);
 
     // 2. Faint Center Watermark (Road safety emblem / traffic lanes)
     const wcx = 105;
@@ -473,34 +516,29 @@ export const pdfGenerator = {
     doc.text('YOROTA SAFETY', wcx, wcy - 2, { align: 'center' });
     doc.text('SECURE SEAL', wcx, wcy + 3, { align: 'center' });
 
-    // 3. Vector Traffic Safety Header Emblem (Center-Top)
-    const cx = 105;
-    const cy = 23;
-    
-    // Outer Green circle
-    doc.setFillColor(9, 13, 22); // Deep Brand Background
-    doc.circle(cx, cy, 12, 'F');
-    doc.setFillColor(16, 185, 129); // Forest Green Ring
-    doc.circle(cx, cy, 10.5, 'F');
-    // Inner Gold ring
-    doc.setDrawColor(245, 200, 0);
-    doc.setLineWidth(0.6);
-    doc.circle(cx, cy, 9.2);
-    // White safety triangles (vector star emblem representing road crossings/polygons)
-    doc.setFillColor(255, 255, 255);
-    doc.triangle(cx, cy - 6.5, cx - 5.5, cy + 3.2, cx + 5.5, cy + 3.2, 'F');
-    doc.triangle(cx, cy + 6.5, cx - 5.5, cy - 3.2, cx + 5.5, cy - 3.2, 'F');
-    // Small emerald core
-    doc.setFillColor(16, 185, 129);
-    doc.circle(cx, cy, 2.2, 'F');
+    // 3. Center Logo Container (Perfect match to high-fidelity A4 web preview)
+    const logoImg = await loadImage('/logo.png');
+    const logoBoxSize = 18;
+    const logoBoxX = 105 - (logoBoxSize / 2);
+    const logoBoxY = 16;
 
-    // Circular brand markers
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(4.5);
-    doc.setTextColor(245, 200, 0);
-    doc.text('YOROTA', cx, cy - 13.5, { align: 'center' });
-    doc.setTextColor(16, 185, 129);
-    doc.text('ROAD SAFETY & COMPLIANCE', cx, cy + 15.5, { align: 'center' });
+    // White rounded card background for logo
+    doc.setFillColor(248, 250, 252); // Slate 50
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setLineWidth(0.3);
+    doc.roundedRect(logoBoxX, logoBoxY, logoBoxSize, logoBoxSize, 2, 2, 'FD'); // 2mm corners
+
+    if (logoImg) {
+      // Fit official logo image inside
+      doc.addImage(logoImg, 'PNG', logoBoxX + 1.5, logoBoxY + 1.5, logoBoxSize - 3, logoBoxSize - 3);
+    } else {
+      // Fallback text if asset fails
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(16, 185, 129);
+      doc.text('YOROTA', 105, logoBoxY + 10, { align: 'center' });
+    }
+
 
     // 4. Government Official Headings
     doc.setFont('Helvetica', 'bold');
@@ -742,13 +780,9 @@ export const pdfGenerator = {
     if (yPos > 240) {
       doc.addPage();
       yPos = 30;
-      // Re-apply frame border on new page if signatures pushed over
-      doc.setDrawColor(16, 185, 129);
-      doc.setLineWidth(1.2);
-      doc.rect(5, 5, 200, 287);
-      doc.setDrawColor(245, 200, 0);
-      doc.setLineWidth(0.4);
-      doc.rect(6.2, 6.2, 197.6, 284.6);
+      // Re-apply premium frame border and corner decorations on new page
+      drawPremiumPageBorders(doc);
+
     }
 
     doc.setDrawColor(203, 213, 225);
