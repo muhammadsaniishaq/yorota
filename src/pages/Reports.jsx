@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { db } from '../services/db';
 import { pdfGenerator } from '../services/pdfGenerator';
+import YorotaLogo from '../components/YorotaLogo';
 
 export default function Reports({ currentUser, setGlobalNotification }) {
   const [loading, setLoading] = useState(true);
@@ -606,108 +607,120 @@ export default function Reports({ currentUser, setGlobalNotification }) {
             </div>
           </div>
 
-          {/* Modernized Paper Form Core Sheet replica */}
-          <div className="bg-[#05080f]/90 border border-slate-850 rounded-3xl p-4 sm:p-8 relative border-t-4 border-t-emerald-500 shadow-inner">
+          {/* Modernized Paper Form Core She          {/* Modernized Paper Form Core Sheet replica in White A4 format */}
+          <div className="bg-white text-slate-800 border border-slate-300 p-6 sm:p-12 relative shadow-[0_15px_50px_rgba(0,0,0,0.5)] max-w-[820px] w-full mx-auto relative overflow-hidden text-left border-t-8 border-t-emerald-600 rounded-lg font-sans">
             
+            {/* Official A4 Page Double Borders */}
+            <div className="absolute inset-4 border-2 border-double border-emerald-600/25 pointer-events-none rounded-sm" />
+
             {/* Visual Vector Road Safety Badge Background watermark */}
-            <div className="absolute inset-0 opacity-[0.02] flex items-center justify-center pointer-events-none select-none">
-              <Shield className="w-96 h-96 text-slate-100" />
+            <div className="absolute inset-0 opacity-[0.025] flex items-center justify-center pointer-events-none select-none">
+              <Shield className="w-96 h-96 text-slate-900" />
             </div>
 
             {/* Form Sheet Content */}
             <div className="space-y-6 relative z-10">
               
               {/* Official Headings */}
-              <div className="text-center space-y-2 border-b border-slate-850 pb-5">
+              <div className="text-center space-y-2 border-b border-slate-200 pb-5">
                 <div className="flex justify-center mb-3">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/5 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-[#F5C800]/10" />
-                    <Shield className="w-8 h-8 text-emerald-400 filter drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]" />
+                  <div className="w-18 h-18 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center shadow-md p-1">
+                    <YorotaLogo className="w-14 h-14" showText={false} />
                   </div>
                 </div>
-                <h2 className="text-xs sm:text-sm font-black text-slate-200 uppercase tracking-wider">
+                
+                {/* Traffic Double Center divider lines */}
+                <div className="flex justify-center gap-0.5 mb-2">
+                  <div className="w-20 h-[1.5px] bg-[#CA8A04]" />
+                  <div className="w-20 h-[1.5px] bg-[#CA8A04]" />
+                </div>
+
+                <h2 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">
                   Yobe State Road Traffic Management Agency (YOROTA)
                 </h2>
-                <h3 className="text-[10px] sm:text-xs text-emerald-400 font-extrabold uppercase tracking-widest leading-none">
+                <h3 className="text-[10px] sm:text-xs text-emerald-700 font-extrabold uppercase tracking-widest leading-none">
                   Road Safety & Compliance Operations Department
                 </h3>
-                <h1 className="text-sm sm:text-lg font-black text-slate-100 uppercase tracking-[0.1em] gold-text-glow pt-1">
-                  ICT DAILY PAYOUT SHEET
-                </h1>
+                
+                <div className="pt-2 flex justify-center">
+                  <h1 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-[0.15em] bg-slate-50 border border-slate-200 py-1.5 px-4 rounded-lg shadow-xs select-none">
+                    ICT DAILY PAYOUT SHEET
+                  </h1>
+                </div>
               </div>
 
               {/* Sheet Metadata Row */}
-              <div className="flex flex-col sm:flex-row justify-between gap-3 text-[10px] font-black uppercase text-slate-400 bg-slate-950/40 border border-slate-850 rounded-xl px-4 py-2.5">
+              <div className="flex flex-col sm:flex-row justify-between gap-3 text-[10px] font-black uppercase text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 shadow-xs">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-slate-500 font-bold">Command:</span>
-                  <span className="text-slate-200 tracking-wide">{commandName || '................................'}</span>
+                  <span className="text-slate-400 font-extrabold">Command:</span>
+                  <span className="text-slate-800 tracking-wide">{commandName || '................................'}</span>
                 </span>
                 <span className="flex items-center gap-1.5 sm:text-right">
-                  <span className="text-slate-500 font-bold">Date Scope:</span>
-                  <span className="text-[#F5C800] tracking-wide">{dateRangeText}</span>
+                  <span className="text-slate-400 font-extrabold">Date Scope:</span>
+                  <span className="text-amber-700 tracking-wide">{dateRangeText}</span>
                 </span>
               </div>
 
               {/* Modernized Grid Table replica */}
-              <div className="overflow-x-auto border border-slate-850 rounded-2xl shadow-inner">
+              <div className="overflow-x-auto border border-slate-250 rounded-xl shadow-xs bg-white">
                 <table className="w-full text-left border-collapse text-[10px] sm:text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-gradient-to-r from-emerald-600 to-emerald-500 text-slate-950 font-black uppercase text-[10px] tracking-wider">
-                      <th className="py-3 px-3 text-center w-12 border border-slate-850">S/N</th>
-                      <th className="py-3 px-4 border border-slate-850">DETAILED FEE CATEGORY BREAKDOWNS</th>
-                      <th className="py-3 px-4 text-right w-32 sm:w-44 border border-slate-850">TOTAL AMOUNT</th>
+                    <tr className="bg-emerald-600 text-white font-black uppercase text-[10px] tracking-wider">
+                      <th className="py-3 px-3 text-center w-12 border border-emerald-700">S/N</th>
+                      <th className="py-3 px-4 border border-emerald-700">DETAILED FEE CATEGORY BREAKDOWNS</th>
+                      <th className="py-3 px-4 text-right w-32 sm:w-44 border border-emerald-700">TOTAL AMOUNT</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800 text-slate-300 font-medium bg-slate-950/20">
+                  <tbody className="divide-y divide-slate-200 text-slate-700 font-medium bg-white">
                     
                     {/* 1. Tricycle */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">1.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">1.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">TRICYCLE (NAPEP/JEGA)</span>
-                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full font-black border border-emerald-200/50">REGISTRATION GRID</span>
                         </div>
                         <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center">
-                          <div className="border-r border-slate-800 flex flex-col">
-                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">OWNERSHIP</div>
-                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1">
-                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦10k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_own_new_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_own_new_qty > 0 ? `₦${pData.tricycle_own_new_amt.toLocaleString()}` : '-'}</div>
+                          <div className="border-r border-slate-200 flex flex-col">
+                            <div className="bg-slate-50/50 py-1.5 border-b border-slate-200 text-slate-600 font-extrabold tracking-wider">OWNERSHIP</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-200 flex-1">
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">New (₦10k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.tricycle_own_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.tricycle_own_new_qty > 0 ? `₦${pData.tricycle_own_new_amt.toLocaleString()}` : '-'}</div>
                               </div>
-                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_own_ren_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_own_ren_qty > 0 ? `₦${pData.tricycle_own_ren_amt.toLocaleString()}` : '-'}</div>
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Renewal (₦5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.tricycle_own_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.tricycle_own_ren_qty > 0 ? `₦${pData.tricycle_own_ren_amt.toLocaleString()}` : '-'}</div>
                               </div>
                             </div>
                           </div>
                           <div className="flex flex-col">
-                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">RIDER</div>
-                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1">
-                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦1.5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_rider_new_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_rider_new_qty > 0 ? `₦${pData.tricycle_rider_new_amt.toLocaleString()}` : '-'}</div>
+                            <div className="bg-slate-50/50 py-1.5 border-b border-slate-200 text-slate-600 font-extrabold tracking-wider">RIDER</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-200 flex-1">
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">New (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.tricycle_rider_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.tricycle_rider_new_qty > 0 ? `₦${pData.tricycle_rider_new_amt.toLocaleString()}` : '-'}</div>
                               </div>
-                              <div className="flex flex-col justify-between h-full bg-slate-900/5">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦1.5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.tricycle_rider_ren_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.tricycle_rider_ren_qty > 0 ? `₦${pData.tricycle_rider_ren_amt.toLocaleString()}` : '-'}</div>
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Renewal (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.tricycle_rider_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.tricycle_rider_ren_qty > 0 ? `₦${pData.tricycle_rider_ren_amt.toLocaleString()}` : '-'}</div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Tricycle Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Tricycle Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.tricycle_own_new_amt + pData.tricycle_own_ren_amt + pData.tricycle_rider_new_amt + pData.tricycle_rider_ren_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.tricycle_own_new_qty || 0) + (pData.tricycle_own_ren_qty || 0) + (pData.tricycle_rider_new_qty || 0) + (pData.tricycle_rider_ren_qty || 0))} Units
                           </span>
                         </div>
@@ -716,52 +729,52 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
                     {/* 2. Motorcycle */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">2.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">2.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">MOTORCYCLE</span>
-                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full font-black border border-emerald-200/50">REGISTRATION GRID</span>
                         </div>
                         <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center">
-                          <div className="border-r border-slate-800 flex flex-col">
-                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">OWNERSHIP</div>
-                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1 bg-slate-900/5">
-                              <div className="flex flex-col justify-between h-full">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦2.5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_own_new_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_own_new_qty > 0 ? `₦${pData.motorcycle_own_new_amt.toLocaleString()}` : '-'}</div>
+                          <div className="border-r border-slate-200 flex flex-col">
+                            <div className="bg-slate-50/50 py-1.5 border-b border-slate-200 text-slate-600 font-extrabold tracking-wider">OWNERSHIP</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-200 flex-1">
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">New (₦2.5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.motorcycle_own_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.motorcycle_own_new_qty > 0 ? `₦${pData.motorcycle_own_new_amt.toLocaleString()}` : '-'}</div>
                               </div>
-                              <div className="flex flex-col justify-between h-full">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦2.5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_own_ren_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_own_ren_qty > 0 ? `₦${pData.motorcycle_own_ren_amt.toLocaleString()}` : '-'}</div>
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Renewal (₦2.5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.motorcycle_own_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.motorcycle_own_ren_qty > 0 ? `₦${pData.motorcycle_own_ren_amt.toLocaleString()}` : '-'}</div>
                               </div>
                             </div>
                           </div>
                           <div className="flex flex-col">
-                            <div className="bg-slate-950/40 py-1.5 border-b border-slate-800 text-slate-300 font-black tracking-wider">RIDER</div>
-                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-800 flex-1 bg-slate-900/5">
-                              <div className="flex flex-col justify-between h-full">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦1.5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_rider_new_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_rider_new_qty > 0 ? `₦${pData.motorcycle_rider_new_amt.toLocaleString()}` : '-'}</div>
+                            <div className="bg-slate-50/50 py-1.5 border-b border-slate-200 text-slate-600 font-extrabold tracking-wider">RIDER</div>
+                            <div className="grid grid-cols-2 text-[8px] sm:text-[9px] font-semibold divide-x divide-slate-200 flex-1">
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">New (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.motorcycle_rider_new_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.motorcycle_rider_new_qty > 0 ? `₦${pData.motorcycle_rider_new_amt.toLocaleString()}` : '-'}</div>
                               </div>
-                              <div className="flex flex-col justify-between h-full">
-                                <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦1.5k)</div>
-                                <div className="py-2.5 font-black text-slate-100 text-xs">{pData.motorcycle_rider_ren_qty || '-'}</div>
-                                <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.motorcycle_rider_ren_qty > 0 ? `₦${pData.motorcycle_rider_ren_amt.toLocaleString()}` : '-'}</div>
+                              <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                                <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Renewal (₦1.5k)</div>
+                                <div className="py-2.5 font-black text-slate-800 text-xs">{pData.motorcycle_rider_ren_qty || '-'}</div>
+                                <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.motorcycle_rider_ren_qty > 0 ? `₦${pData.motorcycle_rider_ren_amt.toLocaleString()}` : '-'}</div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Motorcycle Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Motorcycle Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.motorcycle_own_new_amt + pData.motorcycle_own_ren_amt + pData.motorcycle_rider_new_amt + pData.motorcycle_rider_ren_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.motorcycle_own_new_qty || 0) + (pData.motorcycle_own_ren_qty || 0) + (pData.motorcycle_rider_new_qty || 0) + (pData.motorcycle_rider_ren_qty || 0))} Units
                           </span>
                         </div>
@@ -770,32 +783,32 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
                     {/* 3. Taxi */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">3.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">3.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">TAXI</span>
-                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full font-black border border-emerald-200/50">REGISTRATION GRID</span>
                         </div>
-                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center bg-slate-900/5">
-                          <div className="flex flex-col justify-between h-full border-r border-slate-800">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦10,000)</div>
-                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.taxi_new_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.taxi_new_qty > 0 ? `₦${pData.taxi_new_amt.toLocaleString()}` : '-'}</div>
+                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center">
+                          <div className="flex flex-col justify-between h-full border-r border-slate-200 bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">New (₦10,000)</div>
+                            <div className="py-2.5 font-black text-slate-800 text-xs">{pData.taxi_new_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.taxi_new_qty > 0 ? `₦${pData.taxi_new_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦5,000)</div>
-                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.taxi_ren_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.taxi_ren_qty > 0 ? `₦${pData.taxi_ren_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Renewal (₦5,000)</div>
+                            <div className="py-2.5 font-black text-slate-800 text-xs">{pData.taxi_ren_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.taxi_ren_qty > 0 ? `₦${pData.taxi_ren_amt.toLocaleString()}` : '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Taxi Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Taxi Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.taxi_new_amt + pData.taxi_ren_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.taxi_new_qty || 0) + (pData.taxi_ren_qty || 0))} Units
                           </span>
                         </div>
@@ -804,32 +817,32 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
                     {/* 4. Kurkura */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">4.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">4.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">KURKURA</span>
-                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRATION GRID</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full font-black border border-emerald-200/50">REGISTRATION GRID</span>
                         </div>
-                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center bg-slate-900/5">
-                          <div className="flex flex-col justify-between h-full border-r border-slate-800">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">New (₦10,000)</div>
-                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.kurkura_new_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.kurkura_new_qty > 0 ? `₦${pData.kurkura_new_amt.toLocaleString()}` : '-'}</div>
+                        <div className="grid grid-cols-2 text-[9px] sm:text-[10px] font-bold text-center">
+                          <div className="flex flex-col justify-between h-full border-r border-slate-200 bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">New (₦10,000)</div>
+                            <div className="py-2.5 font-black text-slate-800 text-xs">{pData.kurkura_new_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.kurkura_new_qty > 0 ? `₦${pData.kurkura_new_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Renewal (₦5,000)</div>
-                            <div className="py-2.5 font-black text-slate-100 text-xs">{pData.kurkura_ren_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.kurkura_ren_qty > 0 ? `₦${pData.kurkura_ren_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Renewal (₦5,000)</div>
+                            <div className="py-2.5 font-black text-slate-800 text-xs">{pData.kurkura_ren_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.kurkura_ren_qty > 0 ? `₦${pData.kurkura_ren_amt.toLocaleString()}` : '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Kurkura Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Kurkura Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.kurkura_new_amt + pData.kurkura_ren_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.kurkura_new_qty || 0) + (pData.kurkura_ren_qty || 0))} Units
                           </span>
                         </div>
@@ -838,42 +851,42 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
                     {/* 5. Lost of ID */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">5.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">5.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">LOST OF ID / STICKER</span>
-                          <span className="text-[8px] bg-red-500/10 text-red-400 py-0.5 px-2 rounded-full font-black border border-red-500/20">REPLACEMENT FEES</span>
+                          <span className="text-[8px] bg-red-100 text-red-800 py-0.5 px-2 rounded-full font-black border border-red-200/50">REPLACEMENT FEES</span>
                         </div>
-                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-800 bg-slate-900/5">
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Tricycle (₦2.5k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_tricycle_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_tricycle_qty > 0 ? `₦${pData.lost_tricycle_amt.toLocaleString()}` : '-'}</div>
+                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-200">
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Tricycle (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.lost_tricycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.lost_tricycle_qty > 0 ? `₦${pData.lost_tricycle_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Motor (₦2.5k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_motorcycle_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_motorcycle_qty > 0 ? `₦${pData.lost_motorcycle_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Motor (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.lost_motorcycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.lost_motorcycle_qty > 0 ? `₦${pData.lost_motorcycle_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Taxi (₦2.5k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_taxi_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_taxi_qty > 0 ? `₦${pData.lost_taxi_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Taxi (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.lost_taxi_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.lost_taxi_qty > 0 ? `₦${pData.lost_taxi_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Kurkura (₦2.5k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.lost_kurkura_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.lost_kurkura_qty > 0 ? `₦${pData.lost_kurkura_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Kurkura (₦2.5k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.lost_kurkura_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.lost_kurkura_qty > 0 ? `₦${pData.lost_kurkura_amt.toLocaleString()}` : '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Lost ID Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Lost ID Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.lost_tricycle_amt + pData.lost_motorcycle_amt + pData.lost_taxi_amt + pData.lost_kurkura_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.lost_tricycle_qty || 0) + (pData.lost_motorcycle_qty || 0) + (pData.lost_taxi_qty || 0) + (pData.lost_kurkura_qty || 0))} Units
                           </span>
                         </div>
@@ -882,42 +895,42 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
                     {/* 6. Change of Ownership */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">6.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">6.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">CHANGE OF OWNERSHIP</span>
-                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRY AUDIT</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full font-black border border-emerald-200/50">REGISTRY AUDIT</span>
                         </div>
-                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-800 bg-slate-900/5">
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Tricycle (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_tricycle_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_tricycle_qty > 0 ? `₦${pData.change_tricycle_amt.toLocaleString()}` : '-'}</div>
+                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-200">
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Tricycle (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.change_tricycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.change_tricycle_qty > 0 ? `₦${pData.change_tricycle_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Motor (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_motorcycle_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_motorcycle_qty > 0 ? `₦${pData.change_motorcycle_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Motor (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.change_motorcycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.change_motorcycle_qty > 0 ? `₦${pData.change_motorcycle_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Taxi (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_taxi_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_taxi_qty > 0 ? `₦${pData.change_taxi_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Taxi (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.change_taxi_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.change_taxi_qty > 0 ? `₦${pData.change_taxi_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Kurkura (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.change_kurkura_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.change_kurkura_qty > 0 ? `₦${pData.change_kurkura_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Kurkura (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.change_kurkura_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.change_kurkura_qty > 0 ? `₦${pData.change_kurkura_amt.toLocaleString()}` : '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Change Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Change Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.change_tricycle_amt + pData.change_motorcycle_amt + pData.change_taxi_amt + pData.change_kurkura_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.change_tricycle_qty || 0) + (pData.change_motorcycle_qty || 0) + (pData.change_taxi_qty || 0) + (pData.change_kurkura_qty || 0))} Units
                           </span>
                         </div>
@@ -926,42 +939,42 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
                     {/* 7. Transfer */}
                     <tr>
-                      <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">7.</td>
-                      <td className="p-0 border border-slate-800">
-                        <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                      <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">7.</td>
+                      <td className="p-0 border border-slate-200">
+                        <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                           <span className="tracking-wide uppercase">TRANSFER FEES</span>
-                          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 py-0.5 px-2 rounded-full font-black border border-emerald-500/20">REGISTRY AUDIT</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full font-black border border-emerald-200/50">REGISTRY AUDIT</span>
                         </div>
-                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-800 bg-slate-900/5">
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Tricycle (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_tricycle_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_tricycle_qty > 0 ? `₦${pData.transfer_tricycle_amt.toLocaleString()}` : '-'}</div>
+                        <div className="grid grid-cols-4 text-[8px] sm:text-[9px] font-bold text-center divide-x divide-slate-200">
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Tricycle (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.transfer_tricycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.transfer_tricycle_qty > 0 ? `₦${pData.transfer_tricycle_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Motor (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_motorcycle_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_motorcycle_qty > 0 ? `₦${pData.transfer_motorcycle_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Motor (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.transfer_motorcycle_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.transfer_motorcycle_qty > 0 ? `₦${pData.transfer_motorcycle_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Taxi (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_taxi_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_taxi_qty > 0 ? `₦${pData.transfer_taxi_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Taxi (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.transfer_taxi_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.transfer_taxi_qty > 0 ? `₦${pData.transfer_taxi_amt.toLocaleString()}` : '-'}</div>
                           </div>
-                          <div className="flex flex-col justify-between h-full">
-                            <div className="py-1 text-slate-400 border-b border-slate-800 bg-slate-950/10 font-bold">Kurkura (₦2.0k)</div>
-                            <div className="py-2 font-black text-slate-100 text-xs">{pData.transfer_kurkura_qty || '-'}</div>
-                            <div className="py-1 text-emerald-400 border-t border-slate-800 bg-[#10b981]/5 font-black">{pData.transfer_kurkura_qty > 0 ? `₦${pData.transfer_kurkura_amt.toLocaleString()}` : '-'}</div>
+                          <div className="flex flex-col justify-between h-full bg-slate-50/10">
+                            <div className="py-1 text-slate-400 border-b border-slate-200 bg-slate-100/30 font-bold">Kurkura (₦2.0k)</div>
+                            <div className="py-2 font-black text-slate-800 text-xs">{pData.transfer_kurkura_qty || '-'}</div>
+                            <div className="py-1 text-emerald-700 border-t border-slate-200 bg-emerald-50/30 font-black">{pData.transfer_kurkura_qty > 0 ? `₦${pData.transfer_kurkura_amt.toLocaleString()}` : '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                        <div className="h-full flex flex-col justify-center px-4 py-4">
-                          <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Transfer Total</span>
-                          <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                      <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                        <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
+                          <span className="text-[8px] text-slate-450 block font-bold uppercase tracking-wider">Transfer Total</span>
+                          <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                             ₦{(pData.transfer_tricycle_amt + pData.transfer_motorcycle_amt + pData.transfer_taxi_amt + pData.transfer_kurkura_amt).toFixed(2)}
                           </span>
-                          <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                          <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                             {((pData.transfer_tricycle_qty || 0) + (pData.transfer_motorcycle_qty || 0) + (pData.transfer_taxi_qty || 0) + (pData.transfer_kurkura_qty || 0))} Units
                           </span>
                         </div>
@@ -971,23 +984,23 @@ export default function Reports({ currentUser, setGlobalNotification }) {
                     {/* 8. Other Classifications */}
                     {pData.others_qty > 0 && (
                       <tr>
-                        <td className="py-4 px-3 text-center font-black border border-slate-800 text-[#F5C800]">8.</td>
-                        <td className="p-0 border border-slate-800">
-                          <div className="bg-slate-900/60 font-black text-slate-200 py-2 px-4 border-b border-slate-800 text-[10px] sm:text-xs flex justify-between items-center">
+                        <td className="py-4 px-3 text-center font-black border border-slate-200 text-slate-400">8.</td>
+                        <td className="p-0 border border-slate-200">
+                          <div className="bg-slate-50 font-black text-slate-850 py-2.5 px-4 border-b border-slate-200 text-[10px] sm:text-xs flex justify-between items-center select-none">
                             <span className="tracking-wide uppercase">OTHER UNCLASSIFIED REGISTRATIONS</span>
-                            <span className="text-[8px] bg-yellow-500/10 text-yellow-400 py-0.5 px-2 rounded-full font-black border border-yellow-500/20">MISCELLANEOUS</span>
+                            <span className="text-[8px] bg-yellow-100 text-yellow-800 py-0.5 px-2 rounded-full font-black border border-yellow-200/50">MISCELLANEOUS</span>
                           </div>
-                          <div className="p-4 text-xs font-bold text-slate-450 bg-slate-950/10">
+                          <div className="p-4 text-xs font-bold text-slate-500 bg-slate-50/10">
                             Unclassified customized categories processed under different rates.
                           </div>
                         </td>
-                        <td className="p-0 border border-slate-800 text-right bg-slate-950/40 w-32 sm:w-44">
-                          <div className="h-full flex flex-col justify-center px-4 py-4">
+                        <td className="p-0 border border-slate-200 text-right bg-slate-50/30 w-32 sm:w-44">
+                          <div className="h-full flex flex-col justify-center px-4 py-4 select-none">
                             <span className="text-[8px] text-slate-500 block font-bold uppercase tracking-wider">Others Total</span>
-                            <span className="font-black text-emerald-400 text-sm sm:text-base tracking-wide mt-0.5">
+                            <span className="font-black text-emerald-700 text-sm sm:text-base tracking-wide mt-0.5">
                               ₦{pData.others_amt.toFixed(2)}
                             </span>
-                            <span className="text-[8px] text-slate-450 font-extrabold block mt-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 text-center uppercase">
+                            <span className="text-[8px] text-slate-500 font-black block mt-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs text-center uppercase">
                               {pData.others_qty} Units
                             </span>
                           </div>
@@ -996,13 +1009,13 @@ export default function Reports({ currentUser, setGlobalNotification }) {
                     )}
 
                     {/* Grand Totals */}
-                    <tr className="bg-slate-950 text-slate-100 font-black text-xs sm:text-sm border border-slate-800">
+                    <tr className="bg-slate-900 text-white font-black text-xs sm:text-sm border border-slate-800">
                       <td className="py-3.5 px-3 text-center font-black border-r border-slate-800 text-[#F5C800]">★</td>
-                      <td className="py-3.5 px-4 uppercase text-[#F5C800] tracking-wider border-r border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                      <td className="py-3.5 px-4 uppercase text-[#F5C800] tracking-wider border-r border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 select-none">
                         <span>GRAND TOTAL SUMS</span>
-                        <span className="text-[10px] text-slate-400 font-bold bg-slate-900/60 px-3 py-1 rounded border border-slate-800">TOTAL UNITS: {totalPayoutQty} UNITS</span>
+                        <span className="text-[10px] text-slate-300 font-bold bg-slate-800 px-3 py-1 rounded border border-slate-700">TOTAL UNITS: {totalPayoutQty} UNITS</span>
                       </td>
-                      <td className="py-3.5 px-4 text-right text-emerald-400 bg-slate-900/40 font-black text-sm sm:text-base">
+                      <td className="py-3.5 px-4 text-right text-emerald-400 bg-slate-800/40 font-black text-sm sm:text-base">
                         ₦{totalPayoutAmt.toFixed(2)}
                       </td>
                     </tr>
@@ -1012,16 +1025,16 @@ export default function Reports({ currentUser, setGlobalNotification }) {
               </div>
 
               {/* Signature Blocks preview */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-850 text-slate-400">
-                <div className="p-4 bg-slate-950/40 border border-slate-850/80 rounded-2xl space-y-2">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Prepared By</span>
-                  <div className="text-xs font-black text-slate-200">ICT PAYOUT DESK OFFICER</div>
-                  <div className="text-[10px] text-slate-400 mt-1 font-semibold">Name: {currentUser?.name || 'Authorized Officer'}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Status: Signature & Timestamp appended dynamically on PDF</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-200 text-slate-600">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 shadow-xs">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Prepared By</span>
+                  <div className="text-xs font-black text-slate-700">ICT PAYOUT DESK OFFICER</div>
+                  <div className="text-[10px] text-slate-600 mt-1 font-semibold">Name: {currentUser?.name || 'Authorized Officer'}</div>
+                  <div className="text-[10px] text-slate-400 mt-1">Status: Signature & Timestamp appended dynamically on PDF</div>
                 </div>
-                <div className="p-4 bg-slate-950/40 border border-slate-850/80 rounded-2xl space-y-2">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Approval Authority</span>
-                  <div className="text-xs font-black text-slate-200">UNIT/ZONAL COMMAND</div>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 shadow-xs">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Approval Authority</span>
+                  <div className="text-xs font-black text-slate-700">UNIT/ZONAL COMMAND</div>
                   <div className="text-[10px] text-slate-500 mt-1">Name: ..............................................................</div>
                   <div className="text-[10px] text-slate-500 mt-1">Sign/Date: ........................................................</div>
                 </div>
@@ -1034,9 +1047,6 @@ export default function Reports({ currentUser, setGlobalNotification }) {
         </div>
       )}
 
-
-
     </div>
   );
 }
-
