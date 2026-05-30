@@ -161,15 +161,16 @@ export const pdfGenerator = {
     doc.setFontSize(10);
     doc.text('CUSTOMER RECORDS:', 20, 58);
     
+    const recordId = record.id || '';
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Receipt Number:   RTO-${record.id.substring(2, 8).toUpperCase()}`, 20, 64);
+    doc.text(`Receipt Number:   RTO-${recordId.substring(2, 8).toUpperCase()}`, 20, 64);
     doc.text(`Customer Name:    ${record.customer_name}`, 20, 70);
     doc.text(`Phone Number:     ${record.phone_number}`, 20, 75);
     
     doc.text(`Issue Date:       ${new Date(record.created_at).toLocaleDateString()}`, 110, 64);
     doc.text(`Issuing Officer:  ${record.officer_name}`, 110, 70);
-    doc.text(`Service ID:       ${record.id.substring(0, 12)}`, 110, 75);
+    doc.text(`Service ID:       ${recordId.substring(0, 12)}`, 110, 75);
 
     // 4. Itemized table using autoTable for maximum A4 elegance
     const logRows = [[
@@ -592,11 +593,14 @@ export const pdfGenerator = {
     doc.setLineWidth(0.3);
     doc.rect(12, 63, 186, 11, 'S');
 
+    const cleanCommand = (commandName || '').toUpperCase();
+    const cleanDateRange = (dateRangeText || '').toUpperCase();
+
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(9, 13, 22);
-    doc.text(`COMMAND:  ${commandName.toUpperCase()}`, 16, 70.5);
-    doc.text(`DATE / RANGE:  ${dateRangeText.toUpperCase()}`, 194, 70.5, { align: 'right' });
+    doc.text(`COMMAND:  ${cleanCommand}`, 16, 70.5);
+    doc.text(`DATE / RANGE:  ${cleanDateRange}`, 194, 70.5, { align: 'right' });
 
     // 5. Aggregate Payout Record Columns
     const data = {
@@ -768,89 +772,300 @@ export const pdfGenerator = {
       .filter(k => k.endsWith('_amt'))
       .reduce((sum, k) => sum + data[k], 0);
 
-    // 6. Render Table (Modern layout)
-    doc.autoTable({
-      startY: 78,
-      head: [['S/N', 'DETAILED REGISTRATION FEE DISCLOSURE', 'TOTAL UNITS', 'TOTAL AMOUNT']],
-      body: rows,
-      headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
-      bodyStyles: { fontSize: 7, textColor: [9, 13, 22] },
-      theme: 'grid',
-      styles: { cellPadding: 1.2 },
-      columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { fontStyle: 'normal' },
-        2: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
-        3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
-      },
-      didParseCell: (dataCell) => {
-        // Highlight main headings (S/N is not empty)
-        if (dataCell.row.index % 5 === 0 || dataCell.cell.text[0]?.startsWith('1.') || dataCell.cell.text[0]?.startsWith('2.') || dataCell.cell.text[0]?.startsWith('3.') || dataCell.cell.text[0]?.startsWith('4.') || dataCell.cell.text[0]?.startsWith('5.') || dataCell.cell.text[0]?.startsWith('6.') || dataCell.cell.text[0]?.startsWith('7.') || dataCell.cell.text[0]?.startsWith('8.')) {
-          if (dataCell.column.index === 1) {
-            dataCell.cell.styles.fontStyle = 'bold';
-            dataCell.cell.styles.fillColor = [241, 245, 249];
-          }
-        }
-      },
-      didDrawPage: (data) => {
-        drawPremiumPageBorders(doc);
-      }
+    // 6. Draw Manual Vector Grid Table (1-to-1 scan parity, fits exactly on 1 page)
+    // Draw outer boundary frame
+    doc.setDrawColor(9, 13, 22);
+    doc.setLineWidth(0.6);
+    doc.rect(12, 78, 186, 156, 'S');
+
+    // Draw header fill
+    doc.setFillColor(...BRAND_GREEN);
+    doc.rect(12.3, 78.3, 185.4, 7.4, 'F');
+
+    // Horizontal grid line heights
+    const horizontalLines = [
+      86, 
+      92, 97.5, 103, 108,
+      114, 119.5, 125, 130,
+      136, 142, 148,
+      154, 160, 166,
+      172, 178, 184,
+      190, 196, 202,
+      208, 214, 220,
+      227
+    ];
+    doc.setDrawColor(203, 213, 225); // Slate 300
+    doc.setLineWidth(0.4);
+    horizontalLines.forEach(hy => {
+      doc.line(12, hy, 198, hy);
     });
 
-    // 7. Add Grand Total Row Box below table
-    let yPos = doc.lastAutoTable.finalY + 3;
-    doc.setFillColor(9, 13, 22);
-    doc.rect(12, yPos, 186, 9.5, 'F');
+    // Main column vertical lines
+    doc.setDrawColor(9, 13, 22); // Solid black columns
+    doc.setLineWidth(0.5);
+    doc.line(24, 78, 24, 220); // S/N column
+    doc.line(156, 78, 156, 234); // TOTAL/AMOUNT column
+
+    // Inner Grid Dividers
+    doc.setDrawColor(203, 213, 225); // Slate 300
+    doc.setLineWidth(0.4);
+
+    // Row 1 (Tricycle)
+    doc.line(90, 92, 90, 108); // center split
+    doc.line(57, 97.5, 57, 108); // left split
+    doc.line(123, 97.5, 123, 108); // right split
+
+    // Row 2 (Motorcycle)
+    doc.line(90, 114, 90, 130); // center split
+    doc.line(57, 119.5, 57, 130); // left split
+    doc.line(123, 119.5, 123, 130); // right split
+
+    // Row 3 (Taxi)
+    doc.line(90, 136, 90, 148);
+
+    // Row 4 (Kurkura)
+    doc.line(90, 154, 90, 166);
+
+    // Row 5 (Lost of ID)
+    doc.line(57, 172, 57, 184);
+    doc.line(90, 172, 90, 184);
+    doc.line(123, 172, 123, 184);
+
+    // Row 6 (Change of Ownership)
+    doc.line(57, 190, 57, 202);
+    doc.line(90, 190, 90, 202);
+    doc.line(123, 190, 123, 202);
+
+    // Row 7 (Transfer)
+    doc.line(57, 208, 57, 220);
+    doc.line(90, 208, 90, 220);
+    doc.line(123, 208, 123, 220);
+
+    // Helper to render text centered inside cell bounds
+    const drawCenteredText = (text, x1, x2, y, bold = false, size = 6.5, color = [9, 13, 22]) => {
+      doc.setFont('Helvetica', bold ? 'bold' : 'normal');
+      doc.setFontSize(size);
+      doc.setTextColor(...color);
+      const cx = x1 + (x2 - x1) / 2;
+      doc.text(text, cx, y, { align: 'center' });
+    };
+
+    // --- TABLE HEADERS ---
+    drawCenteredText('S/N', 12, 24, 83, true, 8, [255, 255, 255]);
+    drawCenteredText('DETAILED FEE CATEGORY BREAKDOWNS', 24, 156, 83, true, 8, [255, 255, 255]);
+    drawCenteredText('TOTAL / AMOUNT', 156, 198, 83, true, 8, [255, 255, 255]);
+
+    // --- ROW 1: TRICYCLE ---
+    drawCenteredText('1.', 12, 24, 90.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(9, 13, 22);
+    doc.text('TRICYCLE (NAPEP/JEGA)', 26, 90.5);
+    drawCenteredText('OWNERSHIP', 24, 90, 96, true, 7.5);
+    drawCenteredText('RIDER', 90, 156, 96, true, 7.5);
+    drawCenteredText('New (₦10,000)', 24, 57, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (₦5,000)', 57, 90, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('New (₦1,500)', 90, 123, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (₦1,500)', 123, 156, 101, false, 6.5, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 106.5);
+    drawCenteredText(data.tricycle_own_new_qty > 0 ? `${data.tricycle_own_new_qty} units (₦${data.tricycle_own_new_amt.toLocaleString()})` : '-', 24, 57, 106.5, false, 7);
+    drawCenteredText(data.tricycle_own_ren_qty > 0 ? `${data.tricycle_own_ren_qty} units (₦${data.tricycle_own_ren_amt.toLocaleString()})` : '-', 57, 90, 106.5, false, 7);
+    drawCenteredText(data.tricycle_rider_new_qty > 0 ? `${data.tricycle_rider_new_qty} units (₦${data.tricycle_rider_new_amt.toLocaleString()})` : '-', 90, 123, 106.5, false, 7);
+    drawCenteredText(data.tricycle_rider_ren_qty > 0 ? `${data.tricycle_rider_ren_qty} units (₦${data.tricycle_rider_ren_amt.toLocaleString()})` : '-', 123, 156, 106.5, false, 7);
+    const triTotal = data.tricycle_own_new_amt + data.tricycle_own_ren_amt + data.tricycle_rider_new_amt + data.tricycle_rider_ren_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${triTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 98, { align: 'right' });
+
+    // --- ROW 2: MOTORCYCLE ---
+    doc.setTextColor(9, 13, 22);
+    drawCenteredText('2.', 12, 24, 112.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('MOTORCYCLE', 26, 112.5);
+    drawCenteredText('OWNERSHIP', 24, 90, 118, true, 7.5);
+    drawCenteredText('RIDER', 90, 156, 118, true, 7.5);
+    drawCenteredText('New (₦2,500)', 24, 57, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (₦2,500)', 57, 90, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('New (₦1,500)', 90, 123, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (₦1,500)', 123, 156, 123, false, 6.5, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 128.5);
+    drawCenteredText(data.motorcycle_own_new_qty > 0 ? `${data.motorcycle_own_new_qty} units (₦${data.motorcycle_own_new_amt.toLocaleString()})` : '-', 24, 57, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_own_ren_qty > 0 ? `${data.motorcycle_own_ren_qty} units (₦${data.motorcycle_own_ren_amt.toLocaleString()})` : '-', 57, 90, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_rider_new_qty > 0 ? `${data.motorcycle_rider_new_qty} units (₦${data.motorcycle_rider_new_amt.toLocaleString()})` : '-', 90, 123, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_rider_ren_qty > 0 ? `${data.motorcycle_rider_ren_qty} units (₦${data.motorcycle_rider_ren_amt.toLocaleString()})` : '-', 123, 156, 128.5, false, 7);
+    const motoTotal = data.motorcycle_own_new_amt + data.motorcycle_own_ren_amt + data.motorcycle_rider_new_amt + data.motorcycle_rider_ren_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${motoTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 120, { align: 'right' });
+
+    // --- ROW 3: TAXI ---
+    doc.setTextColor(9, 13, 22);
+    drawCenteredText('3.', 12, 24, 134.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('TAXI', 26, 134.5);
+    drawCenteredText('New (₦10,000)', 24, 90, 140, false, 7, [100, 116, 139]);
+    drawCenteredText('Renewal (₦5,000)', 90, 156, 140, false, 7, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 146.5);
+    drawCenteredText(data.taxi_new_qty > 0 ? `${data.taxi_new_qty} units (₦${data.taxi_new_amt.toLocaleString()})` : '-', 24, 90, 146.5, false, 7);
+    drawCenteredText(data.taxi_ren_qty > 0 ? `${data.taxi_ren_qty} units (₦${data.taxi_ren_amt.toLocaleString()})` : '-', 90, 156, 146.5, false, 7);
+    const taxiTotal = data.taxi_new_amt + data.taxi_ren_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${taxiTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 140, { align: 'right' });
+
+    // --- ROW 4: KURKURA ---
+    doc.setTextColor(9, 13, 22);
+    drawCenteredText('4.', 12, 24, 152.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('KURKURA', 26, 152.5);
+    drawCenteredText('New (₦10,000)', 24, 90, 158, false, 7, [100, 116, 139]);
+    drawCenteredText('Renewal (₦5,000)', 90, 156, 158, false, 7, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 164.5);
+    drawCenteredText(data.kurkura_new_qty > 0 ? `${data.kurkura_new_qty} units (₦${data.kurkura_new_amt.toLocaleString()})` : '-', 24, 90, 164.5, false, 7);
+    drawCenteredText(data.kurkura_ren_qty > 0 ? `${data.kurkura_ren_qty} units (₦${data.kurkura_ren_amt.toLocaleString()})` : '-', 90, 156, 164.5, false, 7);
+    const kurTotal = data.kurkura_new_amt + data.kurkura_ren_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${kurTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 158, { align: 'right' });
+
+    // --- ROW 5: LOST OF ID/STICKER ---
+    doc.setTextColor(9, 13, 22);
+    drawCenteredText('5.', 12, 24, 170.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('LOST OF ID/STICKER', 26, 170.5);
+    drawCenteredText('Tricycle (₦2,500)', 24, 57, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Motorcycle (₦2,500)', 57, 90, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Taxi (₦2,500)', 90, 123, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Kurkura (₦2,500)', 123, 156, 176, false, 6.5, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 182.5);
+    drawCenteredText(data.lost_tricycle_qty > 0 ? `${data.lost_tricycle_qty} (₦${data.lost_tricycle_amt.toLocaleString()})` : '-', 24, 57, 182.5, false, 7);
+    drawCenteredText(data.lost_motorcycle_qty > 0 ? `${data.lost_motorcycle_qty} (₦${data.lost_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 182.5, false, 7);
+    drawCenteredText(data.lost_taxi_qty > 0 ? `${data.lost_taxi_qty} (₦${data.lost_taxi_amt.toLocaleString()})` : '-', 90, 123, 182.5, false, 7);
+    drawCenteredText(data.lost_kurkura_qty > 0 ? `${data.lost_kurkura_qty} (₦${data.lost_kurkura_amt.toLocaleString()})` : '-', 123, 156, 182.5, false, 7);
+    const lostTotal = data.lost_tricycle_amt + data.lost_motorcycle_amt + data.lost_taxi_amt + data.lost_kurkura_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${lostTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 176, { align: 'right' });
+
+    // --- ROW 6: CHANGE OF OWNERSHIP ---
+    doc.setTextColor(9, 13, 22);
+    drawCenteredText('6.', 12, 24, 188.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('CHANGE OF OWNERSHIP', 26, 188.5);
+    drawCenteredText('Tricycle (₦2,000)', 24, 57, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Motorcycle (₦2,000)', 57, 90, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Taxi (₦2,000)', 90, 123, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Kurkura (₦2,000)', 123, 156, 194, false, 6.5, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 200.5);
+    drawCenteredText(data.change_tricycle_qty > 0 ? `${data.change_tricycle_qty} (₦${data.change_tricycle_amt.toLocaleString()})` : '-', 24, 57, 200.5, false, 7);
+    drawCenteredText(data.change_motorcycle_qty > 0 ? `${data.change_motorcycle_qty} (₦${data.change_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 200.5, false, 7);
+    drawCenteredText(data.change_taxi_qty > 0 ? `${data.change_taxi_qty} (₦${data.change_taxi_amt.toLocaleString()})` : '-', 90, 123, 200.5, false, 7);
+    drawCenteredText(data.change_kurkura_qty > 0 ? `${data.change_kurkura_qty} (₦${data.change_kurkura_amt.toLocaleString()})` : '-', 123, 156, 200.5, false, 7);
+    const chgTotal = data.change_tricycle_amt + data.change_motorcycle_amt + data.change_taxi_amt + data.change_kurkura_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${chgTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 194, { align: 'right' });
+
+    // --- ROW 7: TRANSFER ---
+    doc.setTextColor(9, 13, 22);
+    drawCenteredText('7.', 12, 24, 206.5, true, 8.5);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('TRANSFER', 26, 206.5);
+    drawCenteredText('Tricycle (₦2,000)', 24, 57, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Motorcycle (₦2,000)', 57, 90, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Taxi (₦2,000)', 90, 123, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Kurkura (₦2,000)', 123, 156, 212, false, 6.5, [100, 116, 139]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('AMOUNT', 14, 218.5);
+    drawCenteredText(data.transfer_tricycle_qty > 0 ? `${data.transfer_tricycle_qty} (₦${data.transfer_tricycle_amt.toLocaleString()})` : '-', 24, 57, 218.5, false, 7);
+    drawCenteredText(data.transfer_motorcycle_qty > 0 ? `${data.transfer_motorcycle_qty} (₦${data.transfer_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 218.5, false, 7);
+    drawCenteredText(data.transfer_taxi_qty > 0 ? `${data.transfer_taxi_qty} (₦${data.transfer_taxi_amt.toLocaleString()})` : '-', 90, 123, 218.5, false, 7);
+    drawCenteredText(data.transfer_kurkura_qty > 0 ? `${data.transfer_kurkura_qty} (₦${data.transfer_kurkura_amt.toLocaleString()})` : '-', 123, 156, 218.5, false, 7);
+    const transTotal = data.transfer_tricycle_amt + data.transfer_motorcycle_amt + data.transfer_taxi_amt + data.transfer_kurkura_amt;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`₦${transTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 212, { align: 'right' });
+
+    // --- TOTAL ROWS (AT THE BOTTOM) ---
+    // Total Units Row
+    doc.setFillColor(241, 245, 249);
+    doc.rect(12.3, 220.3, 185.4, 6.4, 'F');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(9, 13, 22);
+    doc.text('TOTAL UNITS', 150, 225, { align: 'right' });
+    doc.text(`${totalQty.toLocaleString()} Units`, 194, 225, { align: 'right' });
+
+    // Total Amount Row
+    doc.setFillColor(...BRAND_DARK);
+    doc.rect(12.3, 227.3, 185.4, 6.4, 'F');
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(255, 255, 255);
-    doc.text('GRAND TOTAL SUMS', 16, yPos + 6);
-    doc.text(totalQty.toString(), 155, yPos + 6, { align: 'center' });
-    doc.text(`₦${totalAmt.toFixed(2)}`, 194, yPos + 6, { align: 'right' });
+    doc.text('TOTAL AMOUNT DUE', 150, 232, { align: 'right' });
+    doc.text(`₦${totalAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 232, { align: 'right' });
 
-    // 8. Signatures Block (Matching paper layout perfectly)
-    yPos += 18;
-    if (yPos > 240) {
-      doc.addPage();
-      yPos = 30;
-      // Re-apply premium frame border and corner decorations on new page
-      drawPremiumPageBorders(doc);
-
-    }
-
+    // 8. Signatures Block (Matching physical layout perfectly on exactly one page)
+    const sigY = 248;
     doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.4);
 
     // Left Signature: ICT Payout Desk Officer
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     doc.setTextColor(9, 13, 22);
-    doc.text('ICT PAYOUT DESK OFFICER', 15, yPos);
+    doc.text('ICT PAYOUT DESK OFFICER', 15, sigY);
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Officer Name:    ${officerName || 'Duty Officer'}`, 15, yPos + 5.5);
-    doc.text('Signature/Date: ............................................', 15, yPos + 12);
+    doc.text(`Name:   ${officerName || '................................'}`, 15, sigY + 6.5);
+    doc.text('Sign/Date: ............................................', 15, sigY + 13);
 
     // Right Signature: Unit/Zonal Command
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     doc.setTextColor(9, 13, 22);
-    doc.text('UNIT/ZONAL COMMAND', 115, yPos);
+    doc.text('UNIT/ZONAL COMMAND', 115, sigY);
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
-    doc.text('Command Officer Name: .............................', 115, yPos + 5.5);
-    doc.text('Signature/Date:             .............................', 115, yPos + 12);
+    doc.text('Name:   ............................................', 115, sigY + 6.5);
+    doc.text('Sign/Date: ............................................', 115, sigY + 13);
 
     // Centered seal
     doc.setDrawColor(16, 185, 129);
     doc.setLineWidth(0.6);
-    doc.circle(100, yPos + 6, 8);
+    doc.circle(100, sigY + 6, 8);
     doc.setFontSize(5);
     doc.setTextColor(16, 185, 129);
-    doc.text('YOROTA', 100, yPos + 5, { align: 'center' });
-    doc.text('ICT DEPT', 100, yPos + 8, { align: 'center' });
+    doc.text('YOROTA', 100, sigY + 5, { align: 'center' });
+    doc.text('ICT DEPT', 100, sigY + 8, { align: 'center' });
 
     // Save File
     doc.save(`YOROTA_ICT_Payout_Sheet_${new Date().toISOString().split('T')[0]}.pdf`);
