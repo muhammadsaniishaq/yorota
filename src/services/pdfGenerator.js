@@ -49,6 +49,19 @@ const drawPremiumPageBorders = (doc) => {
   doc.rect(194.5, 288.3, 8, 1.2, 'F'); doc.rect(201.3, 282, 1.2, 8, 'F');
 };
 
+const addLogoWatermark = (doc, logoImg) => {
+  if (!logoImg) return;
+  try {
+    const gState = new doc.GState({ opacity: 0.035 }); // 3.5% opacity for faint overlay
+    doc.saveGraphicsState();
+    doc.setGState(gState);
+    doc.addImage(logoImg, 'PNG', 55, 98.5, 100, 100); // perfectly centered A4
+    doc.restoreGraphicsState();
+  } catch (e) {
+    console.error('Failed to draw logo watermark:', e);
+  }
+};
+
 const addGovernmentHeader = (doc, title, logoImg) => {
   // Official green decorative bar
   doc.setFillColor(...BRAND_GREEN);
@@ -145,6 +158,9 @@ export const pdfGenerator = {
 
     // 1. Premium Government & Safety Border Frame with Corner Brackets
     drawPremiumPageBorders(doc);
+
+    // Add centered faint logo watermark
+    addLogoWatermark(doc, logoImg);
 
     // 2. Add Standardized Government Header
     addGovernmentHeader(doc, 'Official Payment Receipt', logoImg);
@@ -289,6 +305,9 @@ export const pdfGenerator = {
     // Draw premium page borders!
     drawPremiumPageBorders(doc);
 
+    // Add centered faint logo watermark
+    addLogoWatermark(doc, logoImg);
+
     // Date Range Meta Info
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
@@ -431,6 +450,9 @@ export const pdfGenerator = {
     // Draw premium page borders!
     drawPremiumPageBorders(doc);
 
+    // Add centered faint logo watermark
+    addLogoWatermark(doc, logoImg);
+
     // Date Meta Info
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
@@ -511,12 +533,17 @@ export const pdfGenerator = {
     doc.save(`ledger-summary-${new Date().toISOString().split('T')[0]}.pdf`);
   },
 
-  // --- GENERATE YOROTA ICT DAILY PAYOUT FORM ---
   generateIctPayoutReport: async (dateRangeText, records, officerName, commandName) => {
     const doc = new jsPDF();
 
+    // Preload logo
+    const logoImg = await loadImage('/logo.png');
+
     // 1. Premium Government & Safety Border Frame with Corner Brackets
     drawPremiumPageBorders(doc);
+
+    // 2. Faint Center Watermark (Logo watermark)
+    addLogoWatermark(doc, logoImg);
 
     // Double Solid Yellow road dividing lines (thematic top accent)
     doc.setDrawColor(245, 200, 0);
@@ -524,31 +551,7 @@ export const pdfGenerator = {
     doc.line(15, 11, 195, 11);
     doc.line(15, 12.8, 195, 12.8);
 
-
-    // 2. Faint Center Watermark (Road safety emblem / traffic lanes)
-    const wcx = 105;
-    const wcy = 150;
-    doc.setDrawColor(242, 248, 245); // Extremely faint green-slate
-    doc.setLineWidth(1.2);
-    doc.circle(wcx, wcy, 45, 'S'); // Outer circle
-    doc.circle(wcx, wcy, 38, 'S'); // Inner circle
-    doc.setLineWidth(0.5);
-    // Dashed road lane dividers
-    doc.setLineDash([3, 3]);
-    doc.line(wcx, wcy - 35, wcx, wcy + 35); // Vertical dividing line
-    doc.line(wcx - 35, wcy, wcx + 35, wcy); // Horizontal dividing line
-    doc.setLineDash([]); // Reset dash pattern
-    
-    // Watermark core shield
-    doc.circle(wcx, wcy, 12, 'S');
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(230, 242, 235);
-    doc.text('YOROTA SAFETY', wcx, wcy - 2, { align: 'center' });
-    doc.text('SECURE SEAL', wcx, wcy + 3, { align: 'center' });
-
     // 3. Center Logo Container (Perfect match to high-fidelity A4 web preview)
-    const logoImg = await loadImage('/logo.png');
     const logoBoxSize = 18;
     const logoBoxX = 105 - (logoBoxSize / 2);
     const logoBoxY = 16;

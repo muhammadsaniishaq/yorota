@@ -630,9 +630,9 @@ export default function Reports({ currentUser, setGlobalNotification }) {
             <div className="absolute bottom-6 right-6 w-6 h-6 border-b-[3px] border-r-[3px] border-emerald-600 pointer-events-none" />
             <div className="absolute bottom-8 right-8 w-4 h-4 border-b-[1.5px] border-r-[1.5px] border-[#F5C800] pointer-events-none" />
 
-            {/* Visual Vector Road Safety Badge Background watermark */}
-            <div className="absolute inset-0 opacity-[0.025] flex items-center justify-center pointer-events-none select-none">
-              <Shield className="w-96 h-96 text-slate-900" />
+            {/* Visual Vector Road Safety Logo Background watermark */}
+            <div className="absolute inset-0 opacity-[0.035] flex items-center justify-center pointer-events-none select-none">
+              <img src="/logo.png" alt="YOROTA Watermark" className="w-96 h-96 object-contain filter grayscale" />
             </div>
 
             {/* Form Sheet Content */}
