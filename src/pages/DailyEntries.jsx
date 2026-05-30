@@ -51,9 +51,9 @@ export default function DailyEntries({ setGlobalNotification }) {
     setModalOpen(true);
   };
 
-  const handlePrintReceipt = (record) => {
+  const handlePrintReceipt = async (record) => {
     try {
-      pdfGenerator.generateReceipt(record);
+      await pdfGenerator.generateReceipt(record);
       setGlobalNotification({ message: `Receipt downloaded for ${record.customer_name}`, type: 'success' });
     } catch (err) {
       console.error(err);

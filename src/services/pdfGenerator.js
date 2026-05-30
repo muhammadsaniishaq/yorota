@@ -54,16 +54,16 @@ const addGovernmentHeader = (doc, title, logoImg) => {
   doc.setFillColor(...BRAND_GREEN);
   doc.rect(0, 0, 210, 8, 'F');
 
-  // Government Header Title
+  // Government Header Title - standardizing to Yobe State Government
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(...BRAND_DARK);
-  doc.text('YOROTA STATE GOVERNMENT', 105, 20, { align: 'center' });
+  doc.text('YOBE STATE GOVERNMENT', 105, 20, { align: 'center' });
 
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setFont('Helvetica', 'normal');
   doc.setTextColor(100, 116, 139); // Slate 500
-  doc.text('ROAD TRAFFIC OFFICE MANAGEMENT & REVENUE DEPT', 105, 26, { align: 'center' });
+  doc.text('YOBE STATE ROAD TRAFFIC MANAGEMENT AGENCY (YOROTA)', 105, 26, { align: 'center' });
   doc.text('YOROTA Smart Office - Official Document', 105, 31, { align: 'center' });
 
   // Optional Left side Logo image for high-end feel, perfectly matching margins
@@ -133,129 +133,144 @@ const addSignatureBlock = (doc, yPos, officerName) => {
 
 export const pdfGenerator = {
   // --- GENERATE CUSTOMER RECEIPT ---
-  generateReceipt: (record) => {
+  generateReceipt: async (record) => {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a5' // A5 is standard receipt size
+      format: 'a4'
     });
 
-    // Outer border
-    doc.setDrawColor(...BRAND_GREEN);
-    doc.setLineWidth(0.5);
-    doc.rect(5, 5, 138, 200);
+    // Preload logo
+    const logoImg = await loadImage('/logo.png');
 
-    // Decorative Bar
-    doc.setFillColor(...BRAND_GREEN);
-    doc.rect(5, 5, 138, 5, 'F');
+    // 1. Premium Government & Safety Border Frame with Corner Brackets
+    drawPremiumPageBorders(doc);
 
-    // Header
+    // 2. Add Standardized Government Header
+    addGovernmentHeader(doc, 'Official Payment Receipt', logoImg);
+
+    // 3. Customer Detail Panel (A4 size)
+    doc.setFillColor(248, 250, 252);
+    doc.rect(15, 52, 180, 28, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.rect(15, 52, 180, 28, 'S');
+
+    doc.setTextColor(...BRAND_DARK);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(10);
-    doc.setTextColor(...BRAND_DARK);
-    doc.text('YOROTA ROAD TRAFFIC OFFICE', 74, 18, { align: 'center' });
-    doc.setFontSize(7);
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text('OFFICIAL PAYMENT RECEIPT & OPERATING CLEARANCE', 74, 23, { align: 'center' });
-
-    doc.setDrawColor(226, 232, 240);
-    doc.line(10, 27, 138, 27);
-
-    // Receipt details
-    doc.setFontSize(8);
-    doc.setFont('Helvetica', 'bold');
-    doc.setTextColor(...BRAND_GREEN);
-    doc.text(`RECEIPT NO: RTO-${record.id.substring(2, 8).toUpperCase()}`, 10, 34);
-
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Date: ${new Date(record.created_at).toLocaleDateString()}`, 138, 34, { align: 'right' });
-
-    // Customer Detail Panel
-    doc.setFillColor(248, 250, 252);
-    doc.rect(10, 39, 128, 24, 'F');
-    
-    doc.setTextColor(...BRAND_DARK);
-    doc.setFont('Helvetica', 'bold');
-    doc.text('CUSTOMER RECORDS:', 13, 44);
+    doc.text('CUSTOMER RECORDS:', 20, 58);
     
     doc.setFont('Helvetica', 'normal');
-    doc.text(`Name:       ${record.customer_name}`, 13, 49);
-    doc.text(`Phone:      ${record.phone_number}`, 13, 54);
-    doc.text(`Officer:    ${record.officer_name}`, 13, 59);
+    doc.setFontSize(9);
+    doc.text(`Receipt Number:   RTO-${record.id.substring(2, 8).toUpperCase()}`, 20, 64);
+    doc.text(`Customer Name:    ${record.customer_name}`, 20, 70);
+    doc.text(`Phone Number:     ${record.phone_number}`, 20, 75);
+    
+    doc.text(`Issue Date:       ${new Date(record.created_at).toLocaleDateString()}`, 110, 64);
+    doc.text(`Issuing Officer:  ${record.officer_name}`, 110, 70);
+    doc.text(`Service ID:       ${record.id.substring(0, 12)}`, 110, 75);
 
-    // Itemized table using manual rendering for A5 compactness
-    doc.setFillColor(...BRAND_GREEN);
-    doc.rect(10, 68, 128, 6, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('Helvetica', 'bold');
-    doc.text('SERVICE RENDERED', 13, 72);
-    doc.text('QTY', 95, 72, { align: 'center' });
-    doc.text('UNIT PRICE', 113, 72, { align: 'right' });
-    doc.text('TOTAL', 133, 72, { align: 'right' });
+    // 4. Itemized table using autoTable for maximum A4 elegance
+    const logRows = [[
+      record.service?.name || 'Service Category',
+      record.quantity.toString(),
+      `₦${(record.amount / record.quantity).toFixed(2)}`,
+      `₦${parseFloat(record.amount).toFixed(2)}`
+    ]];
 
-    doc.setTextColor(...BRAND_DARK);
-    doc.setFont('Helvetica', 'normal');
-    doc.text(record.service?.name || 'Service Category', 13, 82);
-    doc.text(record.quantity.toString(), 95, 82, { align: 'center' });
-    doc.text(`₦${(record.amount / record.quantity).toFixed(2)}`, 113, 82, { align: 'right' });
-    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 133, 82, { align: 'right' });
+    doc.autoTable({
+      startY: 86,
+      head: [['Service Rendered', 'Qty', 'Unit Price', 'Total Amount']],
+      body: logRows,
+      headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      theme: 'striped',
+      columnStyles: {
+        1: { halign: 'center' },
+        2: { halign: 'right' },
+        3: { halign: 'right' }
+      },
+      didDrawPage: (data) => {
+        drawPremiumPageBorders(doc);
+      }
+    });
 
-    doc.line(10, 86, 138, 86);
-
-    // Notes
+    let currentY = doc.lastAutoTable.finalY + 10;
+    
+    // 5. Notes / Vehicle Remarks block on the left
     if (record.notes) {
-      doc.setFont('Helvetica', 'italic');
-      doc.setFontSize(7);
-      doc.setTextColor(100, 116, 139);
-      doc.text(`Notes: ${record.notes}`, 10, 93);
+      doc.setFillColor(248, 250, 252);
+      doc.rect(15, currentY, 100, 25, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.rect(15, currentY, 100, 25, 'S');
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...BRAND_DARK);
+      doc.text('REMARKS / VEHICLE DETAILS:', 20, currentY + 6);
+      doc.setFont('Helvetica', 'normal');
+      doc.text(record.notes, 20, currentY + 12, { maxWidth: 90 });
     }
 
-    // Totals Panel
+    // 6. Totals Panel on the right (x: 125 to 195)
     doc.setFillColor(248, 250, 252);
-    doc.rect(80, 100, 58, 25, 'F');
-    
+    doc.rect(125, currentY, 70, 25, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.rect(125, currentY, 70, 25, 'S');
+
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     doc.setTextColor(100, 116, 139);
-    doc.text('Subtotal:', 85, 106);
-    doc.text('Vat (0%):', 85, 112);
+    doc.text('Subtotal:', 130, currentY + 6);
+    doc.text('Vat (0%):', 130, currentY + 12);
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(...BRAND_GREEN);
-    doc.text('GRAND TOTAL:', 85, 120);
+    doc.text('GRAND TOTAL:', 130, currentY + 20);
 
     doc.setFont('Helvetica', 'normal');
     doc.setTextColor(...BRAND_DARK);
-    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 133, 106, { align: 'right' });
-    doc.text('₦0.00', 133, 112, { align: 'right' });
+    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 190, currentY + 6, { align: 'right' });
+    doc.text('₦0.00', 190, currentY + 12, { align: 'right' });
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 133, 120, { align: 'right' });
+    doc.text(`₦${parseFloat(record.amount).toFixed(2)}`, 190, currentY + 20, { align: 'right' });
 
-    // Validation Seal and sign
+    // 7. Validation Seal and Signatures
+    let sigY = currentY + 35;
+    if (sigY > 240) {
+      doc.addPage();
+      sigY = 30;
+      drawPremiumPageBorders(doc);
+    }
+
     doc.setDrawColor(...BRAND_GREEN);
-    doc.circle(35, 145, 12);
-    doc.setFontSize(6);
+    doc.setLineWidth(0.8);
+    doc.circle(45, sigY + 12, 15);
+    doc.setFontSize(6.5);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text('OFFICIAL SEAL', 35, 143, { align: 'center' });
-    doc.text('PAID & VALIDATED', 35, 147, { align: 'center' });
+    doc.setFont('Helvetica', 'bold');
+    doc.text('OFFICIAL SEAL', 45, sigY + 10, { align: 'center' });
+    doc.text('PAID & VALIDATED', 45, sigY + 15, { align: 'center' });
 
     doc.setDrawColor(203, 213, 225);
-    doc.line(80, 150, 130, 150);
+    doc.setLineWidth(0.4);
+    doc.line(115, sigY + 18, 185, sigY + 18);
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
-    doc.text('ISSUING OFFICER SIGNATURE', 80, 154);
+    doc.text('ISSUING DESK OFFICER', 115, sigY + 23);
     doc.setFont('Helvetica', 'bold');
-    doc.text(record.officer_name, 80, 159);
+    doc.text(record.officer_name, 115, sigY + 28);
 
-    // Footer notice
+    // 8. Footer notice
     doc.setFont('Helvetica', 'italic');
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setTextColor(100, 116, 139);
-    doc.text('This permit acts as official temporary clearance for road services.', 74, 185, { align: 'center' });
-    doc.text('Keep safely in vehicle cabin at all times.', 74, 189, { align: 'center' });
+    doc.text('This permit acts as official temporary clearance for road services.', 105, 275, { align: 'center' });
+    doc.text('Keep safely in vehicle cabin at all times.', 105, 280, { align: 'center' });
 
     // Download
     doc.save(`receipt-${record.customer_name.replace(/\s+/g, '_')}-${record.id.substring(2, 6)}.pdf`);
@@ -268,7 +283,10 @@ export const pdfGenerator = {
     // Preload logo
     const logoImg = await loadImage('/logo.png');
     // Add Header
-    addGovernmentHeader(doc, `${type} Activity & Audit Report`, logoImg);
+    addGovernmentHeader(doc, `${type} Activity & Report`, logoImg);
+
+    // Draw premium page borders!
+    drawPremiumPageBorders(doc);
 
     // Date Range Meta Info
     doc.setFont('Helvetica', 'bold');
@@ -359,6 +377,9 @@ export const pdfGenerator = {
       headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 8 },
       theme: 'striped',
+      didDrawPage: (data) => {
+        drawPremiumPageBorders(doc);
+      }
     });
 
     let currentY = doc.lastAutoTable.finalY + 12;
@@ -384,7 +405,10 @@ export const pdfGenerator = {
       body: logRows.length > 0 ? logRows : [['-', 'No logs recorded for this period', '-', '-', '-', '-']],
       headStyles: { fillColor: BRAND_DARK, textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 8 },
-      theme: 'striped'
+      theme: 'striped',
+      didDrawPage: (data) => {
+        drawPremiumPageBorders(doc);
+      }
     });
 
     // Signature stamp lines
@@ -402,6 +426,9 @@ export const pdfGenerator = {
     const logoImg = await loadImage('/logo.png');
     // Add Header
     addGovernmentHeader(doc, 'Office Financial Ledger Summary', logoImg);
+
+    // Draw premium page borders!
+    drawPremiumPageBorders(doc);
 
     // Date Meta Info
     doc.setFont('Helvetica', 'bold');
@@ -471,6 +498,9 @@ export const pdfGenerator = {
       columnStyles: {
         1: { cellWidth: 20 },
         3: { cellWidth: 25, halign: 'right' }
+      },
+      didDrawPage: (data) => {
+        drawPremiumPageBorders(doc);
       }
     });
 
@@ -761,6 +791,9 @@ export const pdfGenerator = {
             dataCell.cell.styles.fillColor = [241, 245, 249];
           }
         }
+      },
+      didDrawPage: (data) => {
+        drawPremiumPageBorders(doc);
       }
     });
 
