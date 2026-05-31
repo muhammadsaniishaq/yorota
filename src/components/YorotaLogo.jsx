@@ -8,10 +8,10 @@ import { Shield } from 'lucide-react';
  */
 export default function YorotaLogo({ className = "w-10 h-10", showText = false }) {
   return (
-    <div className={`relative flex items-center gap-2.5 ${className}`}>
+    <div className="relative flex items-center gap-2 select-none shrink-0">
       
       {/* Official YOROTA Logo Image container */}
-      <div className="relative w-full h-full aspect-square shrink-0 select-none flex items-center justify-center">
+      <div className={`relative shrink-0 flex items-center justify-center ${className}`}>
         <img 
           src="/logo.png" 
           alt="YOROTA Official Logo" 
@@ -22,11 +22,11 @@ export default function YorotaLogo({ className = "w-10 h-10", showText = false }
       </div>
 
       {showText && (
-        <div className="flex flex-col justify-center min-w-0 select-none">
-          <span className="font-black text-sm tracking-widest text-slate-100 block gold-text-glow leading-none">
+        <div className="flex flex-col justify-center min-w-0">
+          <span className="font-black text-xs sm:text-sm tracking-widest text-slate-100 block gold-text-glow leading-none">
             YOROTA
           </span>
-          <span className="text-[9px] text-[#F5C800] font-black tracking-[0.2em] block uppercase mt-0.5 leading-none">
+          <span className="text-[8px] sm:text-[9px] text-[#F5C800] font-black tracking-[0.2em] block uppercase mt-0.5 leading-none">
             Smart Office
           </span>
         </div>
@@ -35,3 +35,4 @@ export default function YorotaLogo({ className = "w-10 h-10", showText = false }
     </div>
   );
 }
+
