@@ -293,6 +293,156 @@ export const pdfGenerator = {
     doc.save(`receipt-${record.customer_name.replace(/\s+/g, '_')}-${record.id.substring(2, 6)}.pdf`);
   },
 
+  // --- GENERATE DEBTOR TRANSACTION RECEIPT ---
+  generateDebtorReceipt: async (debtor, tx) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Preload logo
+    const logoImg = await loadImage('/logo.png');
+
+    // 1. Premium Government & Safety Border Frame with Corner Brackets
+    drawPremiumPageBorders(doc);
+
+    // Add centered faint logo watermark
+    addLogoWatermark(doc, logoImg);
+
+    // 2. Add Standardized Government Header
+    const titleText = tx.type === 'repayment' ? 'Debt Repayment Receipt' : 'Credit Accrual Statement';
+    addGovernmentHeader(doc, titleText, logoImg);
+
+    // 3. Debtor Detail Panel (A4 size)
+    doc.setFillColor(248, 250, 252);
+    doc.rect(15, 52, 180, 32, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.rect(15, 52, 180, 32, 'S');
+
+    doc.setTextColor(9, 13, 22); // BRAND_DARK
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('DEBTOR PROFILE & ACCOUNT DETAILS:', 20, 58);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Customer Name:    ${debtor.customer_name}`, 20, 64);
+    doc.text(`Phone Number:     ${debtor.phone_number}`, 20, 70);
+    doc.text(`Payment Due Date:  ${debtor.due_date}`, 20, 76);
+    
+    doc.text(`Receipt Reference: RTO-DB-${debtor.id.substring(0, 6).toUpperCase()}`, 110, 64);
+    doc.text(`Transaction Date:  ${tx.date}`, 110, 70);
+    doc.text(`Account Status:    ${debtor.status.toUpperCase()}`, 110, 76);
+
+    // 4. Transaction Description Table
+    const txTypeLabel = tx.type === 'repayment' ? 'REPAYMENT CASH DEDUCTION (-)' : 'ADDITIONAL CREDIT ACCRUAL (+)';
+    const logRows = [[
+      txTypeLabel,
+      tx.reason || (tx.type === 'repayment' ? 'Cash settlement repayment' : 'Accrued credit addition'),
+      `₦${parseFloat(tx.amount).toFixed(2)}`
+    ]];
+
+    doc.autoTable({
+      startY: 90,
+      head: [['Transaction Type / Action', 'Justification / Details', 'Amount']],
+      body: logRows,
+      headStyles: { fillColor: tx.type === 'repayment' ? BRAND_GREEN : [217, 119, 6], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      theme: 'striped',
+      columnStyles: {
+        2: { halign: 'right' }
+      },
+      didDrawPage: (data) => {
+        drawPremiumPageBorders(doc);
+      }
+    });
+
+    let currentY = doc.lastAutoTable.finalY + 10;
+    
+    // 5. Audit Remarks block on the left
+    doc.setFillColor(248, 250, 252);
+    doc.rect(15, currentY, 100, 28, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.rect(15, currentY, 100, 28, 'S');
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(9, 13, 22);
+    doc.text('REGULATORY COMPLIANCE AUDIT NOTICE:', 20, currentY + 6);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8);
+    const noticeText = tx.type === 'repayment' 
+      ? 'This receipt verifies that the cash repayment has been collected, subtracted from the outstanding profile, and registered directly in the office ledger.' 
+      : 'This statement confirms that credit has been accrued. Outstanding balances are subject to prompt settlement in accordance with regulatory terms.';
+    doc.text(noticeText, 20, currentY + 12, { maxWidth: 90 });
+
+    // 6. Outstanding Balance Summary Card on the right
+    doc.setFillColor(248, 250, 252);
+    doc.rect(125, currentY, 70, 28, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.rect(125, currentY, 70, 28, 'S');
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Transaction Amount:', 130, currentY + 6);
+    doc.text('Previous Balance:', 130, currentY + 12);
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(tx.type === 'repayment' ? BRAND_GREEN : [217, 119, 6]);
+    doc.text('UPDATED DEBT BAL:', 130, currentY + 22);
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(9, 13, 22);
+    doc.text(`₦${parseFloat(tx.amount).toFixed(2)}`, 190, currentY + 6, { align: 'right' });
+    const prevBal = tx.type === 'repayment' ? tx.updatedBalance + tx.amount : tx.updatedBalance - tx.amount;
+    doc.text(`₦${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 190, currentY + 12, { align: 'right' });
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(tx.updatedBalance > 0 ? [239, 68, 68] : BRAND_GREEN);
+    doc.text(`₦${parseFloat(tx.updatedBalance).toFixed(2)}`, 190, currentY + 22, { align: 'right' });
+
+    // 7. Validation Seal and Signatures
+    let sigY = currentY + 38;
+    if (sigY > 240) {
+      doc.addPage();
+      sigY = 30;
+      drawPremiumPageBorders(doc);
+    }
+
+    doc.setDrawColor(tx.type === 'repayment' ? BRAND_GREEN : [245, 200, 0]);
+    doc.setLineWidth(0.8);
+    doc.circle(45, sigY + 12, 15);
+    doc.setFontSize(6.5);
+    doc.setTextColor(tx.type === 'repayment' ? BRAND_GREEN : [217, 119, 6]);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('OFFICIAL RECORD', 45, sigY + 9, { align: 'center' });
+    doc.text(tx.type === 'repayment' ? 'REPAYMENT STAMP' : 'ACCRUAL STAMP', 45, sigY + 14, { align: 'center' });
+
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.4);
+    doc.line(115, sigY + 18, 185, sigY + 18);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text('AUTHORIZING AUDIT OFFICER', 115, sigY + 23);
+    doc.setFont('Helvetica', 'bold');
+    doc.text(tx.received_by || 'Staff Officer', 115, sigY + 28);
+
+    // 8. Footer notice
+    doc.setFont('Helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('This receipt acts as an official record of balance adjustment at YOROTA Smart Office.', 105, 275, { align: 'center' });
+    doc.text('Please retain this slip for reconciliation reference.', 105, 280, { align: 'center' });
+
+    // Save
+    doc.save(`debtor-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
+  },
+
+
   // --- GENERATE REPORT (DAILY/MONTHLY/CUSTOM RANGE) ---
   generateReport: async (type, dateRangeText, records, summary, transactions) => {
     const doc = new jsPDF();

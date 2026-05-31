@@ -17,9 +17,11 @@ import {
   ChevronUp,
   PlusCircle,
   MinusCircle,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 import { db } from '../services/db';
+import { pdfGenerator } from '../services/pdfGenerator';
 
 export default function Debtors({ currentUser, setGlobalNotification }) {
   const [debtors, setDebtors] = useState([]);
@@ -55,6 +57,33 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
 
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleSendReminder = (debtor) => {
+    const rawPhone = debtor.phone_number.replace(/\D/g, ''); // strip non-digits
+    // Standardize to international format (234 for Nigeria) if starts with 0
+    const formattedPhone = rawPhone.startsWith('0') ? `234${rawPhone.substring(1)}` : rawPhone;
+    
+    const message = `Assalamu alaikum, a polite reminder from *YOROTA Smart Office*.\n\nDear *${debtor.customer_name}*, this is a friendly notification regarding your outstanding credit balance of *₦${parseFloat(debtor.amount_owed).toLocaleString(undefined, {minimumFractionDigits: 2})}*.\n\nYour scheduled payment settlement is due on *${debtor.due_date}*. Please arrange for prompt payment at your earliest convenience.\n\nThank you for your cooperation!`;
+    
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    setGlobalNotification({ message: `Pre-filled WhatsApp reminder opened for ${debtor.customer_name}!`, type: 'info' });
+  };
+
+  const handlePrintPastReceipt = (debtor, hist) => {
+    const isPay = hist.amount_paid !== undefined;
+    const txPayload = {
+      type: isPay ? 'repayment' : 'accrual',
+      amount: isPay ? hist.amount_paid : hist.amount_added,
+      date: hist.date,
+      reason: hist.reason || (isPay ? 'Cash settlement repayment' : 'Accrued credit addition'),
+      received_by: hist.received_by || 'Staff Officer',
+      updatedBalance: debtor.amount_owed // simplified, or we can print current balance
+    };
+    pdfGenerator.generateDebtorReceipt(debtor, txPayload);
+    setGlobalNotification({ message: 'Compiling past transaction slip PDF...', type: 'success' });
+  };
+
 
   const loadData = async () => {
     setLoading(true);
@@ -122,7 +151,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     setError('');
 
     try {
-      await db.debtors.create({
+      const createdDebtor = await db.debtors.create({
         customer_name: name.trim(),
         phone_number: phone.trim(),
         amount_owed: parseFloat(amount),
@@ -138,6 +167,17 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       setGlobalNotification({ message: `Registered credit account of ₦${parseFloat(amount).toLocaleString(undefined, {minimumFractionDigits: 2})} for ${name}`, type: 'success' });
       setAddModalOpen(false);
       loadData();
+
+      // Trigger automatic PDF receipt download
+      const createdTx = {
+        type: 'accrual',
+        amount: parseFloat(amount),
+        date: new Date().toISOString().split('T')[0],
+        reason: 'Initial credit account created',
+        received_by: currentUser?.name || 'Authorized Officer',
+        updatedBalance: parseFloat(amount)
+      };
+      pdfGenerator.generateDebtorReceipt(createdDebtor, createdTx);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error creating debtor log.');
@@ -162,7 +202,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     setError('');
 
     try {
-      await db.debtors.recordPayment(
+      const updatedDebtor = await db.debtors.recordPayment(
         selectedDebtor.id,
         parseFloat(payAmount),
         currentUser.name || 'Duty Officer'
@@ -174,6 +214,17 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       });
       setPayModalOpen(false);
       loadData();
+
+      // Trigger automatic PDF receipt download
+      const repaymentTx = {
+        type: 'repayment',
+        amount: parseFloat(payAmount),
+        date: new Date().toISOString().split('T')[0],
+        reason: 'Cash settlement repayment',
+        received_by: currentUser?.name || 'Duty Officer',
+        updatedBalance: updatedDebtor.amount_owed
+      };
+      pdfGenerator.generateDebtorReceipt(updatedDebtor, repaymentTx);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error posting payment.');
@@ -194,7 +245,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     setError('');
 
     try {
-      await db.debtors.increaseDebt(
+      const updatedDebtor = await db.debtors.increaseDebt(
         selectedDebtor.id,
         parseFloat(addDebtAmount),
         addDebtReason.trim() || 'Accrued additional credit',
@@ -207,6 +258,17 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       });
       setAddDebtModalOpen(false);
       loadData();
+
+      // Trigger automatic PDF receipt download
+      const accrualTx = {
+        type: 'accrual',
+        amount: parseFloat(addDebtAmount),
+        date: new Date().toISOString().split('T')[0],
+        reason: addDebtReason.trim() || 'Accrued additional credit',
+        received_by: addDebtOfficer.trim() || currentUser?.name || 'Duty Officer',
+        updatedBalance: updatedDebtor.amount_owed
+      };
+      pdfGenerator.generateDebtorReceipt(updatedDebtor, accrualTx);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error adding credit balance.');
@@ -354,11 +416,11 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                     </button>
 
                     {deb.status === 'unpaid' && (
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-1.5 flex-wrap">
                         {/* 1. Add Debt (+) */}
                         <button
                           onClick={() => openAddDebtModal(deb)}
-                          className="flex items-center gap-1 px-3 py-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 hover:bg-[#CA8A04] hover:text-[#070a13] text-[#F5C800] transition font-black text-[9px] uppercase cursor-pointer"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 hover:bg-[#CA8A04] hover:text-[#070a13] text-[#F5C800] transition font-black text-[9px] uppercase cursor-pointer"
                         >
                           <PlusCircle className="w-3.5 h-3.5" />
                           ADD DEBT
@@ -367,10 +429,20 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                         {/* 2. Deduct Debt (-) */}
                         <button
                           onClick={() => openPayModal(deb)}
-                          className="flex items-center gap-1 px-3 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#10b981] hover:text-[#070a13] text-emerald-400 transition font-black text-[9px] uppercase cursor-pointer"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#10b981] hover:text-[#070a13] text-emerald-400 transition font-black text-[9px] uppercase cursor-pointer"
                         >
                           <MinusCircle className="w-3.5 h-3.5" />
                           DEDUCT
+                        </button>
+
+                        {/* 3. Send WhatsApp Reminder */}
+                        <button
+                          onClick={() => handleSendReminder(deb)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#128C7E] hover:text-white text-[#25D366] transition font-black text-[9px] uppercase cursor-pointer"
+                          title="Send polite WhatsApp due reminder"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          REMIND
                         </button>
                       </div>
                     )}
@@ -400,7 +472,18 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                               )}
                               <div className="text-[8px] text-slate-500 mt-0.5 pl-4">Officer: {hist.received_by || 'Staff'}</div>
                             </div>
-                            <span className="text-slate-500 text-[9px]">{hist.date}</span>
+                            <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                              <span className="text-slate-500 text-[9px]">{hist.date}</span>
+                              <button
+                                type="button"
+                                onClick={() => handlePrintPastReceipt(deb, hist)}
+                                className="flex items-center gap-0.5 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[8px] font-black text-[#F5C800] uppercase hover:bg-slate-700 transition cursor-pointer select-none"
+                                title="Reprint PDF transaction slip"
+                              >
+                                <FileText className="w-2.5 h-2.5 text-[#F5C800]" />
+                                PDF
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -491,6 +574,16 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                                   <MinusCircle className="w-3.5 h-3.5" />
                                   DEDUCT REPAYMENT
                                 </button>
+
+                                {/* 3. Send WhatsApp Reminder */}
+                                <button
+                                  onClick={() => handleSendReminder(deb)}
+                                  className="flex items-center gap-1 px-3 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#128C7E] hover:text-white text-[#25D366] transition font-black text-[10px] uppercase cursor-pointer select-none active:scale-[0.98]"
+                                  title="Send polite WhatsApp due reminder"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  SEND REMINDER
+                                </button>
                               </>
                             ) : (
                               <span className="text-[10px] font-black text-emerald-400 inline-flex items-center gap-1 bg-emerald-500/5 px-3 py-1.5 rounded-xl border border-emerald-500/20">
@@ -530,11 +623,21 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                                         {!isPay && hist.reason && (
                                           <p className="text-[10px] text-slate-500 pl-6 italic">Accrual Justification: "{hist.reason}"</p>
                                         )}
-                                        <div className="text-[9px] text-slate-500 pl-6">Stamped & Verified by Officer: <span className="text-slate-400 font-bold">{hist.received_by || 'System'}</span></div>
+                                        <div className="text-[9px] text-slate-550 pl-6">Stamped & Verified by Officer: <span className="text-slate-400 font-bold">{hist.received_by || 'System'}</span></div>
                                       </div>
-                                      <div className="text-right text-slate-500 font-bold text-[10px] flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5 text-slate-650" />
-                                        {hist.date}
+                                      <div className="text-right flex flex-col items-end gap-1.5 shrink-0">
+                                        <div className="text-slate-500 font-bold text-[10px] flex items-center gap-1.5">
+                                          <Calendar className="w-3.5 h-3.5 text-slate-650" />
+                                          {hist.date}
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handlePrintPastReceipt(deb, hist)}
+                                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-950/60 hover:bg-[#F5C800] hover:text-[#070a13] text-[#F5C800] font-black text-[9px] uppercase transition cursor-pointer select-none"
+                                        >
+                                          <FileText className="w-3 h-3 text-[#F5C800]" />
+                                          REPRINT SLIP
+                                        </button>
                                       </div>
                                     </div>
                                   );
