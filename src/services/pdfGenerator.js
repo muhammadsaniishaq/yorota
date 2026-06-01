@@ -790,7 +790,7 @@ export const pdfGenerator = {
       const amt = parseFloat(r.amount) || 0;
 
       const isLostStickerId = /\b(lost|sticker|id)\b/i.test(name);
-      const isChangeOwnership = /\b(change|ownership)\b/i.test(name);
+      const isChangeOwnership = /\bchange\b/i.test(name);
       const isTransfer = /\btransfer\b/i.test(name);
       const isRider = /\brider\b/i.test(name);
       const isNew = /\bnew\b/i.test(name);
