@@ -785,73 +785,84 @@ export const pdfGenerator = {
     };
 
     records.forEach(r => {
-      const name = (r.service?.name || '').toLowerCase();
+      const name = r.service?.name || '';
       const qty = r.quantity || 0;
       const amt = parseFloat(r.amount) || 0;
 
-      if (name.includes('tricycle') || name.includes('napep') || name.includes('jega')) {
-        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+      const isLostStickerId = /\b(lost|sticker|id)\b/i.test(name);
+      const isChangeOwnership = /\b(change|ownership)\b/i.test(name);
+      const isTransfer = /\btransfer\b/i.test(name);
+      const isRider = /\brider\b/i.test(name);
+      const isNew = /\bnew\b/i.test(name);
+
+      const isTricycle = /\b(tricycle|napep|jega)\b/i.test(name);
+      const isMotorcycle = /\b(motorcycle|bike)\b/i.test(name);
+      const isTaxi = /\b(taxi|cab|car)\b/i.test(name);
+      const isKurkura = /\b(kurkura|kura)\b/i.test(name);
+
+      if (isTricycle) {
+        if (isLostStickerId) {
           data.lost_tricycle_qty += qty; data.lost_tricycle_amt += amt;
-        } else if (name.includes('change') || name.includes('ownership')) {
+        } else if (isChangeOwnership) {
           data.change_tricycle_qty += qty; data.change_tricycle_amt += amt;
-        } else if (name.includes('transfer')) {
+        } else if (isTransfer) {
           data.transfer_tricycle_qty += qty; data.transfer_tricycle_amt += amt;
-        } else if (name.includes('rider')) {
-          if (name.includes('new')) {
+        } else if (isRider) {
+          if (isNew) {
             data.tricycle_rider_new_qty += qty; data.tricycle_rider_new_amt += amt;
           } else {
             data.tricycle_rider_ren_qty += qty; data.tricycle_rider_ren_amt += amt;
           }
         } else {
-          if (name.includes('new')) {
+          if (isNew) {
             data.tricycle_own_new_qty += qty; data.tricycle_own_new_amt += amt;
           } else {
             data.tricycle_own_ren_qty += qty; data.tricycle_own_ren_amt += amt;
           }
         }
-      } else if (name.includes('motorcycle') || name.includes('bike')) {
-        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+      } else if (isMotorcycle) {
+        if (isLostStickerId) {
           data.lost_motorcycle_qty += qty; data.lost_motorcycle_amt += amt;
-        } else if (name.includes('change') || name.includes('ownership')) {
+        } else if (isChangeOwnership) {
           data.change_motorcycle_qty += qty; data.change_motorcycle_amt += amt;
-        } else if (name.includes('transfer')) {
+        } else if (isTransfer) {
           data.transfer_motorcycle_qty += qty; data.transfer_motorcycle_amt += amt;
-        } else if (name.includes('rider')) {
-          if (name.includes('new')) {
+        } else if (isRider) {
+          if (isNew) {
             data.motorcycle_rider_new_qty += qty; data.motorcycle_rider_new_amt += amt;
           } else {
             data.motorcycle_rider_ren_qty += qty; data.motorcycle_rider_ren_amt += amt;
           }
         } else {
-          if (name.includes('new')) {
+          if (isNew) {
             data.motorcycle_own_new_qty += qty; data.motorcycle_own_new_amt += amt;
           } else {
             data.motorcycle_own_ren_qty += qty; data.motorcycle_own_ren_amt += amt;
           }
         }
-      } else if (name.includes('taxi') || name.includes('cab')) {
-        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+      } else if (isTaxi) {
+        if (isLostStickerId) {
           data.lost_taxi_qty += qty; data.lost_taxi_amt += amt;
-        } else if (name.includes('change') || name.includes('ownership')) {
+        } else if (isChangeOwnership) {
           data.change_taxi_qty += qty; data.change_taxi_amt += amt;
-        } else if (name.includes('transfer')) {
+        } else if (isTransfer) {
           data.transfer_taxi_qty += qty; data.transfer_taxi_amt += amt;
         } else {
-          if (name.includes('new')) {
+          if (isNew) {
             data.taxi_new_qty += qty; data.taxi_new_amt += amt;
           } else {
             data.taxi_ren_qty += qty; data.taxi_ren_amt += amt;
           }
         }
-      } else if (name.includes('kurkura') || name.includes('kura')) {
-        if (name.includes('lost') || name.includes('sticker') || name.includes('id')) {
+      } else if (isKurkura) {
+        if (isLostStickerId) {
           data.lost_kurkura_qty += qty; data.lost_kurkura_amt += amt;
-        } else if (name.includes('change') || name.includes('ownership')) {
+        } else if (isChangeOwnership) {
           data.change_kurkura_qty += qty; data.change_kurkura_amt += amt;
-        } else if (name.includes('transfer')) {
+        } else if (isTransfer) {
           data.transfer_kurkura_qty += qty; data.transfer_kurkura_amt += amt;
         } else {
-          if (name.includes('new')) {
+          if (isNew) {
             data.kurkura_new_qty += qty; data.kurkura_new_amt += amt;
           } else {
             data.kurkura_ren_qty += qty; data.kurkura_ren_amt += amt;
