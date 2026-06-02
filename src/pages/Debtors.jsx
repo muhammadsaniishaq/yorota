@@ -299,8 +299,11 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       {/* Top Gold & Emerald Stripe Accent */}
       <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-[#F5C800] to-emerald-500 rounded-full" />
 
-      {/* Zebra Crossing Divider Line */}
-      <div className="zebra-crossing-line opacity-80" />
+      {/* Zebra Crossing Divider & Flowing Highway Line */}
+      <div className="space-y-1.5 my-2">
+        <div className="zebra-crossing-line opacity-95" />
+        <div className="animate-road-flow" />
+      </div>
 
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -326,6 +329,8 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
         {/* Card 1: Debt amount */}
         <div className="backdrop-blur-md bg-slate-900/60 rounded-2xl p-3 sm:p-5 flex items-center gap-3.5 border border-slate-800 shadow-lg relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500" />
+          {/* Ambient red hazard warning beacon */}
+          <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-red-500/10 blur-xl animate-pulse" />
           <div className="p-2 sm:p-3 rounded-xl bg-red-500/10 text-red-500 shrink-0">
             <UserX className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
           </div>
@@ -367,8 +372,25 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
 
       {/* Data Section */}
       {loading ? (
-        <div className="flex items-center justify-center py-24">
-          <div className="w-10 h-10 border-4 border-[#F5C800] border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          {/* Vector SVG Steering Wheel Spinner */}
+          <svg 
+            className="w-14 h-14 text-[#F5C800] steering-wheel-loader" 
+            viewBox="0 0 64 64" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="3.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" />
+            <circle cx="32" cy="32" r="6" fill="currentColor" />
+            <line x1="32" y1="38" x2="32" y2="60" strokeWidth="4.5" />
+            <line x1="28" y1="30" x2="8" y2="18" strokeWidth="4.5" />
+            <line x1="36" y1="30" x2="56" y2="18" strokeWidth="4.5" />
+            <circle cx="32" cy="32" r="16" stroke="currentColor" strokeDasharray="6,6" strokeWidth="1.5" opacity="0.6" />
+          </svg>
+          <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest animate-pulse">Loading Outstanding Accounts...</span>
         </div>
       ) : filteredDebtors.length > 0 ? (
         <div className="space-y-3">

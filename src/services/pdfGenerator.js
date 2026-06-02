@@ -1233,6 +1233,401 @@ export const pdfGenerator = {
 
     // Save File
     doc.save(`YOROTA_ICT_Payout_Sheet_${new Date().toISOString().split('T')[0]}.pdf`);
+  },
+
+  generateMarshalIdCard: async (idData) => {
+    // Standard A4 dimensions in mm: 210 x 297
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Preload logo
+    const logoImg = await loadImage('/logo.png');
+
+    // Title / Print Frame instructions
+    doc.setFillColor(9, 13, 22);
+    doc.rect(0, 0, 210, 297, 'F');
+
+    // Soft repeated watermark or grid in A4 background
+    doc.setDrawColor(255, 255, 255, 0.015);
+    doc.setLineWidth(0.1);
+    for (let i = 10; i < 200; i += 20) {
+      doc.line(i, 0, i, 297);
+    }
+    for (let j = 10; j < 290; j += 20) {
+      doc.line(0, j, 210, j);
+    }
+
+    // Header label
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(245, 200, 0); // Gold
+    doc.text('YOROTA STAFF IDENTITY CARD', 105, 25, { align: 'center' });
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(156, 163, 175); // gray 400
+    doc.text('Official Printable Marshal Identity Slip (CR80 Standard: 54mm x 85.6mm)', 105, 31, { align: 'center' });
+
+    // Thin divider line
+    doc.setDrawColor(245, 200, 0, 0.2);
+    doc.setLineWidth(0.3);
+    doc.line(20, 36, 190, 36);
+
+    const cardW = 54;
+    const cardH = 85.6;
+    const frontX = 35;
+    const backX = 121;
+    const cardY = 55;
+
+    // Draw print boundaries and cut-out guides
+    doc.setDrawColor(156, 163, 175, 0.4);
+    doc.setLineWidth(0.2);
+    doc.setLineDashPattern([2, 2], 0);
+    // Draw outer cut borders
+    doc.rect(frontX - 2, cardY - 2, cardW + 4, cardH + 4);
+    doc.rect(backX - 2, cardY - 2, cardW + 4, cardH + 4);
+    doc.setLineDashPattern([], 0); // Reset
+
+    // ----------------------------------------------------
+    // 1. FRONT CARD GRAPHICS (x: 35, y: 55)
+    // ----------------------------------------------------
+    // Card background
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(frontX, cardY, cardW, cardH, 2, 2, 'F');
+    
+    // Borders: outer boundary card double borders (Emerald / Gold)
+    doc.setDrawColor(245, 200, 0); // Gold outer border
+    doc.setLineWidth(0.6);
+    doc.roundedRect(frontX + 1.2, cardY + 1.2, cardW - 2.4, cardH - 2.4, 1.5, 1.5, 'D');
+
+    // Top Right Gold Triangle accent
+    doc.setFillColor(245, 200, 0);
+    doc.triangle(
+      frontX + cardW - 1.5, cardY + 1.5,
+      frontX + cardW - 1.5, cardY + 18,
+      frontX + cardW - 18, cardY + 1.5,
+      'F'
+    );
+    // Dark slice inside triangle as seen in card
+    doc.setFillColor(9, 13, 22);
+    doc.triangle(
+      frontX + cardW - 1.5, cardY + 18,
+      frontX + cardW - 8, cardY + 18,
+      frontX + cardW - 1.5, cardY + 10,
+      'F'
+    );
+
+    // Front Card Agency Headings
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(9, 13, 22);
+    doc.text('YOBE STATE', frontX + 4.5, cardY + 7);
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(4.8);
+    doc.text('ROAD TRAFFIC MANAGEMENT', frontX + 4.5, cardY + 10.5);
+    doc.setFontSize(5.5);
+    doc.text('AGENCY', frontX + 4.5, cardY + 13.5);
+
+    // Add Logo inside top right triangle
+    if (logoImg) {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(frontX + cardW - 14, cardY + 3, 10, 10, 1, 1, 'F');
+      doc.addImage(logoImg, 'PNG', frontX + cardW - 13.5, cardY + 3.5, 9, 9);
+    }
+
+    // Vertical Staff Identity Card Label
+    doc.setFillColor(55, 65, 81); // Grey box
+    doc.rect(frontX + 3.8, cardY + 18.5, 3.8, 32.5, 'F');
+    // Rotate text by 90 degrees
+    doc.saveGraphicsState();
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.2);
+    doc.setTextColor(255, 255, 255);
+    // Draw rotated text inside box
+    doc.text('STAFF IDENTITY CARD', frontX + 6.4, cardY + 48, { angle: 90 });
+    doc.restoreGraphicsState();
+
+    // Gold frame for Passport image
+    doc.setDrawColor(245, 200, 0);
+    doc.setLineWidth(0.6);
+    doc.rect(frontX + 9, cardY + 18.5, 25, 32.5, 'D');
+
+    // Draw Passport image inside frame
+    if (idData.passportPhoto) {
+      try {
+        doc.addImage(idData.passportPhoto, 'JPEG', frontX + 9.3, cardY + 18.8, 24.4, 31.9);
+      } catch (err) {
+        console.error('Failed to draw passport photo in PDF:', err);
+      }
+    } else {
+      // Fallback gray silhouette box
+      doc.setFillColor(226, 232, 240);
+      doc.rect(frontX + 9.3, cardY + 18.8, 24.4, 31.9, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5);
+      doc.setTextColor(148, 163, 184);
+      doc.text('PASSPORT', frontX + 21.5, cardY + 34, { align: 'center' });
+    }
+
+    // Details section - starts at y: 55
+    const detailsStart = cardY + 55;
+    doc.setFontSize(5.2);
+    
+    // Name
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(75, 85, 99); // Grey text labels
+    doc.text('NAME:', frontX + 3.8, detailsStart);
+    doc.setTextColor(9, 13, 22);
+    doc.setFont('Helvetica', 'bold');
+    doc.text((idData.name || '').toUpperCase(), frontX + 11.5, detailsStart);
+
+    // Rank
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(75, 85, 99);
+    doc.text('RANK:', frontX + 3.8, detailsStart + 4.2);
+    doc.setTextColor(9, 13, 22);
+    doc.setFont('Helvetica', 'bold');
+    doc.text((idData.rank || '').toUpperCase(), frontX + 11.5, detailsStart + 4.2);
+
+    // Service No
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(75, 85, 99);
+    doc.text('SERVICE NO:', frontX + 3.8, detailsStart + 8.4);
+    doc.setTextColor(9, 13, 22);
+    doc.text((idData.serviceNo || '').toUpperCase(), frontX + 17.5, detailsStart + 8.4);
+
+    // Blood Group
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(75, 85, 99);
+    doc.text('BLOOD GROUP:', frontX + 3.8, detailsStart + 12.6);
+    doc.setTextColor(239, 68, 68); // Red
+    doc.text((idData.bloodGroup || '').toUpperCase(), frontX + 20, detailsStart + 12.6);
+
+    // Holder's Sign label
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(75, 85, 99);
+    doc.text('HOLDER\'S SIGN:', frontX + 3.8, detailsStart + 16.8);
+    
+    // Draw Signature (image or typed cursive text)
+    if (idData.signature) {
+      try {
+        doc.addImage(idData.signature, 'PNG', frontX + 21, detailsStart + 13.8, 14, 4.5);
+      } catch (err) {
+        console.error('Failed to draw signature image in PDF:', err);
+      }
+    } else {
+      doc.setFont('Times-Italic', 'bolditalic');
+      doc.setFontSize(6);
+      doc.setTextColor(9, 13, 22);
+      doc.text(idData.name?.substring(0, 10) || '', frontX + 21, detailsStart + 16.8);
+    }
+
+    // Front QR Code Mockup (Vector drawing for high resolution scan compatibility)
+    const qrSize = 9;
+    const qrX = frontX + cardW - 13.5;
+    const qrY = detailsStart + 8;
+    // Draw QR code background
+    doc.setFillColor(255, 255, 255);
+    doc.rect(qrX, qrY, qrSize, qrSize, 'F');
+    doc.setDrawColor(9, 13, 22);
+    doc.setLineWidth(0.2);
+    doc.rect(qrX, qrY, qrSize, qrSize, 'D');
+    // Draw corner anchor blocks representing QR codes
+    doc.setFillColor(9, 13, 22);
+    doc.rect(qrX + 0.6, qrY + 0.6, 2.5, 2.5, 'F');
+    doc.rect(qrX + qrSize - 3.1, qrY + 0.6, 2.5, 2.5, 'F');
+    doc.rect(qrX + 0.6, qrY + qrSize - 3.1, 2.5, 2.5, 'F');
+    // Small inner rings inside QR anchors
+    doc.setFillColor(255, 255, 255);
+    doc.rect(qrX + 1.2, qrY + 1.2, 1.3, 1.3, 'F');
+    doc.rect(qrX + qrSize - 2.5, qrY + 1.2, 1.3, 1.3, 'F');
+    doc.rect(qrX + 1.2, qrY + qrSize - 2.5, 1.3, 1.3, 'F');
+    doc.setFillColor(9, 13, 22);
+    doc.rect(qrX + 1.6, qrY + 1.6, 0.5, 0.5, 'F');
+    doc.rect(qrX + qrSize - 2.1, qrY + 1.6, 0.5, 0.5, 'F');
+    doc.rect(qrX + 1.6, qrY + qrSize - 2.1, 0.5, 0.5, 'F');
+    // Dynamic random mock bits inside QR
+    doc.rect(qrX + 4, qrY + 2, 1.2, 0.6, 'F');
+    doc.rect(qrX + 3.5, qrY + 4, 0.6, 1.2, 'F');
+    doc.rect(qrX + 5, qrY + 5.5, 1.5, 0.6, 'F');
+    doc.rect(qrX + 2, qrY + 5, 0.6, 0.6, 'F');
+    doc.rect(qrX + 5, qrY + 2.5, 0.6, 1.2, 'F');
+    doc.rect(qrX + 4.5, qrY + 4.5, 0.6, 0.6, 'F');
+    doc.rect(qrX + 1.5, qrY + 4, 1.2, 0.6, 'F');
+
+    // Bottom Warning Stripes (Yellow/Gold & Black chevrons)
+    const frontStripeY = cardY + cardH - 3.8;
+    const stripeH = 2.3;
+    doc.setFillColor(245, 200, 0); // Yellow backing
+    doc.rect(frontX + 1.5, frontStripeY, cardW - 3, stripeH, 'F');
+    doc.setFillColor(9, 13, 22); // Black diagonal stripes
+    doc.setLineWidth(0.4);
+    for (let k = frontX + 3; k < frontX + cardW - 3; k += 4.5) {
+      doc.triangle(
+        k, frontStripeY + stripeH,
+        k + 1.8, frontStripeY + stripeH,
+        k + 2.8, frontStripeY,
+        'F'
+      );
+      doc.triangle(
+        k + 1.8, frontStripeY + stripeH,
+        k + 2.8, frontStripeY,
+        k + 1, frontStripeY,
+        'F'
+      );
+    }
+
+    // ----------------------------------------------------
+    // 2. BACK CARD GRAPHICS (x: 121, y: 55)
+    // ----------------------------------------------------
+    // Card background
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(backX, cardY, cardW, cardH, 2, 2, 'F');
+    
+    // Double Border
+    doc.setDrawColor(245, 200, 0);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(backX + 1.2, cardY + 1.2, cardW - 2.4, cardH - 2.4, 1.5, 1.5, 'D');
+
+    // Top Right Gold Triangle accent
+    doc.setFillColor(245, 200, 0);
+    doc.triangle(
+      backX + cardW - 1.5, cardY + 1.5,
+      backX + cardW - 1.5, cardY + 18,
+      backX + cardW - 18, cardY + 1.5,
+      'F'
+    );
+    doc.setFillColor(9, 13, 22);
+    doc.triangle(
+      backX + cardW - 1.5, cardY + 18,
+      backX + cardW - 8, cardY + 18,
+      backX + cardW - 1.5, cardY + 10,
+      'F'
+    );
+
+    // Nigerian Coat of Arms Graphic centerpiece inside top gold triangle
+    const crestX = backX + cardW - 11.5;
+    const crestY = cardY + 5;
+    doc.setDrawColor(239, 68, 68); // Red
+    doc.setLineWidth(0.4);
+    doc.line(crestX - 1.2, crestY - 1.2, crestX + 1.2, crestY - 1.2); // Red crest eagle wing
+    doc.setFillColor(16, 185, 129); // Green shield
+    doc.circle(crestX, crestY + 1.5, 1.8, 'FD');
+    doc.setFillColor(245, 200, 0); // Gold shield details
+    doc.rect(crestX - 0.5, crestY + 0.8, 1, 1.2, 'F');
+
+    // Back card Bearer Terms Text
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.2);
+    doc.setTextColor(55, 65, 81);
+    doc.text('The bearer whose Name,', backX + cardW / 2, cardY + 22, { align: 'center' });
+    doc.text('Signature and Photograph', backX + cardW / 2, cardY + 25.5, { align: 'center' });
+    doc.text('appears overleaf is a Staff of', backX + cardW / 2, cardY + 29, { align: 'center' });
+
+    // Dark banner representing Yobe Traffic Management Agency
+    doc.setFillColor(9, 13, 22);
+    doc.rect(backX + 1.5, cardY + 32, cardW - 3, 9, 'F');
+    // White text inside dark banner
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text('YOBE STATE', backX + cardW / 2, cardY + 36, { align: 'center' });
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(4.4);
+    doc.text('ROAD TRAFFIC MANAGEMENT AGENCY', backX + cardW / 2, cardY + 39.5, { align: 'center' });
+
+    // Lost & Found Notice Instructions
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.8);
+    doc.setTextColor(9, 13, 22);
+    doc.text('If lost but found please', backX + cardW / 2, cardY + 46.5, { align: 'center' });
+    doc.text('return to the YOROTA office', backX + cardW / 2, cardY + 50.2, { align: 'center' });
+
+    // Custom Issued Date
+    const issuedDateString = idData.issuedDate 
+      ? new Date(idData.issuedDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '1ST, OCTOBER, 2021';
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5);
+    doc.setTextColor(75, 85, 99);
+    doc.text(`ISSUED DATE: ${issuedDateString.toUpperCase()}`, backX + cardW / 2, cardY + 56, { align: 'center' });
+
+    // Back card QR Code Mockup
+    const backQrX = backX + 4.5;
+    const backQrY = cardY + 62;
+    doc.setFillColor(255, 255, 255);
+    doc.rect(backQrX, backQrY, qrSize, qrSize, 'F');
+    doc.setDrawColor(9, 13, 22);
+    doc.setLineWidth(0.2);
+    doc.rect(backQrX, backQrY, qrSize, qrSize, 'D');
+    doc.setFillColor(9, 13, 22);
+    doc.rect(backQrX + 0.6, backQrY + 0.6, 2.5, 2.5, 'F');
+    doc.rect(backQrX + qrSize - 3.1, backQrY + 0.6, 2.5, 2.5, 'F');
+    doc.rect(backQrX + 0.6, backQrY + qrSize - 3.1, 2.5, 2.5, 'F');
+    // Inner QR anchors
+    doc.setFillColor(255, 255, 255);
+    doc.rect(backQrX + 1.2, backQrY + 1.2, 1.3, 1.3, 'F');
+    doc.rect(backQrX + qrSize - 2.5, backQrY + 1.2, 1.3, 1.3, 'F');
+    doc.rect(backQrX + 1.2, backQrY + qrSize - 2.5, 1.3, 1.3, 'F');
+    doc.setFillColor(9, 13, 22);
+    doc.rect(backQrX + 1.6, backQrY + 1.6, 0.5, 0.5, 'F');
+    doc.rect(backQrX + qrSize - 2.1, backQrY + 1.6, 0.5, 0.5, 'F');
+    doc.rect(backQrX + 1.6, backQrY + qrSize - 2.1, 0.5, 0.5, 'F');
+    // Mock bits
+    doc.rect(backQrX + 4.5, backQrY + 2.5, 0.6, 1.8, 'F');
+    doc.rect(backQrX + 3.8, backQrY + 4, 1.5, 0.6, 'F');
+    doc.rect(backQrX + 1.5, backQrY + 4.5, 0.6, 1.2, 'F');
+    doc.rect(backQrX + 4, backQrY + 5.5, 1.2, 0.6, 'F');
+
+    // Commander General Signature stamp
+    const sigEndX = backX + cardW - 4.5;
+    const sigEndY = cardY + 68;
+    // Draw signature line
+    doc.setDrawColor(9, 13, 22);
+    doc.setLineWidth(0.4);
+    doc.line(backX + cardW - 20, sigEndY, sigEndX, sigEndY);
+    // Draw cursive CG Signature visual
+    doc.setFont('Times-Italic', 'bolditalic');
+    doc.setFontSize(6.5);
+    doc.setTextColor(30, 41, 59);
+    doc.text('CG YOROTA', backX + cardW - 17, sigEndY - 1.2);
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(4.4);
+    doc.setTextColor(9, 13, 22);
+    doc.text('Commander General', backX + cardW - 12.2, sigEndY + 2.8, { align: 'center' });
+
+    // Bottom Warning Stripes
+    doc.setFillColor(245, 200, 0);
+    doc.rect(backX + 1.5, frontStripeY, cardW - 3, stripeH, 'F');
+    doc.setFillColor(9, 13, 22);
+    for (let m = backX + 3; m < backX + cardW - 3; m += 4.5) {
+      doc.triangle(
+        m, frontStripeY + stripeH,
+        m + 1.8, frontStripeY + stripeH,
+        m + 2.8, frontStripeY,
+        'F'
+      );
+      doc.triangle(
+        m + 1.8, frontStripeY + stripeH,
+        m + 2.8, frontStripeY,
+        m + 1, frontStripeY,
+        'F'
+      );
+    }
+
+    // A4 Footer Guidelines
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(156, 163, 175); // gray 400
+    doc.text('INSTRUCTIONS: Print on dynamic PVC Card sheets or cardstock, cut along dotted guides, fold, and laminate.', 105, cardY + cardH + 15, { align: 'center' });
+
+    // Save PDF
+    doc.save(`YOROTA_Marshal_ID_Card_${(idData.name || 'Marshal').replace(/\s+/g, '_')}.pdf`);
   }
 };
 

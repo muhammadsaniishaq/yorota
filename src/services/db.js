@@ -71,6 +71,17 @@ export const db = {
         .single();
       if (error) throw error;
       return profile ? { id: user.id, email: user.email, name: profile.name, role: profile.role } : null;
+    },
+
+    updateProfileName: async (userId, newName) => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ name: newName })
+        .eq('id', userId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
     }
   },
 

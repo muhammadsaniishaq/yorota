@@ -405,6 +405,12 @@ export default function PendingDrafts({ currentUser, setGlobalNotification }) {
         </button>
       </div>
 
+      {/* Zebra Crossing Divider & Flowing Highway Line */}
+      <div className="space-y-1.5 my-2 z-10">
+        <div className="zebra-crossing-line opacity-95" />
+        <div className="animate-road-flow" />
+      </div>
+
       {/* Batch sync stats card (if drafts exist) */}
       {totalDraftCount > 0 && (
         <div className="backdrop-blur-md bg-slate-950/45 border border-slate-850/60 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden group animate-fade-in border-l-4 border-l-[#F5C800]">
@@ -448,9 +454,25 @@ export default function PendingDrafts({ currentUser, setGlobalNotification }) {
             </div>
 
             {loadingCats ? (
-              <div className="flex flex-col items-center justify-center py-16 space-y-2">
-                <RefreshCw className="w-6 h-6 text-[#F5C800] animate-spin" />
-                <span className="text-[10px] text-slate-450 font-bold uppercase tracking-wider">Syncing categories...</span>
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                {/* Vector SVG Steering Wheel Spinner */}
+                <svg 
+                  className="w-12 h-12 text-[#F5C800] steering-wheel-loader" 
+                  viewBox="0 0 64 64" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="3.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" />
+                  <circle cx="32" cy="32" r="6" fill="currentColor" />
+                  <line x1="32" y1="38" x2="32" y2="60" strokeWidth="4.5" />
+                  <line x1="28" y1="30" x2="8" y2="18" strokeWidth="4.5" />
+                  <line x1="36" y1="30" x2="56" y2="18" strokeWidth="4.5" />
+                  <circle cx="32" cy="32" r="16" stroke="currentColor" strokeDasharray="6,6" strokeWidth="1.5" opacity="0.6" />
+                </svg>
+                <span className="text-[9px] text-slate-450 font-bold uppercase tracking-wider animate-pulse">Syncing Category Rates...</span>
               </div>
             ) : categories.length === 0 ? (
               <div className="text-center py-10 bg-slate-950/20 border border-slate-850 rounded-xl p-4">
@@ -708,7 +730,23 @@ export default function PendingDrafts({ currentUser, setGlobalNotification }) {
             <div className="absolute top-0 inset-x-0 h-1 bg-[#F5C800] animated-hazard-stripe" />
 
             <div className="flex justify-center">
-              <RefreshCw className="w-12 h-12 text-[#F5C800] animate-spin" />
+              {/* Vector SVG Steering Wheel Spinner */}
+              <svg 
+                className="w-12 h-12 text-[#F5C800] steering-wheel-loader" 
+                viewBox="0 0 64 64" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="3.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" />
+                <circle cx="32" cy="32" r="6" fill="currentColor" />
+                <line x1="32" y1="38" x2="32" y2="60" strokeWidth="4.5" />
+                <line x1="28" y1="30" x2="8" y2="18" strokeWidth="4.5" />
+                <line x1="36" y1="30" x2="56" y2="18" strokeWidth="4.5" />
+                <circle cx="32" cy="32" r="16" stroke="currentColor" strokeDasharray="6,6" strokeWidth="1.5" opacity="0.6" />
+              </svg>
             </div>
             
             <div className="space-y-1">

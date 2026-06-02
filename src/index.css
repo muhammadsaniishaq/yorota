@@ -180,6 +180,91 @@
   border-bottom: 2px dashed rgba(245, 200, 0, 0.4);
 }
 
+/* Animated flowing road lane lines */
+@keyframes road-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 40px 0;
+  }
+}
+
+.animate-road-flow {
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #F5C800 0px,
+    #F5C800 15px,
+    transparent 15px,
+    transparent 30px
+  );
+  background-size: 30px 4px;
+  animation: road-flow 1.2s linear infinite;
+  border-radius: 9999px;
+  opacity: 0.8;
+}
+
+/* Steering Wheel Loader rotation */
+@keyframes spin-steering {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.steering-wheel-loader {
+  animation: spin-steering 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Traffic Signal pulse indicators */
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 4px #10b981, 0 0 12px rgba(16, 185, 129, 0.4);
+    opacity: 0.8;
+  }
+  50% {
+    box-shadow: 0 0 12px #10b981, 0 0 24px rgba(16, 185, 129, 0.8);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-yellow {
+  0%, 100% {
+    box-shadow: 0 0 4px #f5c800, 0 0 12px rgba(245, 200, 0, 0.4);
+    opacity: 0.8;
+  }
+  50% {
+    box-shadow: 0 0 12px #f5c800, 0 0 24px rgba(245, 200, 0, 0.8);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 4px #ef4444, 0 0 12px rgba(239, 68, 68, 0.4);
+    opacity: 0.8;
+  }
+  50% {
+    box-shadow: 0 0 12px #ef4444, 0 0 24px rgba(239, 68, 68, 0.8);
+    opacity: 1;
+  }
+}
+
+.pulse-green {
+  animation: pulse-green 2s infinite;
+}
+
+.pulse-yellow {
+  animation: pulse-yellow 1.5s infinite;
+}
+
+.pulse-red {
+  animation: pulse-red 1s infinite;
+}
+
 /* Animated warning chevrons that slide horizontally representing road safety arrows */
 @keyframes slide-chevrons {
   from {

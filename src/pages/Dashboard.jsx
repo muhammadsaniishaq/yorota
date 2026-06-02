@@ -134,8 +134,29 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        {/* Vector SVG Steering Wheel Spinner */}
+        <svg 
+          className="w-16 h-16 text-[#F5C800] steering-wheel-loader" 
+          viewBox="0 0 64 64" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="3.5" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          {/* Outer Rim */}
+          <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" />
+          {/* Inner Center Hub */}
+          <circle cx="32" cy="32" r="6" fill="currentColor" />
+          {/* Three Spoke columns representing official steering wheels */}
+          <line x1="32" y1="38" x2="32" y2="60" strokeWidth="4.5" />
+          <line x1="28" y1="30" x2="8" y2="18" strokeWidth="4.5" />
+          <line x1="36" y1="30" x2="56" y2="18" strokeWidth="4.5" />
+          {/* Small inner decoration rings */}
+          <circle cx="32" cy="32" r="16" stroke="currentColor" strokeDasharray="6,6" strokeWidth="1.5" opacity="0.6" />
+        </svg>
+        <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest animate-pulse">Initializing Dashboard Feeds...</span>
       </div>
     );
   }
@@ -162,8 +183,11 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
         </button>
       </div>
 
-      {/* Zebra Crossing Divider Line */}
-      <div className="zebra-crossing-line opacity-80 my-2" />
+      {/* Zebra Crossing Divider & Flowing Highway Line */}
+      <div className="space-y-1.5 my-2">
+        <div className="zebra-crossing-line opacity-95" />
+        <div className="animate-road-flow" />
+      </div>
 
       {/* Metric Cards Grid - 2 columns on mobile, highly compact */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4">

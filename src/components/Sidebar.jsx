@@ -14,7 +14,8 @@ import {
   X,
   Menu,
   ShieldCheck,
-  Percent
+  Percent,
+  Contact
 } from 'lucide-react';
 import YorotaLogo from './YorotaLogo';
 
@@ -37,6 +38,7 @@ export default function Sidebar({
     { id: 'debtors', label: 'Outstanding Debts', icon: UserX, roles: ['admin', 'officer'] },
     { id: 'reports', label: 'Reports & Audits', icon: BarChart3, roles: ['admin', 'officer'] },
     { id: 'surcharges', label: 'Surcharge & Splits', icon: Percent, roles: ['admin', 'officer'] },
+    { id: 'id-gen', label: 'Marshal ID Generator', icon: Contact, roles: ['admin', 'officer'] },
     { id: 'services', label: 'Manage Categories', icon: Settings, roles: ['admin', 'officer'] } // Accessible to all roles
   ];
 
@@ -110,18 +112,22 @@ export default function Sidebar({
         {/* Sidebar Footer (User details and logout button) */}
         <div className="p-2.5 border-t border-[#F5C800]/10 bg-slate-950/40 space-y-2 shrink-0">
           
-          {/* User badge with online indicator transformed into a Secure Clearance Pass */}
-          <div className="flex items-center gap-2.5 p-2 bg-slate-950/80 border border-[#F5C800]/20 rounded-xl relative overflow-hidden group shadow-lg shadow-black/40">
+          {/* User badge clickable link to active profile */}
+          <div 
+            onClick={() => { onViewChange('profile'); setIsOpen(false); }}
+            title="Click to view secure clearance profile details"
+            className="flex items-center gap-2.5 p-2 bg-slate-950/80 border border-[#F5C800]/20 rounded-xl relative overflow-hidden group shadow-lg shadow-black/40 cursor-pointer hover:bg-slate-900 hover:border-[#F5C800]/50 transition-all duration-300 select-none active:scale-[0.98]"
+          >
             <div className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-emerald-500 m-2.5 shadow-lg shadow-emerald-500/50 animate-ping pointer-events-none" />
             <div className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-emerald-500 m-2.5 shadow-md shadow-emerald-500/50 pointer-events-none" />
-            <div className="w-7 h-7 rounded-full bg-[#F5C800]/10 flex items-center justify-center border border-[#F5C800]/20 group-hover:border-[#F5C800]/50 transition duration-300">
+            <div className="w-7 h-7 rounded-full bg-[#F5C800]/10 flex items-center justify-center border border-[#F5C800]/20 group-hover:border-[#F5C800]/50 group-hover:bg-[#F5C800]/20 transition duration-300">
               <ShieldCheck className="w-4 h-4 text-[#F5C800]" />
             </div>
             <div className="min-w-0">
               <div className="text-[11px] lg:text-xs font-black text-slate-100 truncate group-hover:text-[#F5C800] transition duration-300 flex items-center gap-1">
                 {currentUser?.name || 'Operator'}
               </div>
-              <div className="text-[7.5px] lg:text-[8px] text-[#F5C800] font-black uppercase tracking-widest mt-0.5 flex items-center gap-1 select-none">
+              <div className="text-[7.5px] lg:text-[8px] text-[#F5C800] font-black uppercase tracking-widest mt-0.5 flex items-center gap-1">
                 <span className="w-1 h-1 rounded-full bg-[#F5C800]/40 shrink-0" />
                 {currentUser?.role || 'Officer'} SECURE PASS
               </div>

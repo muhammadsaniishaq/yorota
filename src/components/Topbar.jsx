@@ -24,6 +24,28 @@ export default function Topbar({
   const [results, setResults] = useState({ records: [], debtors: [], transactions: [] });
   const [showDropdown, setShowDropdown] = useState(false);
   const [isMockActive, setIsMockActive] = useState(true);
+  const [draftsCount, setDraftsCount] = useState(0);
+
+  useEffect(() => {
+    const checkDrafts = () => {
+      try {
+        const localData = localStorage.getItem('yorota_overnight_drafts');
+        if (localData) {
+          const list = JSON.parse(localData);
+          setDraftsCount(list.length || 0);
+        } else {
+          setDraftsCount(0);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    checkDrafts();
+    // Poll every 2.5 seconds to track active changes without overhead
+    const interval = setInterval(checkDrafts, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setIsMockActive(db.isMock());
@@ -195,17 +217,71 @@ export default function Topbar({
         )}
       </div>
 
-      {/* Database Mode Status Badges */}
-      <div className="flex items-center gap-3">
+      {/* Dynamic Traffic Light Health Signal Widget */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Vertical Traffic Light Housing Container */}
+        <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-slate-950/80 border border-slate-850 shadow-inner group/traffic relative select-none">
+          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest hidden md:inline pl-1">SYSTEM STATE:</span>
+          
+          {/* Bulb 1: Red (Sandbox/Error Warning) */}
+          <div 
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 relative group cursor-help ${
+              isMockActive 
+                ? 'bg-red-500/25 border border-red-500/40 shadow-lg shadow-red-500/20' 
+                : 'bg-slate-800 border border-slate-900'
+            }`}
+          >
+            {isMockActive && (
+              <div className="absolute inset-0 rounded-full bg-red-500/90 pulse-red" />
+            )}
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg bg-slate-900 border border-slate-800 text-[9px] text-red-200 font-extrabold text-center shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition duration-200 uppercase tracking-wider z-50">
+              🚨 Sandbox active. Supabase connection bypassed!
+            </span>
+          </div>
+
+          {/* Bulb 2: Yellow (Caution - Overnight Unsubmitted Drafts waiting) */}
+          <div 
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 relative group cursor-help ${
+              draftsCount > 0 
+                ? 'bg-amber-500/25 border border-amber-500/40 shadow-lg shadow-amber-500/20' 
+                : 'bg-slate-800 border border-slate-900'
+            }`}
+          >
+            {draftsCount > 0 && (
+              <div className="absolute inset-0 rounded-full bg-[#F5C800]/90 pulse-yellow" />
+            )}
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg bg-slate-900 border border-slate-800 text-[9px] text-amber-200 font-extrabold text-center shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition duration-200 uppercase tracking-wider z-50">
+              ⚠️ {draftsCount} Drafts waiting in overnight vault!
+            </span>
+          </div>
+
+          {/* Bulb 3: Green (Go - Connected & Secured live database) */}
+          <div 
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 relative group cursor-help ${
+              !isMockActive 
+                ? 'bg-emerald-500/25 border border-emerald-500/40 shadow-lg shadow-emerald-500/20' 
+                : 'bg-slate-800 border border-slate-900'
+            }`}
+          >
+            {!isMockActive && (
+              <div className="absolute inset-0 rounded-full bg-emerald-500/90 pulse-green" />
+            )}
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg bg-slate-900 border border-slate-800 text-[9px] text-emerald-200 font-extrabold text-center shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition duration-200 uppercase tracking-wider z-50">
+              ✅ Securely synchronized to Supabase Cloud!
+            </span>
+          </div>
+        </div>
+
+        {/* Database Mode Status Badges */}
         {isMockActive ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-wide bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-xs select-none">
             <Database className="w-3 h-3" />
-            LOCAL SANDBOX
+            SANDBOX
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs select-none animate-pulse">
             <Database className="w-3 h-3 text-emerald-400" />
-            LIVE SUPABASE
+            LIVE SQL
           </span>
         )}
       </div>

@@ -17,6 +17,8 @@ import Debtors from './pages/Debtors';
 import Reports from './pages/Reports';
 import Surcharges from './pages/Surcharges';
 import PendingDrafts from './pages/PendingDrafts';
+import Profile from './pages/Profile';
+import IdGenerator from './pages/IdGenerator';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -57,6 +59,14 @@ export default function App() {
     setCurrentUser(user);
     setCurrentView('dashboard');
     triggerNotification({ message: `Session unlocked. Welcome back, ${user.name}!`, type: 'success' });
+  };
+
+  const handleProfileUpdate = (updatedProfile) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      name: updatedProfile.name
+    }));
+    triggerNotification({ message: 'Clearance display name updated successfully!', type: 'success' });
   };
 
   const handleLogout = async () => {
@@ -138,6 +148,21 @@ export default function App() {
         return <Reports currentUser={currentUser} setGlobalNotification={triggerNotification} />;
       case 'surcharges':
         return <Surcharges setGlobalNotification={triggerNotification} />;
+      case 'profile':
+        return (
+          <Profile 
+            currentUser={currentUser} 
+            onProfileUpdate={handleProfileUpdate} 
+            setGlobalNotification={triggerNotification} 
+          />
+        );
+      case 'id-gen':
+        return (
+          <IdGenerator 
+            currentUser={currentUser} 
+            setGlobalNotification={triggerNotification} 
+          />
+        );
       default:
         return (
           <div className="text-center py-20">

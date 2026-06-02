@@ -144,8 +144,11 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
         </div>
       </div>
 
-      {/* Zebra Crossing Divider Line */}
-      <div className="zebra-crossing-line opacity-80 my-2" />
+      {/* Zebra Crossing Divider & Flowing Highway Line */}
+      <div className="space-y-1.5 my-2">
+        <div className="zebra-crossing-line opacity-95" />
+        <div className="animate-road-flow" />
+      </div>
 
       {/* Financial Ledger Metric Cards - Highly compact 3 columns on mobile */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
@@ -247,8 +250,25 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
 
       {/* Table Data Section */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-[#F5C800] border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          {/* Vector SVG Steering Wheel Spinner */}
+          <svg 
+            className="w-14 h-14 text-[#F5C800] steering-wheel-loader" 
+            viewBox="0 0 64 64" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="3.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" />
+            <circle cx="32" cy="32" r="6" fill="currentColor" />
+            <line x1="32" y1="38" x2="32" y2="60" strokeWidth="4.5" />
+            <line x1="28" y1="30" x2="8" y2="18" strokeWidth="4.5" />
+            <line x1="36" y1="30" x2="56" y2="18" strokeWidth="4.5" />
+            <circle cx="32" cy="32" r="16" stroke="currentColor" strokeDasharray="6,6" strokeWidth="1.5" opacity="0.6" />
+          </svg>
+          <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest animate-pulse">Retrieving Financial Ledger...</span>
         </div>
       ) : filteredTransactions.length > 0 ? (
         <div className="space-y-2">
