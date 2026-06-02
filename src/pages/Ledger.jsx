@@ -144,6 +144,9 @@ export default function Ledger({ currentUser, setGlobalNotification }) {
         </div>
       </div>
 
+      {/* Zebra Crossing Divider Line */}
+      <div className="zebra-crossing-line opacity-80 my-2" />
+
       {/* Financial Ledger Metric Cards - Highly compact 3 columns on mobile */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         

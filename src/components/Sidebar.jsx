@@ -74,12 +74,8 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Caution Accents Hazard Chevron Divider */}
-          <div className="h-1 w-full flex overflow-hidden bg-slate-950 shrink-0 select-none">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="w-8 h-full bg-[#F5C800]/25 -skew-x-[30deg] mx-1 shrink-0" />
-            ))}
-          </div>
+          {/* Caution Accents Hazard Zebra Crossing Divider */}
+          <div className="zebra-crossing-line w-full opacity-90 h-2.5 rounded-none shrink-0 select-none" />
  
           {/* Navigation Links list - Tight gaps on Mobile, standard on Desktop */}
           <nav className="px-3 py-3 space-y-1 overflow-y-auto max-h-[calc(100vh-190px)] scrollbar-thin">

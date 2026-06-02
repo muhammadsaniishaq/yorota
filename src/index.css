@@ -131,3 +131,74 @@
   }
 }
 
+/* --- YOROTA REAL OFFICIAL APPS - ROAD SAFETY DESIGN DECORATIONS --- */
+
+/* Faint security watermark overlay with repeated road signs (Warning triangle, speed limit, bends, traffic lights) */
+.road-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='%23F5C800' fill-opacity='0.015'%3E%3Cpath d='M30 40 L50 10 L70 40 Z' stroke='%23F5C800' stroke-opacity='0.015' stroke-width='1' fill='none'/%3E%3Ccircle cx='150' cy='60' r='14' stroke='%23F5C800' stroke-opacity='0.015' stroke-width='1' fill='none'/%3E%3Ctext x='150' y='64' font-family='sans-serif' font-size='10' font-weight='bold' text-anchor='middle'%3E50%3C/text%3E%3Cpath d='M40 180 A 18 18 0 0 1 76 180 L 70 174 M 76 180 L 70 186' stroke='%23F5C800' stroke-opacity='0.015' stroke-width='1' fill='none'/%3E%3Crect x='160' y='150' width='14' height='30' rx='4' stroke='%23F5C800' stroke-opacity='0.015' stroke-width='1.1' fill='none'/%3E%3Ccircle cx='167' cy='156' r='2' fill='%23F5C800' fill-opacity='0.015'/%3E%3Ccircle cx='167' cy='165' r='2' fill='%23F5C800' fill-opacity='0.015'/%3E%3Ccircle cx='167' cy='174' r='2' fill='%23F5C800' fill-opacity='0.015'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Zebra Traffic Line divider representing a real zebra crossing */
+.zebra-crossing-line {
+  height: 10px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffffff 0px,
+    #ffffff 16px,
+    #121b2d 16px,
+    #121b2d 32px
+  );
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 2px 8px rgba(255,255,255,0.05);
+}
+
+/* Hazard Warning diagonal stripes (yellow/gold and black) */
+.hazard-stripes-yellow {
+  background: repeating-linear-gradient(
+    -45deg,
+    #F5C800,
+    #F5C800 12px,
+    #0c1220 12px,
+    #0c1220 24px
+  );
+}
+
+.hazard-stripes-green {
+  background: repeating-linear-gradient(
+    -45deg,
+    #10b981,
+    #10b981 12px,
+    #0c1220 12px,
+    #0c1220 24px
+  );
+}
+
+/* Highway dashed lane divider */
+.highway-lane-line {
+  height: 2px;
+  border-bottom: 2px dashed rgba(245, 200, 0, 0.4);
+}
+
+/* Animated warning chevrons that slide horizontally representing road safety arrows */
+@keyframes slide-chevrons {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 40px 0;
+  }
+}
+
+.animate-chevrons {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    #F5C800 10px,
+    #F5C800 20px
+  );
+  background-size: 40px 40px;
+  animation: slide-chevrons 2s linear infinite;
+}
+

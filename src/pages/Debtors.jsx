@@ -299,6 +299,9 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       {/* Top Gold & Emerald Stripe Accent */}
       <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-[#F5C800] to-emerald-500 rounded-full" />
 
+      {/* Zebra Crossing Divider Line */}
+      <div className="zebra-crossing-line opacity-80" />
+
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

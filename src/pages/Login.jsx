@@ -33,7 +33,7 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#070a13] flex items-center justify-center px-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#070a13] flex items-center justify-center px-4 relative overflow-hidden font-sans road-overlay">
       
       {/* ── HIGH-END LUXURY NEON GLOW EFFECTS ── */}
       {/* Golden Pulsing Halo (Top-Left) */}
@@ -72,12 +72,12 @@ export default function Login({ onLoginSuccess }) {
         {/* Dynamic Glowing Border Line (Sleek Hover Highlight) */}
         <div className="absolute inset-0 rounded-3xl border border-transparent group-hover:border-gradient-to-r from-[#F5C800]/30 to-[#10b981]/30 transition-all duration-700 pointer-events-none" />
 
-        {/* Top Gold & Emerald Gradient Stripe */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-[3px] bg-gradient-to-r from-transparent via-[#F5C800]/70 to-transparent blur-[1px]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/5 h-[1px] bg-gradient-to-r from-transparent via-[#10b981]/80 to-transparent" />
+        {/* Top Gold & Emerald Gradient Stripe & Zebra Accent */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-[#F5C800] to-emerald-500 rounded-t-3xl" />
+        <div className="zebra-crossing-line absolute top-1.5 left-0 right-0 opacity-20" style={{ height: '4px', borderRadius: '0' }} />
 
         {/* Agency Logo & Unified Branding */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-6">
           <div className="w-22 h-22 rounded-2xl bg-[#070a13]/90 flex items-center justify-center border border-slate-800 mb-4 shadow-xl shadow-black/40 group-hover:border-[#F5C800]/50 transition-all duration-500 relative overflow-hidden">
             {/* Background Glow inside logo */}
             <div className="absolute inset-0 bg-gradient-to-tr from-[#F5C800]/10 to-[#10b981]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -94,6 +94,9 @@ export default function Login({ onLoginSuccess }) {
             Secure Entry Portal
           </p>
         </div>
+
+        {/* Premium Zebra Crossing Line Divider */}
+        <div className="zebra-crossing-line mb-6 opacity-80" />
 
         {/* Premium Secure Shield Subtitle Badge */}
         <div className="mb-6 py-2.5 px-4 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-center gap-2">

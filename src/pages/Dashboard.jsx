@@ -162,6 +162,9 @@ export default function Dashboard({ currentUser, onViewChange, notification }) {
         </button>
       </div>
 
+      {/* Zebra Crossing Divider Line */}
+      <div className="zebra-crossing-line opacity-80 my-2" />
+
       {/* Metric Cards Grid - 2 columns on mobile, highly compact */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4">
         

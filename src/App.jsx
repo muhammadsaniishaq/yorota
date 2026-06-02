@@ -149,7 +149,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground dark">
+    <div className="min-h-screen flex bg-background text-foreground dark road-overlay">
       
       {/* Sidebar - left */}
       <Sidebar 
