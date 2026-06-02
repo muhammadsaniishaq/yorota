@@ -14,6 +14,7 @@ import {
   CheckCircle,
   HelpCircle
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { pdfGenerator } from '../services/pdfGenerator';
 
 export default function IdGenerator({ currentUser, setGlobalNotification }) {
@@ -23,6 +24,29 @@ export default function IdGenerator({ currentUser, setGlobalNotification }) {
   const [serviceNo, setServiceNo] = useState('A/YB/ST/YOR/RNO/356');
   const [bloodGroup, setBloodGroup] = useState('A+');
   const [issuedDate, setIssuedDate] = useState('2021-10-01');
+
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+  // Dynamically generate QR code when state changes
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const payload = `YOROTA OFFICIAL STAFF ID\nName: ${name}\nRank: ${rank}\nService No: ${serviceNo}\nBlood Group: ${bloodGroup}\nIssued: ${issuedDate}`;
+        const url = await QRCode.toDataURL(payload, {
+          margin: 1,
+          width: 150,
+          color: {
+            dark: '#090d16',
+            light: '#ffffff'
+          }
+        });
+        setQrCodeUrl(url);
+      } catch (err) {
+        console.error('Failed to generate QR Code', err);
+      }
+    };
+    generateQR();
+  }, [name, rank, serviceNo, bloodGroup, issuedDate]);
 
   // Images and drawing states
   const [passportPhoto, setPassportPhoto] = useState(null);
@@ -515,17 +539,11 @@ export default function IdGenerator({ currentUser, setGlobalNotification }) {
 
                 {/* Bottom Right QR Code layout */}
                 <div className="absolute bottom-[23px] right-4 w-11 h-11 bg-white border border-slate-900 rounded-sm flex items-center justify-center p-0.5 select-none">
-                  {/* Generated QR Code mockup */}
-                  <div className="w-full h-full flex flex-col justify-between">
-                    <div className="flex justify-between w-full h-3">
-                      <div className="w-3 h-3 bg-slate-900 p-0.5"><div className="w-full h-full bg-white flex items-center justify-center"><div className="w-1 h-1 bg-slate-900" /></div></div>
-                      <div className="w-3 h-3 bg-slate-900 p-0.5"><div className="w-full h-full bg-white flex items-center justify-center"><div className="w-1 h-1 bg-slate-900" /></div></div>
-                    </div>
-                    <div className="flex justify-between w-full h-3 items-end">
-                      <div className="w-3 h-3 bg-slate-900 p-0.5"><div className="w-full h-full bg-white flex items-center justify-center"><div className="w-1 h-1 bg-slate-900" /></div></div>
-                      <div className="w-4 h-2 bg-slate-900 block" />
-                    </div>
-                  </div>
+                  {qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="w-full h-full bg-slate-100" />
+                  )}
                 </div>
 
                 {/* Warning Hazard Safety stripes at front bottom */}
@@ -585,16 +603,11 @@ export default function IdGenerator({ currentUser, setGlobalNotification }) {
 
                 {/* Footer section: Left QR code, Right Commander General Sign */}
                 <div className="absolute bottom-[23px] left-4 w-11 h-11 bg-white border border-slate-900 rounded-sm flex items-center justify-center p-0.5 select-none">
-                  <div className="w-full h-full flex flex-col justify-between select-none">
-                    <div className="flex justify-between w-full h-3">
-                      <div className="w-3 h-3 bg-slate-900 p-0.5"><div className="w-full h-full bg-white flex items-center justify-center"><div className="w-1 h-1 bg-slate-900" /></div></div>
-                      <div className="w-3 h-3 bg-slate-900 p-0.5"><div className="w-full h-full bg-white flex items-center justify-center"><div className="w-1 h-1 bg-slate-900" /></div></div>
-                    </div>
-                    <div className="flex justify-between w-full h-3 items-end">
-                      <div className="w-3 h-3 bg-slate-900 p-0.5"><div className="w-full h-full bg-white flex items-center justify-center"><div className="w-1 h-1 bg-slate-900" /></div></div>
-                      <div className="w-4 h-2 bg-slate-900 block" />
-                    </div>
-                  </div>
+                  {qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="w-full h-full bg-slate-100" />
+                  )}
                 </div>
 
                 {/* Commander General Signature block */}

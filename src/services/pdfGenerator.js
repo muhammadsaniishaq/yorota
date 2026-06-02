@@ -3,6 +3,7 @@
 
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import QRCode from 'qrcode';
 
 // Official green color theme codes
 const BRAND_GREEN = [16, 185, 129]; // RGB: #10b981
@@ -1246,6 +1247,22 @@ export const pdfGenerator = {
     // Preload logo
     const logoImg = await loadImage('/logo.png');
 
+    // Generate QR Code dynamically
+    let qrCodeUrl = null;
+    try {
+      const payload = `YOROTA OFFICIAL STAFF ID\nName: ${idData.name}\nRank: ${idData.rank}\nService No: ${idData.serviceNo}\nBlood Group: ${idData.bloodGroup}\nIssued: ${idData.issuedDate}`;
+      qrCodeUrl = await QRCode.toDataURL(payload, {
+        margin: 1,
+        width: 150,
+        color: {
+          dark: '#090d16',
+          light: '#ffffff'
+        }
+      });
+    } catch (err) {
+      console.error('Failed to generate QR Code for PDF:', err);
+    }
+
     // Title / Print Frame instructions
     doc.setFillColor(9, 13, 22);
     doc.rect(0, 0, 210, 297, 'F');
@@ -1426,38 +1443,18 @@ export const pdfGenerator = {
       doc.text(idData.name?.substring(0, 10) || '', frontX + 21, detailsStart + 16.8);
     }
 
-    // Front QR Code Mockup (Vector drawing for high resolution scan compatibility)
+    // Front QR Code
     const qrSize = 9;
     const qrX = frontX + cardW - 13.5;
     const qrY = detailsStart + 8;
-    // Draw QR code background
-    doc.setFillColor(255, 255, 255);
-    doc.rect(qrX, qrY, qrSize, qrSize, 'F');
-    doc.setDrawColor(9, 13, 22);
-    doc.setLineWidth(0.2);
-    doc.rect(qrX, qrY, qrSize, qrSize, 'D');
-    // Draw corner anchor blocks representing QR codes
-    doc.setFillColor(9, 13, 22);
-    doc.rect(qrX + 0.6, qrY + 0.6, 2.5, 2.5, 'F');
-    doc.rect(qrX + qrSize - 3.1, qrY + 0.6, 2.5, 2.5, 'F');
-    doc.rect(qrX + 0.6, qrY + qrSize - 3.1, 2.5, 2.5, 'F');
-    // Small inner rings inside QR anchors
-    doc.setFillColor(255, 255, 255);
-    doc.rect(qrX + 1.2, qrY + 1.2, 1.3, 1.3, 'F');
-    doc.rect(qrX + qrSize - 2.5, qrY + 1.2, 1.3, 1.3, 'F');
-    doc.rect(qrX + 1.2, qrY + qrSize - 2.5, 1.3, 1.3, 'F');
-    doc.setFillColor(9, 13, 22);
-    doc.rect(qrX + 1.6, qrY + 1.6, 0.5, 0.5, 'F');
-    doc.rect(qrX + qrSize - 2.1, qrY + 1.6, 0.5, 0.5, 'F');
-    doc.rect(qrX + 1.6, qrY + qrSize - 2.1, 0.5, 0.5, 'F');
-    // Dynamic random mock bits inside QR
-    doc.rect(qrX + 4, qrY + 2, 1.2, 0.6, 'F');
-    doc.rect(qrX + 3.5, qrY + 4, 0.6, 1.2, 'F');
-    doc.rect(qrX + 5, qrY + 5.5, 1.5, 0.6, 'F');
-    doc.rect(qrX + 2, qrY + 5, 0.6, 0.6, 'F');
-    doc.rect(qrX + 5, qrY + 2.5, 0.6, 1.2, 'F');
-    doc.rect(qrX + 4.5, qrY + 4.5, 0.6, 0.6, 'F');
-    doc.rect(qrX + 1.5, qrY + 4, 1.2, 0.6, 'F');
+    if (qrCodeUrl) {
+      doc.addImage(qrCodeUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+    } else {
+      // Fallback outline if QR generation fails
+      doc.setDrawColor(9, 13, 22);
+      doc.setLineWidth(0.2);
+      doc.rect(qrX, qrY, qrSize, qrSize, 'D');
+    }
 
     // Bottom Warning Stripes (Yellow/Gold & Black chevrons)
     const frontStripeY = cardY + cardH - 3.8;
@@ -1556,32 +1553,16 @@ export const pdfGenerator = {
     doc.setTextColor(75, 85, 99);
     doc.text(`ISSUED DATE: ${issuedDateString.toUpperCase()}`, backX + cardW / 2, cardY + 56, { align: 'center' });
 
-    // Back card QR Code Mockup
+    // Back card QR Code
     const backQrX = backX + 4.5;
     const backQrY = cardY + 62;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(backQrX, backQrY, qrSize, qrSize, 'F');
-    doc.setDrawColor(9, 13, 22);
-    doc.setLineWidth(0.2);
-    doc.rect(backQrX, backQrY, qrSize, qrSize, 'D');
-    doc.setFillColor(9, 13, 22);
-    doc.rect(backQrX + 0.6, backQrY + 0.6, 2.5, 2.5, 'F');
-    doc.rect(backQrX + qrSize - 3.1, backQrY + 0.6, 2.5, 2.5, 'F');
-    doc.rect(backQrX + 0.6, backQrY + qrSize - 3.1, 2.5, 2.5, 'F');
-    // Inner QR anchors
-    doc.setFillColor(255, 255, 255);
-    doc.rect(backQrX + 1.2, backQrY + 1.2, 1.3, 1.3, 'F');
-    doc.rect(backQrX + qrSize - 2.5, backQrY + 1.2, 1.3, 1.3, 'F');
-    doc.rect(backQrX + 1.2, backQrY + qrSize - 2.5, 1.3, 1.3, 'F');
-    doc.setFillColor(9, 13, 22);
-    doc.rect(backQrX + 1.6, backQrY + 1.6, 0.5, 0.5, 'F');
-    doc.rect(backQrX + qrSize - 2.1, backQrY + 1.6, 0.5, 0.5, 'F');
-    doc.rect(backQrX + 1.6, backQrY + qrSize - 2.1, 0.5, 0.5, 'F');
-    // Mock bits
-    doc.rect(backQrX + 4.5, backQrY + 2.5, 0.6, 1.8, 'F');
-    doc.rect(backQrX + 3.8, backQrY + 4, 1.5, 0.6, 'F');
-    doc.rect(backQrX + 1.5, backQrY + 4.5, 0.6, 1.2, 'F');
-    doc.rect(backQrX + 4, backQrY + 5.5, 1.2, 0.6, 'F');
+    if (qrCodeUrl) {
+      doc.addImage(qrCodeUrl, 'PNG', backQrX, backQrY, qrSize, qrSize);
+    } else {
+      doc.setDrawColor(9, 13, 22);
+      doc.setLineWidth(0.2);
+      doc.rect(backQrX, backQrY, qrSize, qrSize, 'D');
+    }
 
     // Commander General Signature stamp
     const sigEndX = backX + cardW - 4.5;
