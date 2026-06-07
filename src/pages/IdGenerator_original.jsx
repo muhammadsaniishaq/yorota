@@ -1,4 +1,4 @@
-// YOROTA Smart Office - Marshal Identity Card Generator System
+﻿// YOROTA Smart Office - Marshal Identity Card Generator System
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Contact, 
@@ -453,15 +453,13 @@ export default function IdGenerator({ currentUser, setGlobalNotification }) {
               {/* ==================================================== */}
               <div className="w-[245px] h-[388px] bg-white border border-slate-300 rounded-2xl relative shadow-2xl p-4 overflow-hidden select-none shrink-0">
                 
-                {/* Top Right Decoration matching Physical Card */}
-                <svg className="absolute top-0 right-0 w-full h-full pointer-events-none z-0 rounded-tr-2xl" viewBox="0 0 245 388" xmlns="http://www.w3.org/2000/svg">
-                  {/* Big Yellow Shape */}
-                  <polygon points="245,0 100,0 173,68 245,45" fill="#F5C800" />
-                  {/* Black Triangle */}
-                  <polygon points="245,45 173,68 245,95" fill="#090d16" />
-                  {/* Small Yellow Triangle */}
-                  <polygon points="245,95 204,80 245,136" fill="#F5C800" />
-                </svg>
+                {/* Specular spec border lines */}
+                <div className="absolute inset-1.5 border border-[#F5C800] rounded-xl pointer-events-none" />
+
+                {/* Top Right Solid Gold Triangular flag */}
+                <div className="absolute top-0 right-0 w-0 h-0 border-t-[80px] border-t-[#F5C800] border-l-[80px] border-l-transparent pointer-events-none" />
+                {/* Secondary black triangular slice */}
+                <div className="absolute top-0 right-0 w-0 h-0 border-t-[80px] border-t-transparent border-r-[45px] border-r-slate-950 pointer-events-none" />
 
                 {/* Top Right Yobe State Logo emblem placement */}
                 <div className="absolute top-2 right-2.5 w-11 h-11 bg-white rounded-md flex items-center justify-center p-0.5 border border-slate-100 shadow-sm z-10">
@@ -560,16 +558,21 @@ export default function IdGenerator({ currentUser, setGlobalNotification }) {
               {/* ==================================================== */}
               <div className="w-[245px] h-[388px] bg-white border border-slate-300 rounded-2xl relative shadow-2xl p-4 overflow-hidden select-none shrink-0">
                 
-                {/* Top Right Decoration matching Physical Card */}
-                <svg className="absolute top-0 right-0 w-full h-full pointer-events-none z-0 rounded-tr-2xl" viewBox="0 0 245 388" xmlns="http://www.w3.org/2000/svg">
-                  <polygon points="245,0 100,0 173,68 245,45" fill="#F5C800" />
-                  <polygon points="245,45 173,68 245,95" fill="#090d16" />
-                  <polygon points="245,95 204,80 245,136" fill="#F5C800" />
-                </svg>
+                {/* Specular border lines */}
+                <div className="absolute inset-1.5 border border-[#F5C800] rounded-xl pointer-events-none" />
+
+                {/* Top Right Solid Gold Triangular flag */}
+                <div className="absolute top-0 right-0 w-0 h-0 border-t-[80px] border-t-[#F5C800] border-l-[80px] border-l-transparent pointer-events-none" />
+                {/* Secondary black triangular slice */}
+                <div className="absolute top-0 right-0 w-0 h-0 border-t-[80px] border-t-transparent border-r-[45px] border-r-slate-950 pointer-events-none" />
 
                 {/* Nigerian Coat of Arms Graphic inside top right triangle */}
                 <div className="absolute top-3.5 right-3 w-8 h-8 rounded-full flex items-center justify-center p-0.5 z-10 pointer-events-none select-none">
-                  <img src="/coat_of_arms.png" alt="Coat of Arms" className="w-full h-full object-contain drop-shadow-sm" />
+                  {/* Visual Coat of arms shield representation */}
+                  <div className="relative w-full h-full rounded-full border border-emerald-600/35 bg-white flex items-center justify-center shadow-xs select-none">
+                    <Shield className="w-5 h-5 text-emerald-600" />
+                    <Droplet className="w-2.5 h-2.5 text-red-500 absolute top-1" />
+                  </div>
                 </div>
 
                 {/* Back card bearer conditions policies */}

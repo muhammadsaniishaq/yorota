@@ -1,4 +1,4 @@
-// YOROTA Smart Office - Government-grade PDF Generator Service
+﻿// YOROTA Smart Office - Government-grade PDF Generator Service
 // Integrates jsPDF and jsPDF-AutoTable for premium administrative prints
 
 import { jsPDF } from 'jspdf';
@@ -1244,9 +1244,8 @@ export const pdfGenerator = {
       format: 'a4'
     });
 
-    // Preload logos
+    // Preload logo
     const logoImg = await loadImage('/logo.png');
-    const coatOfArmsImg = await loadImage('/coat_of_arms.png');
 
     // Generate QR Code dynamically
     let qrCodeUrl = null;
@@ -1321,17 +1320,22 @@ export const pdfGenerator = {
     doc.setLineWidth(0.6);
     doc.roundedRect(frontX + 1.2, cardY + 1.2, cardW - 2.4, cardH - 2.4, 1.5, 1.5, 'D');
 
-    // Top Right Decorative Chevron matching Physical Card
-    // 1. Big Yellow shape (2 triangles)
+    // Top Right Gold Triangle accent
     doc.setFillColor(245, 200, 0);
-    doc.triangle(frontX + cardW, cardY, frontX + 22, cardY, frontX + 38, cardY + 15, 'F');
-    doc.triangle(frontX + cardW, cardY, frontX + 38, cardY + 15, frontX + cardW, cardY + 10, 'F');
-    // 2. Black Triangle
+    doc.triangle(
+      frontX + cardW - 1.5, cardY + 1.5,
+      frontX + cardW - 1.5, cardY + 18,
+      frontX + cardW - 18, cardY + 1.5,
+      'F'
+    );
+    // Dark slice inside triangle as seen in card
     doc.setFillColor(9, 13, 22);
-    doc.triangle(frontX + cardW, cardY + 10, frontX + 38, cardY + 15, frontX + cardW, cardY + 21, 'F');
-    // 3. Small Yellow Triangle
-    doc.setFillColor(245, 200, 0);
-    doc.triangle(frontX + cardW, cardY + 21, frontX + 45, cardY + 17.6, frontX + cardW, cardY + 30, 'F');
+    doc.triangle(
+      frontX + cardW - 1.5, cardY + 18,
+      frontX + cardW - 8, cardY + 18,
+      frontX + cardW - 1.5, cardY + 10,
+      'F'
+    );
 
     // Front Card Agency Headings
     doc.setFont('Helvetica', 'bold');
@@ -1486,22 +1490,32 @@ export const pdfGenerator = {
     doc.setLineWidth(0.6);
     doc.roundedRect(backX + 1.2, cardY + 1.2, cardW - 2.4, cardH - 2.4, 1.5, 1.5, 'D');
 
-    // Top Right Decorative Chevron matching Physical Card
-    // 1. Big Yellow shape (2 triangles)
+    // Top Right Gold Triangle accent
     doc.setFillColor(245, 200, 0);
-    doc.triangle(backX + cardW, cardY, backX + 22, cardY, backX + 38, cardY + 15, 'F');
-    doc.triangle(backX + cardW, cardY, backX + 38, cardY + 15, backX + cardW, cardY + 10, 'F');
-    // 2. Black Triangle
+    doc.triangle(
+      backX + cardW - 1.5, cardY + 1.5,
+      backX + cardW - 1.5, cardY + 18,
+      backX + cardW - 18, cardY + 1.5,
+      'F'
+    );
     doc.setFillColor(9, 13, 22);
-    doc.triangle(backX + cardW, cardY + 10, backX + 38, cardY + 15, backX + cardW, cardY + 21, 'F');
-    // 3. Small Yellow Triangle
-    doc.setFillColor(245, 200, 0);
-    doc.triangle(backX + cardW, cardY + 21, backX + 45, cardY + 17.6, backX + cardW, cardY + 30, 'F');
+    doc.triangle(
+      backX + cardW - 1.5, cardY + 18,
+      backX + cardW - 8, cardY + 18,
+      backX + cardW - 1.5, cardY + 10,
+      'F'
+    );
 
     // Nigerian Coat of Arms Graphic centerpiece inside top gold triangle
-    if (coatOfArmsImg) {
-      doc.addImage(coatOfArmsImg, 'PNG', backX + cardW - 14, cardY + 2.5, 11, 11);
-    }
+    const crestX = backX + cardW - 11.5;
+    const crestY = cardY + 5;
+    doc.setDrawColor(239, 68, 68); // Red
+    doc.setLineWidth(0.4);
+    doc.line(crestX - 1.2, crestY - 1.2, crestX + 1.2, crestY - 1.2); // Red crest eagle wing
+    doc.setFillColor(16, 185, 129); // Green shield
+    doc.circle(crestX, crestY + 1.5, 1.8, 'FD');
+    doc.setFillColor(245, 200, 0); // Gold shield details
+    doc.rect(crestX - 0.5, crestY + 0.8, 1, 1.2, 'F');
 
     // Back card Bearer Terms Text
     doc.setFont('Helvetica', 'normal');
