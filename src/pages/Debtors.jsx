@@ -92,8 +92,8 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
         updatedBalance: debtor.amount_owed
       };
       if (format === 'thermal') {
-        await pdfGenerator.generateDebtorThermalReceipt(debtor, txPayload);
-        setGlobalNotification({ message: 'Compiling past thermal slip PDF...', type: 'success' });
+        pdfGenerator.printDebtorThermalSlip(debtor, txPayload);
+        setGlobalNotification({ message: 'Sending past receipt to thermal printer...', type: 'info' });
       } else {
         await pdfGenerator.generateDebtorReceipt(debtor, txPayload);
         setGlobalNotification({ message: 'Compiling past standard receipt PDF...', type: 'success' });
@@ -199,7 +199,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       };
       try {
         if (useThermalPref) {
-          await pdfGenerator.generateDebtorThermalReceipt(createdDebtor, createdTx);
+          pdfGenerator.printDebtorThermalSlip(createdDebtor, createdTx);
         } else {
           await pdfGenerator.generateDebtorReceipt(createdDebtor, createdTx);
         }
@@ -255,7 +255,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       };
       try {
         if (useThermalPref) {
-          await pdfGenerator.generateDebtorThermalReceipt(updatedDebtor, repaymentTx);
+          pdfGenerator.printDebtorThermalSlip(updatedDebtor, repaymentTx);
         } else {
           await pdfGenerator.generateDebtorReceipt(updatedDebtor, repaymentTx);
         }
@@ -308,7 +308,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       };
       try {
         if (useThermalPref) {
-          await pdfGenerator.generateDebtorThermalReceipt(updatedDebtor, accrualTx);
+          pdfGenerator.printDebtorThermalSlip(updatedDebtor, accrualTx);
         } else {
           await pdfGenerator.generateDebtorReceipt(updatedDebtor, accrualTx);
         }

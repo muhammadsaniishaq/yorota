@@ -5,6 +5,45 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
 
+// Auto-sanitize all texts passed to jsPDF to prevent WinAnsiEncoding (CP-1252) crashes
+const originalJsPDFText = jsPDF.prototype.text;
+jsPDF.prototype.text = function(text, x, y, options) {
+  const cleanValue = (val) => {
+    if (val === null || val === undefined) return '';
+    if (Array.isArray(val)) return val.map(cleanValue);
+    if (typeof val !== 'string') return String(val);
+    
+    // Replace Naira symbol with N
+    let cleaned = val.replace(/₦/g, 'N');
+    
+    let result = '';
+    for (let i = 0; i < cleaned.length; i++) {
+      const code = cleaned.charCodeAt(i);
+      // CP-1252 allowed characters range check
+      const isCp1252 = 
+        (code >= 32 && code <= 126) || 
+        (code >= 160 && code <= 255) ||
+        code === 9 || code === 10 || code === 13 ||
+        [0x20AC, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x017D, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x017E, 0x0178].includes(code);
+        
+      if (isCp1252) {
+        result += cleaned[i];
+      } else {
+        if (code === 8358 || code === 8374) {
+          result += 'N';
+        } else {
+          result += ' ';
+        }
+      }
+    }
+    return result;
+  };
+  
+  const cleanedText = cleanValue(text);
+  return originalJsPDFText.call(this, cleanedText, x, y, options);
+};
+
+
 // Official green color theme codes
 const BRAND_GREEN = [16, 185, 129]; // RGB: #10b981
 const BRAND_DARK = [9, 13, 22]; // RGB: #090d16
@@ -193,8 +232,8 @@ export const pdfGenerator = {
     const logRows = [[
       record.service?.name || 'Service Category',
       record.quantity.toString(),
-      `Γéª${(record.amount / record.quantity).toFixed(2)}`,
-      `Γéª${parseFloat(record.amount).toFixed(2)}`
+      `N${(record.amount / record.quantity).toFixed(2)}`,
+      `N${parseFloat(record.amount).toFixed(2)}`
     ]];
 
     doc.autoTable({
@@ -250,11 +289,11 @@ export const pdfGenerator = {
 
     doc.setFont('Helvetica', 'normal');
     doc.setTextColor(...BRAND_DARK);
-    doc.text(`Γéª${parseFloat(record.amount).toFixed(2)}`, 190, currentY + 6, { align: 'right' });
-    doc.text('Γéª0.00', 190, currentY + 12, { align: 'right' });
+    doc.text(`N${parseFloat(record.amount).toFixed(2)}`, 190, currentY + 6, { align: 'right' });
+    doc.text('N0.00', 190, currentY + 12, { align: 'right' });
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${parseFloat(record.amount).toFixed(2)}`, 190, currentY + 20, { align: 'right' });
+    doc.text(`N${parseFloat(record.amount).toFixed(2)}`, 190, currentY + 20, { align: 'right' });
 
     // 7. Validation Seal and Signatures
     let sigY = currentY + 35;
@@ -296,11 +335,12 @@ export const pdfGenerator = {
 
   // --- GENERATE DEBTOR TRANSACTION RECEIPT ---
   generateDebtorReceipt: async (debtor, tx) => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
     // Preload logo
     const logoImg = await loadImage('/logo.png');
@@ -342,7 +382,7 @@ export const pdfGenerator = {
     const logRows = [[
       txTypeLabel,
       tx.reason || (tx.type === 'repayment' ? 'Cash settlement repayment' : 'Accrued credit addition'),
-      `Γéª${parseFloat(tx.amount).toFixed(2)}`
+      `N${parseFloat(tx.amount).toFixed(2)}`
     ]];
 
     doc.autoTable({
@@ -398,12 +438,12 @@ export const pdfGenerator = {
 
     doc.setFont('Helvetica', 'normal');
     doc.setTextColor(9, 13, 22);
-    doc.text(`Γéª${parseFloat(tx.amount).toFixed(2)}`, 190, currentY + 6, { align: 'right' });
-    const prevBal = tx.type === 'repayment' ? tx.updatedBalance + tx.amount : tx.updatedBalance - tx.amount;
-    doc.text(`Γéª${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 190, currentY + 12, { align: 'right' });
+    doc.text(`N${parseFloat(tx.amount).toFixed(2)}`, 190, currentY + 6, { align: 'right' });
+    const prevBal = tx.type === 'repayment' ? Number(tx.updatedBalance) + Number(tx.amount) : Number(tx.updatedBalance) - Number(tx.amount);
+    doc.text(`N${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 190, currentY + 12, { align: 'right' });
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(...(tx.updatedBalance > 0 ? [239, 68, 68] : BRAND_GREEN));
-    doc.text(`Γéª${parseFloat(tx.updatedBalance).toFixed(2)}`, 190, currentY + 22, { align: 'right' });
+    doc.text(`N${parseFloat(tx.updatedBalance).toFixed(2)}`, 190, currentY + 22, { align: 'right' });
 
     // 7. Validation Seal and Signatures
     let sigY = currentY + 38;
@@ -439,8 +479,12 @@ export const pdfGenerator = {
     doc.text('This receipt acts as an official record of balance adjustment at YOROTA Smart Office.', 105, 275, { align: 'center' });
     doc.text('Please retain this slip for reconciliation reference.', 105, 280, { align: 'center' });
 
-    // Save
-    doc.save(`debtor-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
+      // Save
+      doc.save(`debtor-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
+    } catch (e) {
+      console.error('generateDebtorReceipt error:', e);
+      throw e;
+    }
   },
 
   // --- GENERATE DEBTOR TRANSACTION THERMAL RECEIPT (58MM) ---
@@ -494,18 +538,18 @@ export const pdfGenerator = {
 
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7);
-    doc.text(`Amount: Γéª${parseFloat(tx.amount).toFixed(2)}`, 4, 66);
+    doc.text(`Amount: N${parseFloat(tx.amount).toFixed(2)}`, 4, 66);
 
     doc.line(4, 69, 54, 69);
 
     // 4. Balances
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(6);
-    const prevBal = tx.type === 'repayment' ? tx.updatedBalance + tx.amount : tx.updatedBalance - tx.amount;
-    doc.text(`Previous Balance:  Γéª${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 4, 73);
+    const prevBal = tx.type === 'repayment' ? Number(tx.updatedBalance) + Number(tx.amount) : Number(tx.updatedBalance) - Number(tx.amount);
+    doc.text(`Previous Balance:  N${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 4, 73);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(6.5);
-    doc.text(`UPDATED BALANCE:   Γéª${parseFloat(tx.updatedBalance).toFixed(2)}`, 4, 78);
+    doc.text(`UPDATED BALANCE:   N${parseFloat(tx.updatedBalance).toFixed(2)}`, 4, 78);
 
     doc.line(4, 81, 54, 81);
 
@@ -538,6 +582,190 @@ export const pdfGenerator = {
 
     // Save
     doc.save(`thermal-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
+  },
+
+  // --- PRINT DEBTOR TRANSACTION THERMAL SLIP DIRECTLY TO BLUETOOTH/SYSTEM PRINTER ---
+  printDebtorThermalSlip: (debtor, tx) => {
+    try {
+      const isRepayment = tx.type === 'repayment';
+      const txTypeLabel = isRepayment ? 'DEBT REPAYMENT SLIP' : 'CREDIT ACCRUAL SLIP';
+      const prevBal = isRepayment ? Number(tx.updatedBalance) + Number(tx.amount) : Number(tx.updatedBalance) - Number(tx.amount);
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Thermal Print Receipt</title>
+          <meta charset="utf-8">
+          <style>
+            @page {
+              size: 58mm auto;
+              margin: 0;
+            }
+            body {
+              width: 50mm;
+              margin: 0 auto;
+              padding: 4mm 0;
+              font-family: 'Courier New', Courier, monospace;
+              font-size: 10px;
+              line-height: 1.3;
+              color: #000;
+              background-color: #fff;
+            }
+            .text-center {
+              text-align: center;
+            }
+            .bold {
+              font-weight: bold;
+            }
+            .title {
+              font-size: 11px;
+              line-height: 1.2;
+              margin-bottom: 2px;
+            }
+            .subtitle {
+              font-size: 7px;
+              line-height: 1.2;
+              margin-bottom: 4px;
+              text-transform: uppercase;
+            }
+            .divider {
+              border-top: 1px dashed #000;
+              margin: 6px 0;
+            }
+            .row {
+              display: flex;
+              justify-content: space-between;
+            }
+            .section-title {
+              font-size: 9px;
+              font-weight: bold;
+              margin-top: 6px;
+              margin-bottom: 3px;
+              text-decoration: underline;
+            }
+            .amount-box {
+              font-size: 11px;
+              margin: 8px 0;
+              text-align: center;
+              border: 1px solid #000;
+              padding: 4px;
+            }
+            .signature-section {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 25px;
+              margin-bottom: 10px;
+            }
+            .sig-box {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            .sig-line {
+              width: 20mm;
+              border-top: 1px solid #000;
+              margin-bottom: 2px;
+            }
+            .sig-label {
+              font-size: 7px;
+              text-transform: uppercase;
+            }
+            .footer {
+              font-size: 7px;
+              text-align: center;
+              margin-top: 15px;
+              font-style: italic;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="text-center bold title">YOROTA SMART OFFICE</div>
+          <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
+          <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">${txTypeLabel}</div>
+          
+          <div class="divider"></div>
+          
+          <div class="section-title">DEBTOR PROFILE:</div>
+          <div class="row"><span>Name:</span><span class="bold">${debtor.customer_name}</span></div>
+          <div class="row"><span>Phone:</span><span>${debtor.phone_number}</span></div>
+          <div class="row"><span>Ref:</span><span>RTO-DB-${debtor.id.substring(0, 6).toUpperCase()}</span></div>
+          <div class="row"><span>Date:</span><span>${tx.date}</span></div>
+          <div class="row"><span>Due Date:</span><span>${debtor.due_date}</span></div>
+          
+          <div class="divider"></div>
+          
+          <div class="section-title">TRANSACTION DETAILS:</div>
+          <div style="word-wrap: break-word; max-width: 50mm;">
+            <span>Reason:</span><br/>
+            <span style="font-style: italic;">${tx.reason || (isRepayment ? 'Cash settlement repayment' : 'Accrued credit addition')}</span>
+          </div>
+          <div class="amount-box bold">
+            AMOUNT: ₦${parseFloat(tx.amount).toFixed(2)}
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="row">
+            <span>Previous Balance:</span>
+            <span>₦${parseFloat(Math.max(0, prevBal)).toFixed(2)}</span>
+          </div>
+          <div class="row bold" style="font-size: 11px; margin-top: 2px;">
+            <span>UPDATED BALANCE:</span>
+            <span>₦${parseFloat(tx.updatedBalance).toFixed(2)}</span>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div style="font-size: 8px; margin-top: 4px; text-align: justify;">
+            ${isRepayment 
+              ? 'Verified: Cash repayment collected and subtracted from outstanding balance.' 
+              : 'Statement: Credit accrued subject to prompt settlement under regulatory terms.'}
+          </div>
+          <div style="margin-top: 6px; font-size: 8px;">
+            <span>Officer:</span> <span class="bold">${tx.received_by || 'Staff Officer'}</span>
+          </div>
+          
+          <div class="signature-section">
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <div class="sig-label">Officer Sig</div>
+            </div>
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <div class="sig-label">Customer Sig</div>
+            </div>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="footer">
+            Thank you for your cooperation!<br/>
+            YOROTA Smart Office
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() {
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      const printWindow = window.open('', '_blank', 'width=350,height=600');
+      if (!printWindow) {
+        throw new Error('Popup blocked! Please allow popups for this site to print receipts.');
+      }
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    } catch (err) {
+      console.error('printDebtorThermalSlip error:', err);
+      throw err;
+    }
   },
 
 
@@ -586,7 +814,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${parseFloat(summary.totalAmount).toFixed(2)}`, 81, 75);
+    doc.text(`N${parseFloat(summary.totalAmount).toFixed(2)}`, 81, 75);
 
     // Card 3
     doc.setFillColor(248, 250, 252);
@@ -598,9 +826,9 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...(summary.ledgerNet >= 0 ? BRAND_GREEN : [239, 68, 68]));
-    doc.text(`Γéª${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
+    doc.text(`N${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
 
-    // Set-aside Revenue Surcharge Splits Audit Block (Γéª500 per unit, 70% HQ / 30% local office)
+    // Set-aside Revenue Surcharge Splits Audit Block (N500 per unit, 70% HQ / 30% local office)
     let ySplit = 85;
     doc.setFillColor(245, 247, 250);
     doc.rect(15, ySplit, 180, 22, 'F');
@@ -611,19 +839,19 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text('REVENUE SHARE & RETENTION SURCHARGE AUDIT (Γéª500 / unit)', 20, ySplit + 5.5);
+    doc.text('REVENUE SHARE & RETENTION SURCHARGE AUDIT (N500 / unit)', 20, ySplit + 5.5);
 
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(...BRAND_DARK);
     doc.text('Headquarters Share (70%):', 20, ySplit + 11);
     doc.setFont('Helvetica', 'normal');
-    doc.text(`Gen: Γéª${parseFloat(summary.setAsideHQ || 0).toFixed(2)} | Paid: Γéª${parseFloat(summary.hqRemitted || 0).toFixed(2)} | Due: Γéª${parseFloat(summary.hqOutstanding || 0).toFixed(2)}`, 20, ySplit + 16);
+    doc.text(`Gen: N${parseFloat(summary.setAsideHQ || 0).toFixed(2)} | Paid: N${parseFloat(summary.hqRemitted || 0).toFixed(2)} | Due: N${parseFloat(summary.hqOutstanding || 0).toFixed(2)}`, 20, ySplit + 16);
 
     doc.setFont('Helvetica', 'bold');
     doc.text('Local Office Share (30%):', 110, ySplit + 11);
     doc.setFont('Helvetica', 'normal');
-    doc.text(`Gen: Γéª${parseFloat(summary.setAsideOffice || 0).toFixed(2)} | Spent: Γéª${parseFloat(summary.officeDisbursed || 0).toFixed(2)} | Retained: Γéª${parseFloat(summary.officeBalance || 0).toFixed(2)}`, 110, ySplit + 16);
+    doc.text(`Gen: N${parseFloat(summary.setAsideOffice || 0).toFixed(2)} | Spent: N${parseFloat(summary.officeDisbursed || 0).toFixed(2)} | Retained: N${parseFloat(summary.officeBalance || 0).toFixed(2)}`, 110, ySplit + 16);
 
     // Header 1: Category Summary Breakdowns
     doc.setFont('Helvetica', 'bold');
@@ -635,13 +863,13 @@ export const pdfGenerator = {
     const catRows = Object.entries(summary.categories).map(([name, count]) => {
       const serviceRecords = records.filter(r => r.service?.name === name);
       const totalAmount = serviceRecords.reduce((sum, r) => sum + parseFloat(r.amount), 0);
-      return [name, count.toString(), `Γéª${totalAmount.toFixed(2)}`];
+      return [name, count.toString(), `N${totalAmount.toFixed(2)}`];
     });
 
     doc.autoTable({
       startY: 118,
       head: [['Category Service Name', 'Units Logged', 'Revenue Generated']],
-      body: catRows.length > 0 ? catRows : [['No data recorded', '0', 'Γéª0.00']],
+      body: catRows.length > 0 ? catRows : [['No data recorded', '0', 'N0.00']],
       headStyles: { fillColor: BRAND_GREEN, textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 8 },
       theme: 'striped',
@@ -663,7 +891,7 @@ export const pdfGenerator = {
       rec.customer_name,
       rec.service?.name || 'Unknown',
       rec.quantity.toString(),
-      `Γéª${parseFloat(rec.amount).toFixed(2)}`,
+      `N${parseFloat(rec.amount).toFixed(2)}`,
       rec.officer_name
     ]);
 
@@ -719,7 +947,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${parseFloat(summary.totalIncome).toFixed(2)}`, 19, 75);
+    doc.text(`N${parseFloat(summary.totalIncome).toFixed(2)}`, 19, 75);
 
     // Card 2: Expenses
     doc.setFillColor(248, 250, 252);
@@ -731,7 +959,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(239, 68, 68); // Red
-    doc.text(`Γéª${parseFloat(summary.totalExpenses).toFixed(2)}`, 81, 75);
+    doc.text(`N${parseFloat(summary.totalExpenses).toFixed(2)}`, 81, 75);
 
     // Card 3: Net Cash
     doc.setFillColor(248, 250, 252);
@@ -743,7 +971,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...(summary.remainingBalance >= 0 ? BRAND_GREEN : [239, 68, 68]));
-    doc.text(`Γéª${parseFloat(summary.remainingBalance).toFixed(2)}`, 144, 75);
+    doc.text(`N${parseFloat(summary.remainingBalance).toFixed(2)}`, 144, 75);
 
     // Header 1: Ledgers
     doc.setFont('Helvetica', 'bold');
@@ -755,7 +983,7 @@ export const pdfGenerator = {
       t.date,
       t.type.toUpperCase(),
       t.purpose,
-      `Γéª${parseFloat(t.amount).toFixed(2)}`,
+      `N${parseFloat(t.amount).toFixed(2)}`,
       t.collected_by
     ]);
 
@@ -974,55 +1202,55 @@ export const pdfGenerator = {
     const rows = [
       // 1. Tricycle
       ['1.', 'TRICYCLE (NAPEP/JEGA)', '', ''],
-      ['', '  - OWNERSHIP: New (Γéª10,000)', data.tricycle_own_new_qty > 0 ? data.tricycle_own_new_qty.toString() : '-', data.tricycle_own_new_qty > 0 ? `Γéª${data.tricycle_own_new_amt.toFixed(2)}` : '-'],
-      ['', '  - OWNERSHIP: Renewal (Γéª5,000)', data.tricycle_own_ren_qty > 0 ? data.tricycle_own_ren_qty.toString() : '-', data.tricycle_own_ren_qty > 0 ? `Γéª${data.tricycle_own_ren_amt.toFixed(2)}` : '-'],
-      ['', '  - RIDER: New (Γéª1,500)', data.tricycle_rider_new_qty > 0 ? data.tricycle_rider_new_qty.toString() : '-', data.tricycle_rider_new_qty > 0 ? `Γéª${data.tricycle_rider_new_amt.toFixed(2)}` : '-'],
-      ['', '  - RIDER: Renewal (Γéª1,500)', data.tricycle_rider_ren_qty > 0 ? data.tricycle_rider_ren_qty.toString() : '-', data.tricycle_rider_ren_qty > 0 ? `Γéª${data.tricycle_rider_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - OWNERSHIP: New (N10,000)', data.tricycle_own_new_qty > 0 ? data.tricycle_own_new_qty.toString() : '-', data.tricycle_own_new_qty > 0 ? `N${data.tricycle_own_new_amt.toFixed(2)}` : '-'],
+      ['', '  - OWNERSHIP: Renewal (N5,000)', data.tricycle_own_ren_qty > 0 ? data.tricycle_own_ren_qty.toString() : '-', data.tricycle_own_ren_qty > 0 ? `N${data.tricycle_own_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: New (N1,500)', data.tricycle_rider_new_qty > 0 ? data.tricycle_rider_new_qty.toString() : '-', data.tricycle_rider_new_qty > 0 ? `N${data.tricycle_rider_new_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: Renewal (N1,500)', data.tricycle_rider_ren_qty > 0 ? data.tricycle_rider_ren_qty.toString() : '-', data.tricycle_rider_ren_qty > 0 ? `N${data.tricycle_rider_ren_amt.toFixed(2)}` : '-'],
       
       // 2. Motorcycle
       ['2.', 'MOTORCYCLE', '', ''],
-      ['', '  - OWNERSHIP: New (Γéª2,500)', data.motorcycle_own_new_qty > 0 ? data.motorcycle_own_new_qty.toString() : '-', data.motorcycle_own_new_qty > 0 ? `Γéª${data.motorcycle_own_new_amt.toFixed(2)}` : '-'],
-      ['', '  - OWNERSHIP: Renewal (Γéª2,500)', data.motorcycle_own_ren_qty > 0 ? data.motorcycle_own_ren_qty.toString() : '-', data.motorcycle_own_ren_qty > 0 ? `Γéª${data.motorcycle_own_ren_amt.toFixed(2)}` : '-'],
-      ['', '  - RIDER: New (Γéª1,500)', data.motorcycle_rider_new_qty > 0 ? data.motorcycle_rider_new_qty.toString() : '-', data.motorcycle_rider_new_qty > 0 ? `Γéª${data.motorcycle_rider_new_amt.toFixed(2)}` : '-'],
-      ['', '  - RIDER: Renewal (Γéª1,500)', data.motorcycle_rider_ren_qty > 0 ? data.motorcycle_rider_ren_qty.toString() : '-', data.motorcycle_rider_ren_qty > 0 ? `Γéª${data.motorcycle_rider_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - OWNERSHIP: New (N2,500)', data.motorcycle_own_new_qty > 0 ? data.motorcycle_own_new_qty.toString() : '-', data.motorcycle_own_new_qty > 0 ? `N${data.motorcycle_own_new_amt.toFixed(2)}` : '-'],
+      ['', '  - OWNERSHIP: Renewal (N2,500)', data.motorcycle_own_ren_qty > 0 ? data.motorcycle_own_ren_qty.toString() : '-', data.motorcycle_own_ren_qty > 0 ? `N${data.motorcycle_own_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: New (N1,500)', data.motorcycle_rider_new_qty > 0 ? data.motorcycle_rider_new_qty.toString() : '-', data.motorcycle_rider_new_qty > 0 ? `N${data.motorcycle_rider_new_amt.toFixed(2)}` : '-'],
+      ['', '  - RIDER: Renewal (N1,500)', data.motorcycle_rider_ren_qty > 0 ? data.motorcycle_rider_ren_qty.toString() : '-', data.motorcycle_rider_ren_qty > 0 ? `N${data.motorcycle_rider_ren_amt.toFixed(2)}` : '-'],
       
       // 3. Taxi
       ['3.', 'TAXI', '', ''],
-      ['', '  - New (Γéª10,000)', data.taxi_new_qty > 0 ? data.taxi_new_qty.toString() : '-', data.taxi_new_qty > 0 ? `Γéª${data.taxi_new_amt.toFixed(2)}` : '-'],
-      ['', '  - Renewal (Γéª5,000)', data.taxi_ren_qty > 0 ? data.taxi_ren_qty.toString() : '-', data.taxi_ren_qty > 0 ? `Γéª${data.taxi_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - New (N10,000)', data.taxi_new_qty > 0 ? data.taxi_new_qty.toString() : '-', data.taxi_new_qty > 0 ? `N${data.taxi_new_amt.toFixed(2)}` : '-'],
+      ['', '  - Renewal (N5,000)', data.taxi_ren_qty > 0 ? data.taxi_ren_qty.toString() : '-', data.taxi_ren_qty > 0 ? `N${data.taxi_ren_amt.toFixed(2)}` : '-'],
       
       // 4. Kurkura
       ['4.', 'KURKURA', '', ''],
-      ['', '  - New (Γéª10,000)', data.kurkura_new_qty > 0 ? data.kurkura_new_qty.toString() : '-', data.kurkura_new_qty > 0 ? `Γéª${data.kurkura_new_amt.toFixed(2)}` : '-'],
-      ['', '  - Renewal (Γéª5,000)', data.kurkura_ren_qty > 0 ? data.kurkura_ren_qty.toString() : '-', data.kurkura_ren_qty > 0 ? `Γéª${data.kurkura_ren_amt.toFixed(2)}` : '-'],
+      ['', '  - New (N10,000)', data.kurkura_new_qty > 0 ? data.kurkura_new_qty.toString() : '-', data.kurkura_new_qty > 0 ? `N${data.kurkura_new_amt.toFixed(2)}` : '-'],
+      ['', '  - Renewal (N5,000)', data.kurkura_ren_qty > 0 ? data.kurkura_ren_qty.toString() : '-', data.kurkura_ren_qty > 0 ? `N${data.kurkura_ren_amt.toFixed(2)}` : '-'],
       
       // 5. Lost ID
       ['5.', 'LOST OF ID/STICKER', '', ''],
-      ['', '  - Tricycle (Γéª2,500)', data.lost_tricycle_qty > 0 ? data.lost_tricycle_qty.toString() : '-', data.lost_tricycle_qty > 0 ? `Γéª${data.lost_tricycle_amt.toFixed(2)}` : '-'],
-      ['', '  - Motorcycle (Γéª2,500)', data.lost_motorcycle_qty > 0 ? data.lost_motorcycle_qty.toString() : '-', data.lost_motorcycle_qty > 0 ? `Γéª${data.lost_motorcycle_amt.toFixed(2)}` : '-'],
-      ['', '  - Taxi (Γéª2,500)', data.lost_taxi_qty > 0 ? data.lost_taxi_qty.toString() : '-', data.lost_taxi_qty > 0 ? `Γéª${data.lost_taxi_amt.toFixed(2)}` : '-'],
-      ['', '  - Kurkura (Γéª2,500)', data.lost_kurkura_qty > 0 ? data.lost_kurkura_qty.toString() : '-', data.lost_kurkura_qty > 0 ? `Γéª${data.lost_kurkura_amt.toFixed(2)}` : '-'],
+      ['', '  - Tricycle (N2,500)', data.lost_tricycle_qty > 0 ? data.lost_tricycle_qty.toString() : '-', data.lost_tricycle_qty > 0 ? `N${data.lost_tricycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Motorcycle (N2,500)', data.lost_motorcycle_qty > 0 ? data.lost_motorcycle_qty.toString() : '-', data.lost_motorcycle_qty > 0 ? `N${data.lost_motorcycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Taxi (N2,500)', data.lost_taxi_qty > 0 ? data.lost_taxi_qty.toString() : '-', data.lost_taxi_qty > 0 ? `N${data.lost_taxi_amt.toFixed(2)}` : '-'],
+      ['', '  - Kurkura (N2,500)', data.lost_kurkura_qty > 0 ? data.lost_kurkura_qty.toString() : '-', data.lost_kurkura_qty > 0 ? `N${data.lost_kurkura_amt.toFixed(2)}` : '-'],
       
       // 6. Change of Ownership
       ['6.', 'CHANGE OF OWNERSHIP', '', ''],
-      ['', '  - Tricycle (Γéª2,000)', data.change_tricycle_qty > 0 ? data.change_tricycle_qty.toString() : '-', data.change_tricycle_qty > 0 ? `Γéª${data.change_tricycle_amt.toFixed(2)}` : '-'],
-      ['', '  - Motorcycle (Γéª2,000)', data.change_motorcycle_qty > 0 ? data.change_motorcycle_qty.toString() : '-', data.change_motorcycle_qty > 0 ? `Γéª${data.change_motorcycle_amt.toFixed(2)}` : '-'],
-      ['', '  - Taxi (Γéª2,000)', data.change_taxi_qty > 0 ? data.change_taxi_qty.toString() : '-', data.change_taxi_qty > 0 ? `Γéª${data.change_taxi_amt.toFixed(2)}` : '-'],
-      ['', '  - Kurkura (Γéª2,000)', data.change_kurkura_qty > 0 ? data.change_kurkura_qty.toString() : '-', data.change_kurkura_qty > 0 ? `Γéª${data.change_kurkura_amt.toFixed(2)}` : '-'],
+      ['', '  - Tricycle (N2,000)', data.change_tricycle_qty > 0 ? data.change_tricycle_qty.toString() : '-', data.change_tricycle_qty > 0 ? `N${data.change_tricycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Motorcycle (N2,000)', data.change_motorcycle_qty > 0 ? data.change_motorcycle_qty.toString() : '-', data.change_motorcycle_qty > 0 ? `N${data.change_motorcycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Taxi (N2,000)', data.change_taxi_qty > 0 ? data.change_taxi_qty.toString() : '-', data.change_taxi_qty > 0 ? `N${data.change_taxi_amt.toFixed(2)}` : '-'],
+      ['', '  - Kurkura (N2,000)', data.change_kurkura_qty > 0 ? data.change_kurkura_qty.toString() : '-', data.change_kurkura_qty > 0 ? `N${data.change_kurkura_amt.toFixed(2)}` : '-'],
       
       // 7. Transfer
       ['7.', 'TRANSFER', '', ''],
-      ['', '  - Tricycle (Γéª2,000)', data.transfer_tricycle_qty > 0 ? data.transfer_tricycle_qty.toString() : '-', data.transfer_tricycle_qty > 0 ? `Γéª${data.transfer_tricycle_amt.toFixed(2)}` : '-'],
-      ['', '  - Motorcycle (Γéª2,000)', data.transfer_motorcycle_qty > 0 ? data.transfer_motorcycle_qty.toString() : '-', data.transfer_motorcycle_qty > 0 ? `Γéª${data.transfer_motorcycle_amt.toFixed(2)}` : '-'],
-      ['', '  - Taxi (Γéª2,000)', data.transfer_taxi_qty > 0 ? data.transfer_taxi_qty.toString() : '-', data.transfer_taxi_qty > 0 ? `Γéª${data.transfer_taxi_amt.toFixed(2)}` : '-'],
-      ['', '  - Kurkura (Γéª2,000)', data.transfer_kurkura_qty > 0 ? data.transfer_kurkura_qty.toString() : '-', data.transfer_kurkura_qty > 0 ? `Γéª${data.transfer_kurkura_amt.toFixed(2)}` : '-'],
+      ['', '  - Tricycle (N2,000)', data.transfer_tricycle_qty > 0 ? data.transfer_tricycle_qty.toString() : '-', data.transfer_tricycle_qty > 0 ? `N${data.transfer_tricycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Motorcycle (N2,000)', data.transfer_motorcycle_qty > 0 ? data.transfer_motorcycle_qty.toString() : '-', data.transfer_motorcycle_qty > 0 ? `N${data.transfer_motorcycle_amt.toFixed(2)}` : '-'],
+      ['', '  - Taxi (N2,000)', data.transfer_taxi_qty > 0 ? data.transfer_taxi_qty.toString() : '-', data.transfer_taxi_qty > 0 ? `N${data.transfer_taxi_amt.toFixed(2)}` : '-'],
+      ['', '  - Kurkura (N2,000)', data.transfer_kurkura_qty > 0 ? data.transfer_kurkura_qty.toString() : '-', data.transfer_kurkura_qty > 0 ? `N${data.transfer_kurkura_amt.toFixed(2)}` : '-'],
     ];
 
     // Append custom/other classifications if present in records
     if (data.others_qty > 0) {
       rows.push(
         ['8.', 'OTHER SERVICES / REGISTRATIONS', '', ''],
-        ['', '  - Custom Category Registrations', data.others_qty.toString(), `Γéª${data.others_amt.toFixed(2)}`]
+        ['', '  - Custom Category Registrations', data.others_qty.toString(), `N${data.others_amt.toFixed(2)}`]
       );
     }
 
@@ -1125,22 +1353,22 @@ export const pdfGenerator = {
     doc.text('TRICYCLE (NAPEP/JEGA)', 26, 90.5);
     drawCenteredText('OWNERSHIP', 24, 90, 96, true, 7.5);
     drawCenteredText('RIDER', 90, 156, 96, true, 7.5);
-    drawCenteredText('New (Γéª10,000)', 24, 57, 101, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Renewal (Γéª5,000)', 57, 90, 101, false, 6.5, [100, 116, 139]);
-    drawCenteredText('New (Γéª1,500)', 90, 123, 101, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Renewal (Γéª1,500)', 123, 156, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('New (N10,000)', 24, 57, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (N5,000)', 57, 90, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('New (N1,500)', 90, 123, 101, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (N1,500)', 123, 156, 101, false, 6.5, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 106.5);
-    drawCenteredText(data.tricycle_own_new_qty > 0 ? `${data.tricycle_own_new_qty} units (Γéª${data.tricycle_own_new_amt.toLocaleString()})` : '-', 24, 57, 106.5, false, 7);
-    drawCenteredText(data.tricycle_own_ren_qty > 0 ? `${data.tricycle_own_ren_qty} units (Γéª${data.tricycle_own_ren_amt.toLocaleString()})` : '-', 57, 90, 106.5, false, 7);
-    drawCenteredText(data.tricycle_rider_new_qty > 0 ? `${data.tricycle_rider_new_qty} units (Γéª${data.tricycle_rider_new_amt.toLocaleString()})` : '-', 90, 123, 106.5, false, 7);
-    drawCenteredText(data.tricycle_rider_ren_qty > 0 ? `${data.tricycle_rider_ren_qty} units (Γéª${data.tricycle_rider_ren_amt.toLocaleString()})` : '-', 123, 156, 106.5, false, 7);
+    drawCenteredText(data.tricycle_own_new_qty > 0 ? `${data.tricycle_own_new_qty} units (N${data.tricycle_own_new_amt.toLocaleString()})` : '-', 24, 57, 106.5, false, 7);
+    drawCenteredText(data.tricycle_own_ren_qty > 0 ? `${data.tricycle_own_ren_qty} units (N${data.tricycle_own_ren_amt.toLocaleString()})` : '-', 57, 90, 106.5, false, 7);
+    drawCenteredText(data.tricycle_rider_new_qty > 0 ? `${data.tricycle_rider_new_qty} units (N${data.tricycle_rider_new_amt.toLocaleString()})` : '-', 90, 123, 106.5, false, 7);
+    drawCenteredText(data.tricycle_rider_ren_qty > 0 ? `${data.tricycle_rider_ren_qty} units (N${data.tricycle_rider_ren_amt.toLocaleString()})` : '-', 123, 156, 106.5, false, 7);
     const triTotal = data.tricycle_own_new_amt + data.tricycle_own_ren_amt + data.tricycle_rider_new_amt + data.tricycle_rider_ren_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${triTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 98, { align: 'right' });
+    doc.text(`N${triTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 98, { align: 'right' });
 
     // --- ROW 2: MOTORCYCLE ---
     doc.setTextColor(9, 13, 22);
@@ -1150,22 +1378,22 @@ export const pdfGenerator = {
     doc.text('MOTORCYCLE', 26, 112.5);
     drawCenteredText('OWNERSHIP', 24, 90, 118, true, 7.5);
     drawCenteredText('RIDER', 90, 156, 118, true, 7.5);
-    drawCenteredText('New (Γéª2,500)', 24, 57, 123, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Renewal (Γéª2,500)', 57, 90, 123, false, 6.5, [100, 116, 139]);
-    drawCenteredText('New (Γéª1,500)', 90, 123, 123, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Renewal (Γéª1,500)', 123, 156, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('New (N2,500)', 24, 57, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (N2,500)', 57, 90, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('New (N1,500)', 90, 123, 123, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Renewal (N1,500)', 123, 156, 123, false, 6.5, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 128.5);
-    drawCenteredText(data.motorcycle_own_new_qty > 0 ? `${data.motorcycle_own_new_qty} units (Γéª${data.motorcycle_own_new_amt.toLocaleString()})` : '-', 24, 57, 128.5, false, 7);
-    drawCenteredText(data.motorcycle_own_ren_qty > 0 ? `${data.motorcycle_own_ren_qty} units (Γéª${data.motorcycle_own_ren_amt.toLocaleString()})` : '-', 57, 90, 128.5, false, 7);
-    drawCenteredText(data.motorcycle_rider_new_qty > 0 ? `${data.motorcycle_rider_new_qty} units (Γéª${data.motorcycle_rider_new_amt.toLocaleString()})` : '-', 90, 123, 128.5, false, 7);
-    drawCenteredText(data.motorcycle_rider_ren_qty > 0 ? `${data.motorcycle_rider_ren_qty} units (Γéª${data.motorcycle_rider_ren_amt.toLocaleString()})` : '-', 123, 156, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_own_new_qty > 0 ? `${data.motorcycle_own_new_qty} units (N${data.motorcycle_own_new_amt.toLocaleString()})` : '-', 24, 57, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_own_ren_qty > 0 ? `${data.motorcycle_own_ren_qty} units (N${data.motorcycle_own_ren_amt.toLocaleString()})` : '-', 57, 90, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_rider_new_qty > 0 ? `${data.motorcycle_rider_new_qty} units (N${data.motorcycle_rider_new_amt.toLocaleString()})` : '-', 90, 123, 128.5, false, 7);
+    drawCenteredText(data.motorcycle_rider_ren_qty > 0 ? `${data.motorcycle_rider_ren_qty} units (N${data.motorcycle_rider_ren_amt.toLocaleString()})` : '-', 123, 156, 128.5, false, 7);
     const motoTotal = data.motorcycle_own_new_amt + data.motorcycle_own_ren_amt + data.motorcycle_rider_new_amt + data.motorcycle_rider_ren_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${motoTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 120, { align: 'right' });
+    doc.text(`N${motoTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 120, { align: 'right' });
 
     // --- ROW 3: TAXI ---
     doc.setTextColor(9, 13, 22);
@@ -1173,18 +1401,18 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('TAXI', 26, 134.5);
-    drawCenteredText('New (Γéª10,000)', 24, 90, 140, false, 7, [100, 116, 139]);
-    drawCenteredText('Renewal (Γéª5,000)', 90, 156, 140, false, 7, [100, 116, 139]);
+    drawCenteredText('New (N10,000)', 24, 90, 140, false, 7, [100, 116, 139]);
+    drawCenteredText('Renewal (N5,000)', 90, 156, 140, false, 7, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 146.5);
-    drawCenteredText(data.taxi_new_qty > 0 ? `${data.taxi_new_qty} units (Γéª${data.taxi_new_amt.toLocaleString()})` : '-', 24, 90, 146.5, false, 7);
-    drawCenteredText(data.taxi_ren_qty > 0 ? `${data.taxi_ren_qty} units (Γéª${data.taxi_ren_amt.toLocaleString()})` : '-', 90, 156, 146.5, false, 7);
+    drawCenteredText(data.taxi_new_qty > 0 ? `${data.taxi_new_qty} units (N${data.taxi_new_amt.toLocaleString()})` : '-', 24, 90, 146.5, false, 7);
+    drawCenteredText(data.taxi_ren_qty > 0 ? `${data.taxi_ren_qty} units (N${data.taxi_ren_amt.toLocaleString()})` : '-', 90, 156, 146.5, false, 7);
     const taxiTotal = data.taxi_new_amt + data.taxi_ren_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${taxiTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 140, { align: 'right' });
+    doc.text(`N${taxiTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 140, { align: 'right' });
 
     // --- ROW 4: KURKURA ---
     doc.setTextColor(9, 13, 22);
@@ -1192,18 +1420,18 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('KURKURA', 26, 152.5);
-    drawCenteredText('New (Γéª10,000)', 24, 90, 158, false, 7, [100, 116, 139]);
-    drawCenteredText('Renewal (Γéª5,000)', 90, 156, 158, false, 7, [100, 116, 139]);
+    drawCenteredText('New (N10,000)', 24, 90, 158, false, 7, [100, 116, 139]);
+    drawCenteredText('Renewal (N5,000)', 90, 156, 158, false, 7, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 164.5);
-    drawCenteredText(data.kurkura_new_qty > 0 ? `${data.kurkura_new_qty} units (Γéª${data.kurkura_new_amt.toLocaleString()})` : '-', 24, 90, 164.5, false, 7);
-    drawCenteredText(data.kurkura_ren_qty > 0 ? `${data.kurkura_ren_qty} units (Γéª${data.kurkura_ren_amt.toLocaleString()})` : '-', 90, 156, 164.5, false, 7);
+    drawCenteredText(data.kurkura_new_qty > 0 ? `${data.kurkura_new_qty} units (N${data.kurkura_new_amt.toLocaleString()})` : '-', 24, 90, 164.5, false, 7);
+    drawCenteredText(data.kurkura_ren_qty > 0 ? `${data.kurkura_ren_qty} units (N${data.kurkura_ren_amt.toLocaleString()})` : '-', 90, 156, 164.5, false, 7);
     const kurTotal = data.kurkura_new_amt + data.kurkura_ren_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${kurTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 158, { align: 'right' });
+    doc.text(`N${kurTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 158, { align: 'right' });
 
     // --- ROW 5: LOST OF ID/STICKER ---
     doc.setTextColor(9, 13, 22);
@@ -1211,22 +1439,22 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('LOST OF ID/STICKER', 26, 170.5);
-    drawCenteredText('Tricycle (Γéª2,500)', 24, 57, 176, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Motorcycle (Γéª2,500)', 57, 90, 176, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Taxi (Γéª2,500)', 90, 123, 176, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Kurkura (Γéª2,500)', 123, 156, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Tricycle (N2,500)', 24, 57, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Motorcycle (N2,500)', 57, 90, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Taxi (N2,500)', 90, 123, 176, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Kurkura (N2,500)', 123, 156, 176, false, 6.5, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 182.5);
-    drawCenteredText(data.lost_tricycle_qty > 0 ? `${data.lost_tricycle_qty} (Γéª${data.lost_tricycle_amt.toLocaleString()})` : '-', 24, 57, 182.5, false, 7);
-    drawCenteredText(data.lost_motorcycle_qty > 0 ? `${data.lost_motorcycle_qty} (Γéª${data.lost_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 182.5, false, 7);
-    drawCenteredText(data.lost_taxi_qty > 0 ? `${data.lost_taxi_qty} (Γéª${data.lost_taxi_amt.toLocaleString()})` : '-', 90, 123, 182.5, false, 7);
-    drawCenteredText(data.lost_kurkura_qty > 0 ? `${data.lost_kurkura_qty} (Γéª${data.lost_kurkura_amt.toLocaleString()})` : '-', 123, 156, 182.5, false, 7);
+    drawCenteredText(data.lost_tricycle_qty > 0 ? `${data.lost_tricycle_qty} (N${data.lost_tricycle_amt.toLocaleString()})` : '-', 24, 57, 182.5, false, 7);
+    drawCenteredText(data.lost_motorcycle_qty > 0 ? `${data.lost_motorcycle_qty} (N${data.lost_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 182.5, false, 7);
+    drawCenteredText(data.lost_taxi_qty > 0 ? `${data.lost_taxi_qty} (N${data.lost_taxi_amt.toLocaleString()})` : '-', 90, 123, 182.5, false, 7);
+    drawCenteredText(data.lost_kurkura_qty > 0 ? `${data.lost_kurkura_qty} (N${data.lost_kurkura_amt.toLocaleString()})` : '-', 123, 156, 182.5, false, 7);
     const lostTotal = data.lost_tricycle_amt + data.lost_motorcycle_amt + data.lost_taxi_amt + data.lost_kurkura_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${lostTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 176, { align: 'right' });
+    doc.text(`N${lostTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 176, { align: 'right' });
 
     // --- ROW 6: CHANGE OF OWNERSHIP ---
     doc.setTextColor(9, 13, 22);
@@ -1234,22 +1462,22 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('CHANGE OF OWNERSHIP', 26, 188.5);
-    drawCenteredText('Tricycle (Γéª2,000)', 24, 57, 194, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Motorcycle (Γéª2,000)', 57, 90, 194, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Taxi (Γéª2,000)', 90, 123, 194, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Kurkura (Γéª2,000)', 123, 156, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Tricycle (N2,000)', 24, 57, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Motorcycle (N2,000)', 57, 90, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Taxi (N2,000)', 90, 123, 194, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Kurkura (N2,000)', 123, 156, 194, false, 6.5, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 200.5);
-    drawCenteredText(data.change_tricycle_qty > 0 ? `${data.change_tricycle_qty} (Γéª${data.change_tricycle_amt.toLocaleString()})` : '-', 24, 57, 200.5, false, 7);
-    drawCenteredText(data.change_motorcycle_qty > 0 ? `${data.change_motorcycle_qty} (Γéª${data.change_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 200.5, false, 7);
-    drawCenteredText(data.change_taxi_qty > 0 ? `${data.change_taxi_qty} (Γéª${data.change_taxi_amt.toLocaleString()})` : '-', 90, 123, 200.5, false, 7);
-    drawCenteredText(data.change_kurkura_qty > 0 ? `${data.change_kurkura_qty} (Γéª${data.change_kurkura_amt.toLocaleString()})` : '-', 123, 156, 200.5, false, 7);
+    drawCenteredText(data.change_tricycle_qty > 0 ? `${data.change_tricycle_qty} (N${data.change_tricycle_amt.toLocaleString()})` : '-', 24, 57, 200.5, false, 7);
+    drawCenteredText(data.change_motorcycle_qty > 0 ? `${data.change_motorcycle_qty} (N${data.change_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 200.5, false, 7);
+    drawCenteredText(data.change_taxi_qty > 0 ? `${data.change_taxi_qty} (N${data.change_taxi_amt.toLocaleString()})` : '-', 90, 123, 200.5, false, 7);
+    drawCenteredText(data.change_kurkura_qty > 0 ? `${data.change_kurkura_qty} (N${data.change_kurkura_amt.toLocaleString()})` : '-', 123, 156, 200.5, false, 7);
     const chgTotal = data.change_tricycle_amt + data.change_motorcycle_amt + data.change_taxi_amt + data.change_kurkura_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${chgTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 194, { align: 'right' });
+    doc.text(`N${chgTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 194, { align: 'right' });
 
     // --- ROW 7: TRANSFER ---
     doc.setTextColor(9, 13, 22);
@@ -1257,22 +1485,22 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('TRANSFER', 26, 206.5);
-    drawCenteredText('Tricycle (Γéª2,000)', 24, 57, 212, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Motorcycle (Γéª2,000)', 57, 90, 212, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Taxi (Γéª2,000)', 90, 123, 212, false, 6.5, [100, 116, 139]);
-    drawCenteredText('Kurkura (Γéª2,000)', 123, 156, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Tricycle (N2,000)', 24, 57, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Motorcycle (N2,000)', 57, 90, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Taxi (N2,000)', 90, 123, 212, false, 6.5, [100, 116, 139]);
+    drawCenteredText('Kurkura (N2,000)', 123, 156, 212, false, 6.5, [100, 116, 139]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('AMOUNT', 14, 218.5);
-    drawCenteredText(data.transfer_tricycle_qty > 0 ? `${data.transfer_tricycle_qty} (Γéª${data.transfer_tricycle_amt.toLocaleString()})` : '-', 24, 57, 218.5, false, 7);
-    drawCenteredText(data.transfer_motorcycle_qty > 0 ? `${data.transfer_motorcycle_qty} (Γéª${data.transfer_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 218.5, false, 7);
-    drawCenteredText(data.transfer_taxi_qty > 0 ? `${data.transfer_taxi_qty} (Γéª${data.transfer_taxi_amt.toLocaleString()})` : '-', 90, 123, 218.5, false, 7);
-    drawCenteredText(data.transfer_kurkura_qty > 0 ? `${data.transfer_kurkura_qty} (Γéª${data.transfer_kurkura_amt.toLocaleString()})` : '-', 123, 156, 218.5, false, 7);
+    drawCenteredText(data.transfer_tricycle_qty > 0 ? `${data.transfer_tricycle_qty} (N${data.transfer_tricycle_amt.toLocaleString()})` : '-', 24, 57, 218.5, false, 7);
+    drawCenteredText(data.transfer_motorcycle_qty > 0 ? `${data.transfer_motorcycle_qty} (N${data.transfer_motorcycle_amt.toLocaleString()})` : '-', 57, 90, 218.5, false, 7);
+    drawCenteredText(data.transfer_taxi_qty > 0 ? `${data.transfer_taxi_qty} (N${data.transfer_taxi_amt.toLocaleString()})` : '-', 90, 123, 218.5, false, 7);
+    drawCenteredText(data.transfer_kurkura_qty > 0 ? `${data.transfer_kurkura_qty} (N${data.transfer_kurkura_amt.toLocaleString()})` : '-', 123, 156, 218.5, false, 7);
     const transTotal = data.transfer_tricycle_amt + data.transfer_motorcycle_amt + data.transfer_taxi_amt + data.transfer_kurkura_amt;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND_GREEN);
-    doc.text(`Γéª${transTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 212, { align: 'right' });
+    doc.text(`N${transTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 212, { align: 'right' });
 
     // --- TOTAL ROWS (AT THE BOTTOM) ---
     // Total Units Row
@@ -1291,7 +1519,7 @@ export const pdfGenerator = {
     doc.setFontSize(8.5);
     doc.setTextColor(255, 255, 255);
     doc.text('TOTAL AMOUNT DUE', 150, 232, { align: 'right' });
-    doc.text(`Γéª${totalAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 232, { align: 'right' });
+    doc.text(`N${totalAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, 194, 232, { align: 'right' });
 
     // 8. Signatures Block (Matching physical layout perfectly on exactly one page)
     const sigY = 248;
