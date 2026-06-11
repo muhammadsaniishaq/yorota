@@ -403,7 +403,7 @@ export const pdfGenerator = {
     doc.text(`Γéª${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 190, currentY + 12, { align: 'right' });
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(...(tx.updatedBalance > 0 ? [239, 68, 68] : BRAND_GREEN));
-    doc.text(`₦${parseFloat(tx.updatedBalance).toFixed(2)}`, 190, currentY + 22, { align: 'right' });
+    doc.text(`Γéª${parseFloat(tx.updatedBalance).toFixed(2)}`, 190, currentY + 22, { align: 'right' });
 
     // 7. Validation Seal and Signatures
     let sigY = currentY + 38;
@@ -501,7 +501,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...(summary.ledgerNet >= 0 ? BRAND_GREEN : [239, 68, 68]));
-    doc.text(`₦${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
+    doc.text(`Γéª${parseFloat(summary.ledgerNet || 0).toFixed(2)}`, 144, 75);
 
     // Set-aside Revenue Surcharge Splits Audit Block (Γéª500 per unit, 70% HQ / 30% local office)
     let ySplit = 85;
@@ -646,7 +646,7 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...(summary.remainingBalance >= 0 ? BRAND_GREEN : [239, 68, 68]));
-    doc.text(`₦${parseFloat(summary.remainingBalance).toFixed(2)}`, 144, 75);
+    doc.text(`Γéª${parseFloat(summary.remainingBalance).toFixed(2)}`, 144, 75);
 
     // Header 1: Ledgers
     doc.setFont('Helvetica', 'bold');
