@@ -443,6 +443,103 @@ export const pdfGenerator = {
     doc.save(`debtor-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
   },
 
+  // --- GENERATE DEBTOR TRANSACTION THERMAL RECEIPT (58MM) ---
+  generateDebtorThermalReceipt: async (debtor, tx) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [58, 140]
+    });
+
+    // 1. Header
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0); // Solid black for thermal printer
+    doc.text('YOROTA SMART OFFICE', 29, 8, { align: 'center' });
+    doc.setFontSize(5.5);
+    doc.setFont('Helvetica', 'normal');
+    doc.text('YOBE STATE ROAD TRAFFIC MANAGEMENT AGENCY', 29, 12, { align: 'center' });
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text(tx.type === 'repayment' ? 'DEBT REPAYMENT SLIP' : 'CREDIT ACCRUAL SLIP', 29, 16, { align: 'center' });
+
+    // Separator line
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.2);
+    doc.line(4, 19, 54, 19);
+
+    // 2. Debtor Info
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text('DEBTOR PROFILE:', 4, 23);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.text(`Name: ${debtor.customer_name}`, 4, 27);
+    doc.text(`Phone: ${debtor.phone_number}`, 4, 31);
+    doc.text(`Ref: RTO-DB-${debtor.id.substring(0, 6).toUpperCase()}`, 4, 35);
+    doc.text(`Date: ${tx.date}`, 4, 39);
+    doc.text(`Due Date: ${debtor.due_date}`, 4, 43);
+
+    doc.line(4, 46, 54, 46);
+
+    // 3. Transaction Details
+    const txTypeLabel = tx.type === 'repayment' ? 'REPAYMENT DEDUCTION' : 'CREDIT ACCRUAL';
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text('TRANSACTION DETAILS:', 4, 50);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.text(`Type: ${txTypeLabel}`, 4, 54);
+    doc.text(`Reason: ${tx.reason || (tx.type === 'repayment' ? 'Cash settlement repayment' : 'Accrued credit addition')}`, 4, 58, { maxWidth: 50 });
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text(`Amount: Γéª${parseFloat(tx.amount).toFixed(2)}`, 4, 66);
+
+    doc.line(4, 69, 54, 69);
+
+    // 4. Balances
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(6);
+    const prevBal = tx.type === 'repayment' ? tx.updatedBalance + tx.amount : tx.updatedBalance - tx.amount;
+    doc.text(`Previous Balance:  Γéª${parseFloat(Math.max(0, prevBal)).toFixed(2)}`, 4, 73);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text(`UPDATED BALANCE:   Γéª${parseFloat(tx.updatedBalance).toFixed(2)}`, 4, 78);
+
+    doc.line(4, 81, 54, 81);
+
+    // 5. Compliance & Signature
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.5);
+    const noticeText = tx.type === 'repayment'
+      ? 'Verified: Cash repayment collected and subtracted from outstanding balance.'
+      : 'Statement: Credit accrued subject to prompt settlement under regulatory terms.';
+    doc.text(noticeText, 4, 85, { maxWidth: 50 });
+
+    // Authorizing Officer
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.text(`Officer: ${tx.received_by || 'Staff Officer'}`, 4, 96);
+
+    // Signature lines
+    doc.setLineWidth(0.1);
+    doc.line(4, 110, 24, 110);
+    doc.line(34, 110, 54, 110);
+    doc.setFont('Helvetica', 'normal');
+    doc.text('Officer Sig', 8, 113);
+    doc.text('Customer Sig', 38, 113);
+
+    // Footer message
+    doc.setFont('Helvetica', 'italic');
+    doc.setFontSize(5.5);
+    doc.text('Thank you for your cooperation!', 29, 123, { align: 'center' });
+    doc.text('YOROTA Smart Office', 29, 126, { align: 'center' });
+
+    // Save
+    doc.save(`thermal-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
+  },
+
 
   // --- GENERATE REPORT (DAILY/MONTHLY/CUSTOM RANGE) ---
   generateReport: async (type, dateRangeText, records, summary, transactions) => {

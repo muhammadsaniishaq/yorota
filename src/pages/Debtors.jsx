@@ -32,6 +32,16 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  const [useThermalPref, setUseThermalPref] = useState(() => {
+    return localStorage.getItem('yorota_pref_thermal_print') === 'true';
+  });
+
+  const handleToggleThermalPref = (e) => {
+    const checked = e.target.checked;
+    setUseThermalPref(checked);
+    localStorage.setItem('yorota_pref_thermal_print', checked ? 'true' : 'false');
+  };
+
   // Expanded / Toggleable History State (stores debtor IDs)
   const [expandedHistories, setExpandedHistories] = useState({});
 
@@ -70,18 +80,28 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     setGlobalNotification({ message: `Pre-filled WhatsApp reminder opened for ${debtor.customer_name}!`, type: 'info' });
   };
 
-  const handlePrintPastReceipt = (debtor, hist) => {
-    const isPay = hist.amount_paid !== undefined;
-    const txPayload = {
-      type: isPay ? 'repayment' : 'accrual',
-      amount: isPay ? hist.amount_paid : hist.amount_added,
-      date: hist.date,
-      reason: hist.reason || (isPay ? 'Cash settlement repayment' : 'Accrued credit addition'),
-      received_by: hist.received_by || 'Staff Officer',
-      updatedBalance: debtor.amount_owed // simplified, or we can print current balance
-    };
-    pdfGenerator.generateDebtorReceipt(debtor, txPayload);
-    setGlobalNotification({ message: 'Compiling past transaction slip PDF...', type: 'success' });
+  const handlePrintPastReceipt = async (debtor, hist, format = 'a4') => {
+    try {
+      const isPay = hist.amount_paid !== undefined;
+      const txPayload = {
+        type: isPay ? 'repayment' : 'accrual',
+        amount: isPay ? hist.amount_paid : hist.amount_added,
+        date: hist.date,
+        reason: hist.reason || (isPay ? 'Cash settlement repayment' : 'Accrued credit addition'),
+        received_by: hist.received_by || 'Staff Officer',
+        updatedBalance: debtor.amount_owed
+      };
+      if (format === 'thermal') {
+        await pdfGenerator.generateDebtorThermalReceipt(debtor, txPayload);
+        setGlobalNotification({ message: 'Compiling past thermal slip PDF...', type: 'success' });
+      } else {
+        await pdfGenerator.generateDebtorReceipt(debtor, txPayload);
+        setGlobalNotification({ message: 'Compiling past standard receipt PDF...', type: 'success' });
+      }
+    } catch (err) {
+      console.error(err);
+      setGlobalNotification({ message: 'Failed to generate PDF: ' + err.message, type: 'error' });
+    }
   };
 
 
@@ -177,7 +197,16 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
         received_by: currentUser?.name || 'Authorized Officer',
         updatedBalance: parseFloat(amount)
       };
-      pdfGenerator.generateDebtorReceipt(createdDebtor, createdTx);
+      try {
+        if (useThermalPref) {
+          await pdfGenerator.generateDebtorThermalReceipt(createdDebtor, createdTx);
+        } else {
+          await pdfGenerator.generateDebtorReceipt(createdDebtor, createdTx);
+        }
+      } catch (pdfErr) {
+        console.error(pdfErr);
+        setGlobalNotification({ message: 'Saved successfully, but PDF generation failed.', type: 'warning' });
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error creating debtor log.');
@@ -224,7 +253,16 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
         received_by: currentUser?.name || 'Duty Officer',
         updatedBalance: updatedDebtor.amount_owed
       };
-      pdfGenerator.generateDebtorReceipt(updatedDebtor, repaymentTx);
+      try {
+        if (useThermalPref) {
+          await pdfGenerator.generateDebtorThermalReceipt(updatedDebtor, repaymentTx);
+        } else {
+          await pdfGenerator.generateDebtorReceipt(updatedDebtor, repaymentTx);
+        }
+      } catch (pdfErr) {
+        console.error(pdfErr);
+        setGlobalNotification({ message: 'Repayment posted, but PDF generation failed.', type: 'warning' });
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error posting payment.');
@@ -268,7 +306,16 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
         received_by: addDebtOfficer.trim() || currentUser?.name || 'Duty Officer',
         updatedBalance: updatedDebtor.amount_owed
       };
-      pdfGenerator.generateDebtorReceipt(updatedDebtor, accrualTx);
+      try {
+        if (useThermalPref) {
+          await pdfGenerator.generateDebtorThermalReceipt(updatedDebtor, accrualTx);
+        } else {
+          await pdfGenerator.generateDebtorReceipt(updatedDebtor, accrualTx);
+        }
+      } catch (pdfErr) {
+        console.error(pdfErr);
+        setGlobalNotification({ message: 'Credit accrued, but PDF generation failed.', type: 'warning' });
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error adding credit balance.');
@@ -499,15 +546,26 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                             </div>
                             <div className="text-right flex flex-col items-end gap-1 shrink-0">
                               <span className="text-slate-500 text-[9px]">{hist.date}</span>
-                              <button
-                                type="button"
-                                onClick={() => handlePrintPastReceipt(deb, hist)}
-                                className="flex items-center gap-0.5 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[8px] font-black text-[#F5C800] uppercase hover:bg-slate-700 transition cursor-pointer select-none"
-                                title="Reprint PDF transaction slip"
-                              >
-                                <FileText className="w-2.5 h-2.5 text-[#F5C800]" />
-                                PDF
-                              </button>
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handlePrintPastReceipt(deb, hist, 'a4')}
+                                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-[8px] font-black text-[#F5C800] uppercase hover:bg-slate-700 transition cursor-pointer select-none"
+                                  title="Reprint A4 PDF receipt"
+                                >
+                                  <FileText className="w-2.5 h-2.5 text-[#F5C800]" />
+                                  A4
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handlePrintPastReceipt(deb, hist, 'thermal')}
+                                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-[8px] font-black text-[#10b981] uppercase hover:bg-slate-700 transition cursor-pointer select-none"
+                                  title="Reprint 58mm Thermal receipt"
+                                >
+                                  <FileText className="w-2.5 h-2.5 text-[#10b981]" />
+                                  MINI
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
@@ -650,20 +708,32 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                                         )}
                                         <div className="text-[9px] text-slate-550 pl-6">Stamped & Verified by Officer: <span className="text-slate-400 font-bold">{hist.received_by || 'System'}</span></div>
                                       </div>
-                                      <div className="text-right flex flex-col items-end gap-1.5 shrink-0">
-                                        <div className="text-slate-500 font-bold text-[10px] flex items-center gap-1.5">
-                                          <Calendar className="w-3.5 h-3.5 text-slate-650" />
-                                          {hist.date}
+                                        <div className="text-right flex flex-col items-end gap-1.5 shrink-0">
+                                          <div className="text-slate-500 font-bold text-[10px] flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-650" />
+                                            {hist.date}
+                                          </div>
+                                          <div className="flex gap-1.5 justify-end">
+                                            <button
+                                              type="button"
+                                              onClick={() => handlePrintPastReceipt(deb, hist, 'a4')}
+                                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-950/60 hover:bg-[#F5C800] hover:text-[#070a13] text-[#F5C800] font-black text-[9px] uppercase transition cursor-pointer select-none"
+                                              title="Reprint standard A4 receipt"
+                                            >
+                                              <FileText className="w-3 h-3 text-[#F5C800]" />
+                                              A4 SLIP
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handlePrintPastReceipt(deb, hist, 'thermal')}
+                                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-955/60 hover:bg-[#10b981] hover:text-[#070a13] text-[#10b981] font-black text-[9px] uppercase transition cursor-pointer select-none"
+                                              title="Reprint 58mm Thermal receipt"
+                                            >
+                                              <FileText className="w-3 h-3 text-[#10b981]" />
+                                              MINI PRINT
+                                            </button>
+                                          </div>
                                         </div>
-                                        <button
-                                          type="button"
-                                          onClick={() => handlePrintPastReceipt(deb, hist)}
-                                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-950/60 hover:bg-[#F5C800] hover:text-[#070a13] text-[#F5C800] font-black text-[9px] uppercase transition cursor-pointer select-none"
-                                        >
-                                          <FileText className="w-3 h-3 text-[#F5C800]" />
-                                          REPRINT SLIP
-                                        </button>
-                                      </div>
                                     </div>
                                   );
                                 })}
@@ -772,6 +842,20 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                 </div>
               </div>
 
+              {/* Thermal Printer Option */}
+              <div className="flex items-center gap-2 py-1 select-none">
+                <input
+                  type="checkbox"
+                  id="thermal_add_debtor"
+                  checked={useThermalPref}
+                  onChange={handleToggleThermalPref}
+                  className="rounded border-slate-800 text-[#F5C800] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                />
+                <label htmlFor="thermal_add_debtor" className="text-[10px] font-bold text-slate-400 cursor-pointer">
+                  Use Bluetooth Thermal Printer (58mm)
+                </label>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
                 <button
@@ -847,6 +931,20 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                   <UserCheck className="w-3.5 h-3.5 text-[#F5C800]" />
                   {currentUser.name}
                 </div>
+              </div>
+
+              {/* Thermal Printer Option */}
+              <div className="flex items-center gap-2 py-1 select-none">
+                <input
+                  type="checkbox"
+                  id="thermal_pay_debtor"
+                  checked={useThermalPref}
+                  onChange={handleToggleThermalPref}
+                  className="rounded border-slate-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                />
+                <label htmlFor="thermal_pay_debtor" className="text-[10px] font-bold text-slate-400 cursor-pointer">
+                  Use Bluetooth Thermal Printer (58mm)
+                </label>
               </div>
 
               {/* Action Buttons */}
@@ -937,6 +1035,20 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                   <UserCheck className="w-3.5 h-3.5 text-[#F5C800]" />
                   {currentUser.name}
                 </div>
+              </div>
+
+              {/* Thermal Printer Option */}
+              <div className="flex items-center gap-2 py-1 select-none">
+                <input
+                  type="checkbox"
+                  id="thermal_add_debt"
+                  checked={useThermalPref}
+                  onChange={handleToggleThermalPref}
+                  className="rounded border-slate-800 text-[#F5C800] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                />
+                <label htmlFor="thermal_add_debt" className="text-[10px] font-bold text-slate-400 cursor-pointer">
+                  Use Bluetooth Thermal Printer (58mm)
+                </label>
               </div>
 
               {/* Action Buttons */}
