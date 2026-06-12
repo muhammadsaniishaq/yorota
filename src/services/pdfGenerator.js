@@ -1528,6 +1528,378 @@ export const pdfGenerator = {
     }
   },
 
+  // --- PRINT PAYOUT SUMMARY DIRECTLY TO BLUETOOTH BLE PRINTER ---
+  printPayoutThermalSlipDirect: async (dateRangeText, commandName, pData) => {
+    if (!navigator.bluetooth) {
+      throw new Error('Web Bluetooth is not supported in this browser/device. Please use Google Chrome.');
+    }
+
+    let writeChar = pdfGenerator.activeBleCharacteristic;
+    let device = pdfGenerator.activeBleDevice;
+
+    const optionalServices = [
+      '000018f0-0000-1000-8000-00805f9b34fb', // Generic BLE Print
+      '0000ffe0-0000-1000-8000-00805f9b34fb', // Serial BLE
+      '0000e7e7-0000-1000-8000-00805f9b34fb',
+      '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+      '0000fee7-0000-1000-8000-00805f9b34fb',
+      '0000ff00-0000-1000-8000-00805f9b34fb',
+      '0000af30-0000-1000-8000-00805f9b34fb'
+    ];
+
+    if (!writeChar) {
+      const reconnectedName = await pdfGenerator.tryAutoConnectBlePrinter();
+      if (reconnectedName) {
+        writeChar = pdfGenerator.activeBleCharacteristic;
+        device = pdfGenerator.activeBleDevice;
+      }
+    }
+
+    if (!writeChar) {
+      device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: optionalServices
+      });
+
+      const server = await device.gatt.connect();
+
+      for (const uuid of optionalServices) {
+        try {
+          const service = await server.getPrimaryService(uuid);
+          const chars = await service.getCharacteristics();
+          writeChar = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+          if (writeChar) break;
+        } catch (e) {}
+      }
+
+      if (!writeChar) {
+        throw new Error('Could not find write characteristic on the printer.');
+      }
+
+      pdfGenerator.activeBleDevice = device;
+      pdfGenerator.activeBleCharacteristic = writeChar;
+      localStorage.setItem('yorota_last_printer_name', device.name || 'Generic BT Printer');
+
+      device.addEventListener('gattserverdisconnected', () => {
+        pdfGenerator.activeBleDevice = null;
+        pdfGenerator.activeBleCharacteristic = null;
+      });
+    }
+
+    const encoder = new TextEncoder();
+    const bytes = [];
+    const addBytes = (arr) => bytes.push(...arr);
+    const addText = (text) => bytes.push(...encoder.encode(text));
+
+    const init = [0x1B, 0x40];
+    const alignCenter = [0x1B, 0x61, 0x01];
+    const alignLeft = [0x1B, 0x61, 0x00];
+    const boldOn = [0x1B, 0x45, 0x01];
+    const boldOff = [0x1B, 0x45, 0x00];
+    const feedLines = [0x0A, 0x0A, 0x0A, 0x0A];
+
+    addBytes(init);
+    addBytes(alignCenter);
+    addBytes(boldOn);
+    addText("YOROTA SMART OFFICE\n");
+    addBytes(boldOff);
+    addText("Yobe State Road Traffic\nManagement Agency\n");
+    addBytes(boldOn);
+    addText("ICT DAILY PAYOUT SHEET\n");
+    addBytes(boldOff);
+    addText("--------------------------------\n");
+
+    addBytes(alignLeft);
+    addText(`Command: ${commandName || 'Damaturu Zonal'}\n`);
+    addText(`Scope:   ${dateRangeText}\n`);
+    addText(`Date:    ${new Date().toLocaleDateString()}\n`);
+    addText("--------------------------------\n");
+
+    addBytes(boldOn);
+    addText("PAYOUT FEE BREAKDOWNS:\n");
+    addBytes(boldOff);
+    
+    // Helper to print category line
+    const printLine = (name, qty, amt) => {
+      if (qty > 0) {
+        addText(`${(name + '          ').substring(0, 14)} x${qty} N${parseFloat(amt).toFixed(0)}\n`);
+      }
+    };
+
+    // Tricycle
+    printLine("Tri Own New", pData.tricycle_own_new_qty, pData.tricycle_own_new_amt);
+    printLine("Tri Own Ren", pData.tricycle_own_ren_qty, pData.tricycle_own_ren_amt);
+    printLine("Tri Rider New", pData.tricycle_rider_new_qty, pData.tricycle_rider_new_amt);
+    printLine("Tri Rider Ren", pData.tricycle_rider_ren_qty, pData.tricycle_rider_ren_amt);
+
+    // Motorcycle
+    printLine("Moto Own New", pData.motorcycle_own_new_qty, pData.motorcycle_own_new_amt);
+    printLine("Moto Own Ren", pData.motorcycle_own_ren_qty, pData.motorcycle_own_ren_amt);
+    printLine("Moto Rider Nw", pData.motorcycle_rider_new_qty, pData.motorcycle_rider_new_amt);
+    printLine("Moto Rider Rn", pData.motorcycle_rider_ren_qty, pData.motorcycle_rider_ren_amt);
+
+    // Taxi & Kurkura
+    printLine("Taxi New", pData.taxi_new_qty, pData.taxi_new_amt);
+    printLine("Taxi Ren", pData.taxi_ren_qty, pData.taxi_ren_amt);
+    printLine("Kurkura New", pData.kurkura_new_qty, pData.kurkura_new_amt);
+    printLine("Kurkura Ren", pData.kurkura_ren_qty, pData.kurkura_ren_amt);
+
+    // Extras
+    const lostQty = pData.lost_tricycle_qty + pData.lost_motorcycle_qty + pData.lost_taxi_qty + pData.lost_kurkura_qty;
+    const lostAmt = pData.lost_tricycle_amt + pData.lost_motorcycle_amt + pData.lost_taxi_amt + pData.lost_kurkura_amt;
+    printLine("Lost IDs", lostQty, lostAmt);
+
+    const changeQty = pData.change_tricycle_qty + pData.change_motorcycle_qty + pData.change_taxi_qty + pData.change_kurkura_qty;
+    const changeAmt = pData.change_tricycle_amt + pData.change_motorcycle_amt + pData.change_taxi_amt + pData.change_kurkura_amt;
+    printLine("Ownership Chg", changeQty, changeAmt);
+
+    const transQty = pData.transfer_tricycle_qty + pData.transfer_motorcycle_qty + pData.transfer_taxi_qty + pData.transfer_kurkura_qty;
+    const transAmt = pData.transfer_tricycle_amt + pData.transfer_motorcycle_amt + pData.transfer_taxi_amt + pData.transfer_kurkura_amt;
+    printLine("Transfers", transQty, transAmt);
+    printLine("Others", pData.others_qty, pData.others_amt);
+
+    addText("--------------------------------\n");
+    const totalQty = Object.keys(pData).filter(k => k.endsWith('_qty')).reduce((sum, k) => sum + pData[k], 0);
+    const totalAmt = Object.keys(pData).filter(k => k.endsWith('_amt')).reduce((sum, k) => sum + pData[k], 0);
+    addText(`TOTAL QTY:    ${totalQty} units\n`);
+    addBytes(boldOn);
+    addText(`TOTAL AMOUNT: N${parseFloat(totalAmt).toFixed(2)}\n`);
+    addBytes(boldOff);
+    addText("--------------------------------\n\n");
+
+    addText("Officer Sig:       Auditor Sig:\n\n\n");
+    addText("___________        ___________\n\n");
+
+    addBytes(alignCenter);
+    addText("YOROTA Smart Office\n");
+    addBytes(feedLines);
+
+    const dataBytes = new Uint8Array(bytes);
+    await pdfGenerator.writeToCharacteristic(writeChar, dataBytes);
+    return true;
+  },
+
+  printPayoutThermalSlip: async (dateRangeText, commandName, pData, existingWindow = null) => {
+    let printWindow = existingWindow;
+    try {
+      if (!printWindow) {
+        printWindow = window.open('', '_blank', 'width=350,height=600');
+        if (!printWindow) {
+          throw new Error('Popup blocked! Please allow popups for this site.');
+        }
+      }
+
+      if (navigator.bluetooth) {
+        if (!existingWindow) {
+          printWindow.document.open();
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>YOROTA Print Connector</title>
+              <meta charset="utf-8">
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                  text-align: center;
+                  padding: 30px 15px;
+                  color: #e2e8f0;
+                  background-color: #0f172a;
+                  margin: 0;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 80vh;
+                }
+                .card {
+                  background: #1e293b;
+                  border: 1px solid #334155;
+                  border-radius: 16px;
+                  padding: 24px;
+                  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                  max-width: 280px;
+                }
+                .spinner {
+                  margin: 20px auto;
+                  width: 45px;
+                  height: 45px;
+                  border: 4px solid #334155;
+                  border-top: 4px solid #10b981;
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                h2 { font-size: 15px; margin: 12px 0 6px 0; font-weight: 700; color: #fff; }
+                p { font-size: 11px; color: #94a3b8; line-height: 1.4; margin: 4px 0; }
+                .fallback-hint {
+                  font-size: 9px;
+                  color: #64748b;
+                  margin-top: 20px;
+                  border-top: 1px dashed #334155;
+                  padding-top: 12px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div class="spinner"></div>
+                <h2>Connecting to Bluetooth Printer</h2>
+                <p>Please select your paired 58mm printer in the browser prompt.</p>
+                <div class="fallback-hint">
+                  If Bluetooth is unavailable or cancelled, the standard print system will open automatically.
+                </div>
+              </div>
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+        }
+
+        try {
+          const success = await pdfGenerator.printPayoutThermalSlipDirect(dateRangeText, commandName, pData);
+          if (success) {
+            printWindow.close();
+            return;
+          }
+        } catch (bleErr) {
+          console.warn('Direct Bluetooth print failed, falling back to browser print:', bleErr);
+        }
+      }
+
+      // Fallback: system print
+      let rowsHtml = '';
+      const addRow = (name, qty, amt) => {
+        if (qty > 0) {
+          rowsHtml += `
+            <div class="row">
+              <span>\${name} (x\${qty}):</span>
+              <span>₦\${parseFloat(amt).toFixed(2)}</span>
+            </div>
+          `;
+        }
+      };
+
+      addRow("Tricycle Own New", pData.tricycle_own_new_qty, pData.tricycle_own_new_amt);
+      addRow("Tricycle Own Ren", pData.tricycle_own_ren_qty, pData.tricycle_own_ren_amt);
+      addRow("Tricycle Rider New", pData.tricycle_rider_new_qty, pData.tricycle_rider_new_amt);
+      addRow("Tricycle Rider Ren", pData.tricycle_rider_ren_qty, pData.tricycle_rider_ren_amt);
+      addRow("Motorcycle Own New", pData.motorcycle_own_new_qty, pData.motorcycle_own_new_amt);
+      addRow("Motorcycle Own Ren", pData.motorcycle_own_ren_qty, pData.motorcycle_own_ren_amt);
+      addRow("Motorcycle Rider New", pData.motorcycle_rider_new_qty, pData.motorcycle_rider_new_amt);
+      addRow("Motorcycle Rider Ren", pData.motorcycle_rider_ren_qty, pData.motorcycle_rider_ren_amt);
+      addRow("Taxi New", pData.taxi_new_qty, pData.taxi_new_amt);
+      addRow("Taxi Ren", pData.taxi_ren_qty, pData.taxi_ren_amt);
+      addRow("Kurkura New", pData.kurkura_new_qty, pData.kurkura_new_amt);
+      addRow("Kurkura Ren", pData.kurkura_ren_qty, pData.kurkura_ren_amt);
+      
+      const lostQty = pData.lost_tricycle_qty + pData.lost_motorcycle_qty + pData.lost_taxi_qty + pData.lost_kurkura_qty;
+      const lostAmt = pData.lost_tricycle_amt + pData.lost_motorcycle_amt + pData.lost_taxi_amt + pData.lost_kurkura_amt;
+      addRow("Lost IDs", lostQty, lostAmt);
+
+      const changeQty = pData.change_tricycle_qty + pData.change_motorcycle_qty + pData.change_taxi_qty + pData.change_kurkura_qty;
+      const changeAmt = pData.change_tricycle_amt + pData.change_motorcycle_amt + pData.change_taxi_amt + pData.change_kurkura_amt;
+      addRow("Ownership Chg", changeQty, changeAmt);
+
+      const transQty = pData.transfer_tricycle_qty + pData.transfer_motorcycle_qty + pData.transfer_taxi_qty + pData.transfer_kurkura_qty;
+      const transAmt = pData.transfer_tricycle_amt + pData.transfer_motorcycle_amt + pData.transfer_taxi_amt + pData.transfer_kurkura_amt;
+      addRow("Transfers", transQty, transAmt);
+      addRow("Others", pData.others_qty, pData.others_amt);
+
+      const totalQty = Object.keys(pData).filter(k => k.endsWith('_qty')).reduce((sum, k) => sum + pData[k], 0);
+      const totalAmt = Object.keys(pData).filter(k => k.endsWith('_amt')).reduce((sum, k) => sum + pData[k], 0);
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Thermal Payout Sheet</title>
+          <meta charset="utf-8">
+          <style>
+            @page { size: 58mm auto; margin: 0; }
+            body {
+              width: 50mm; margin: 0 auto; padding: 4mm 0;
+              font-family: 'Courier New', Courier, monospace; font-size: 10px; line-height: 1.3;
+              color: #000; background-color: #fff;
+            }
+            .text-center { text-align: center; }
+            .bold { font-weight: bold; }
+            .title { font-size: 11px; margin-bottom: 2px; }
+            .subtitle { font-size: 7px; margin-bottom: 4px; text-transform: uppercase; }
+            .divider { border-top: 1px dashed #000; margin: 6px 0; }
+            .row { display: flex; justify-content: space-between; }
+            .section-title { font-size: 9px; font-weight: bold; margin-top: 6px; margin-bottom: 3px; text-decoration: underline; }
+            .signature-section { display: flex; justify-content: space-between; margin-top: 25px; margin-bottom: 10px; }
+            .sig-box { display: flex; flex-direction: column; align-items: center; }
+            .sig-line { width: 20mm; border-top: 1px solid #000; margin-bottom: 2px; }
+            .sig-label { font-size: 7px; text-transform: uppercase; }
+            .footer { font-size: 7px; text-align: center; margin-top: 15px; font-style: italic; }
+          </style>
+        </head>
+        <body>
+          <div class="text-center bold title">YOROTA SMART OFFICE</div>
+          <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
+          <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">ICT DAILY PAYOUT SHEET</div>
+          
+          <div class="divider"></div>
+          
+          <div class="row"><span>Command:</span><span>\${commandName}</span></div>
+          <div class="row"><span>Scope:</span><span>\${dateRangeText}</span></div>
+          <div class="row"><span>Date:</span><span>\${new Date().toLocaleDateString()}</span></div>
+          
+          <div class="divider"></div>
+          
+          <div class="section-title">PAYOUT FEE BREAKDOWNS:</div>
+          \${rowsHtml || '<div class="text-center">No transactions</div>'}
+          
+          <div class="divider"></div>
+          
+          <div class="row"><span>TOTAL QTY:</span><span>\${totalQty} units</span></div>
+          <div class="row bold" style="font-size: 11px; margin-top: 2px;">
+            <span>TOTAL AMOUNT:</span>
+            <span>₦\${parseFloat(totalAmt).toFixed(2)}</span>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="signature-section">
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <div class="sig-label">Officer Sig</div>
+            </div>
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <div class="sig-label">Auditor Sig</div>
+            </div>
+          </div>
+          
+          <div class="divider"></div>
+          <div class="footer">YOROTA Smart Office</div>
+          
+          <script>
+            window.onload = function() { window.print(); };
+            window.onafterprint = function() { window.close(); };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.open();
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+
+    } catch (err) {
+      console.error('printPayoutThermalSlip error:', err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
+      throw err;
+    }
+  },
+
 
   // --- GENERATE REPORT (DAILY/MONTHLY/CUSTOM RANGE) ---
   generateReport: async (type, dateRangeText, records, summary, transactions) => {

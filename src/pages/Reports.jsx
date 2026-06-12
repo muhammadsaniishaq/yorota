@@ -158,6 +158,24 @@ export default function Reports({ currentUser, setGlobalNotification }) {
     }
   };
 
+  const handlePrintPayoutThermal = async (existingWindow = null) => {
+    let printWindow = existingWindow;
+    if (useThermalPref && !printWindow) {
+      printWindow = window.open('', '_blank', 'width=350,height=600');
+    }
+    
+    try {
+      await pdfGenerator.printPayoutThermalSlip(dateRangeText, commandName, pData, printWindow);
+      setGlobalNotification({ message: 'Payout summary printed successfully!', type: 'success' });
+    } catch (err) {
+      console.error(err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
+      setGlobalNotification({ message: 'Failed to print payout summary: ' + err.message, type: 'error' });
+    }
+  };
+
   // Compute boundaries based on selection
   const getFilterBounds = () => {
     const start = new Date();
@@ -551,6 +569,56 @@ export default function Reports({ currentUser, setGlobalNotification }) {
       ) : activeTab === 'general' ? (
         <div className="space-y-5">
           
+          {/* Quick Print Actions Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/40 border border-slate-850 rounded-2xl p-4 shadow-md backdrop-blur-md relative overflow-hidden animate-fade-in">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#F5C800]/5 to-transparent rounded-bl-full pointer-events-none" />
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-200">
+                Audit Report Actions
+              </h3>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5">
+                Print or export the General Audit Summary.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+              <div className="flex items-center gap-2 mr-2 select-none">
+                <input
+                  type="checkbox"
+                  id="thermal_report_pref_top"
+                  checked={useThermalPref}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setUseThermalPref(checked);
+                    localStorage.setItem('yorota_pref_thermal_print', checked ? 'true' : 'false');
+                  }}
+                  className="rounded border-slate-800 text-[#F5C800] focus:ring-0 focus:ring-offset-0 cursor-pointer bg-slate-950"
+                />
+                <label htmlFor="thermal_report_pref_top" className="text-[10px] font-bold text-slate-400 cursor-pointer">
+                  Use Thermal Printer
+                </label>
+              </div>
+
+              <button
+                onClick={handleExportPDF}
+                disabled={filteredRecords.length === 0}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-450 hover:to-emerald-550 text-slate-950 font-black text-xs transition duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 select-none cursor-pointer shadow-md shadow-emerald-500/5"
+              >
+                <FileText className="w-3.5 h-3.5 text-slate-950" />
+                GENERATE A4 PDF
+              </button>
+
+              <button
+                onClick={() => handlePrintReportThermal(null)}
+                disabled={filteredRecords.length === 0}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs transition duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 select-none cursor-pointer shadow-md shadow-[#F5C800]/5"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#070a13]" />
+                MINI PRINT REPORT
+              </button>
+            </div>
+          </div>
+
           {/* Summary Audit Metric Grid - Highly visual, structured 2x2 layout on mobile, 1x4 on desktop */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
             
@@ -801,13 +869,41 @@ export default function Reports({ currentUser, setGlobalNotification }) {
               </p>
             </div>
             
-            <button
-              onClick={handleExportIctPayout}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-[#10b981] text-slate-950 font-black text-xs transition duration-300 shadow-lg shadow-emerald-500/10 hover:scale-[1.01] active:scale-[0.99] select-none cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              PRINT OFFICIAL A4 PDF SHEET
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+              {/* Thermal Printer Option Checkbox */}
+              <div className="flex items-center gap-2 mr-2 select-none">
+                <input
+                  type="checkbox"
+                  id="thermal_payout_pref"
+                  checked={useThermalPref}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setUseThermalPref(checked);
+                    localStorage.setItem('yorota_pref_thermal_print', checked ? 'true' : 'false');
+                  }}
+                  className="rounded border-slate-800 text-[#F5C800] focus:ring-0 focus:ring-offset-0 cursor-pointer bg-slate-950"
+                />
+                <label htmlFor="thermal_payout_pref" className="text-[10px] font-bold text-slate-400 cursor-pointer">
+                  Use Thermal Printer
+                </label>
+              </div>
+
+              <button
+                onClick={handleExportIctPayout}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-[#10b981] text-slate-950 font-black text-xs transition duration-300 shadow-lg shadow-emerald-500/10 hover:scale-[1.01] active:scale-[0.99] select-none cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                PRINT OFFICIAL A4 PDF SHEET
+              </button>
+
+              <button
+                onClick={() => handlePrintPayoutThermal(null)}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs transition duration-300 shadow-lg shadow-[#F5C800]/10 hover:scale-[1.01] active:scale-[0.99] select-none cursor-pointer"
+              >
+                <Printer className="w-4 h-4 text-[#070a13]" />
+                MINI PRINT PAYOUT
+              </button>
+            </div>
           </div>
 
           {/* Interactive Document Header Configuration Panel */}
