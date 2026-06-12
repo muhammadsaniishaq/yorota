@@ -5,43 +5,38 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
 
-// Auto-sanitize all texts passed to jsPDF to prevent WinAnsiEncoding (CP-1252) crashes
-const originalJsPDFText = jsPDF.prototype.text;
-jsPDF.prototype.text = function(text, x, y, options) {
-  const cleanValue = (val) => {
-    if (val === null || val === undefined) return '';
-    if (Array.isArray(val)) return val.map(cleanValue);
-    if (typeof val !== 'string') return String(val);
-    
-    // Replace Naira symbol with N
-    let cleaned = val.replace(/₦/g, 'N');
-    
-    let result = '';
-    for (let i = 0; i < cleaned.length; i++) {
-      const code = cleaned.charCodeAt(i);
-      // CP-1252 allowed characters range check
-      const isCp1252 = 
-        (code >= 32 && code <= 126) || 
-        (code >= 160 && code <= 255) ||
-        code === 9 || code === 10 || code === 13 ||
-        [0x20AC, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x017D, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x017E, 0x0178].includes(code);
-        
-      if (isCp1252) {
-        result += cleaned[i];
+// Auto-sanitize texts passed to jsPDF to prevent WinAnsiEncoding (CP-1252) crashes
+const cleanText = (val) => {
+  if (val === null || val === undefined) return '';
+  if (Array.isArray(val)) return val.map(cleanText);
+  if (typeof val !== 'string') return String(val);
+  
+  // Replace Naira symbol with N
+  let cleaned = val.replace(/₦/g, 'N');
+  
+  let result = '';
+  for (let i = 0; i < cleaned.length; i++) {
+    const code = cleaned.charCodeAt(i);
+    // CP-1252 allowed characters range check
+    const isCp1252 = 
+      (code >= 32 && code <= 126) || 
+      (code >= 160 && code <= 255) ||
+      code === 9 || code === 10 || code === 13 ||
+      [0x20AC, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x017D, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x017E, 0x0178].includes(code);
+      
+    if (isCp1252) {
+      result += cleaned[i];
+    } else {
+      if (code === 8358 || code === 8374) {
+        result += 'N';
       } else {
-        if (code === 8358 || code === 8374) {
-          result += 'N';
-        } else {
-          result += ' ';
-        }
+        result += ' ';
       }
     }
-    return result;
-  };
-  
-  const cleanedText = cleanValue(text);
-  return originalJsPDFText.call(this, cleanedText, x, y, options);
+  }
+  return result;
 };
+
 
 
 // Official green color theme codes
@@ -221,16 +216,16 @@ export const pdfGenerator = {
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(9);
     doc.text(`Receipt Number:   RTO-${recordId.substring(2, 8).toUpperCase()}`, 20, 64);
-    doc.text(`Customer Name:    ${record.customer_name}`, 20, 70);
-    doc.text(`Phone Number:     ${record.phone_number}`, 20, 75);
+    doc.text(`Customer Name:    ${cleanText(record.customer_name)}`, 20, 70);
+    doc.text(`Phone Number:     ${cleanText(record.phone_number)}`, 20, 75);
     
     doc.text(`Issue Date:       ${new Date(record.created_at).toLocaleDateString()}`, 110, 64);
-    doc.text(`Issuing Officer:  ${record.officer_name}`, 110, 70);
+    doc.text(`Issuing Officer:  ${cleanText(record.officer_name)}`, 110, 70);
     doc.text(`Service ID:       ${recordId.substring(0, 12)}`, 110, 75);
 
     // 4. Itemized table using autoTable for maximum A4 elegance
     const logRows = [[
-      record.service?.name || 'Service Category',
+      cleanText(record.service?.name || 'Service Category'),
       record.quantity.toString(),
       `N${(record.amount / record.quantity).toFixed(2)}`,
       `N${parseFloat(record.amount).toFixed(2)}`
@@ -268,7 +263,7 @@ export const pdfGenerator = {
       doc.setTextColor(...BRAND_DARK);
       doc.text('REMARKS / VEHICLE DETAILS:', 20, currentY + 6);
       doc.setFont('Helvetica', 'normal');
-      doc.text(record.notes, 20, currentY + 12, { maxWidth: 90 });
+      doc.text(cleanText(record.notes), 20, currentY + 12, { maxWidth: 90 });
     }
 
     // 6. Totals Panel on the right (x: 125 to 195)
@@ -320,7 +315,7 @@ export const pdfGenerator = {
     doc.setTextColor(100, 116, 139);
     doc.text('ISSUING DESK OFFICER', 115, sigY + 23);
     doc.setFont('Helvetica', 'bold');
-    doc.text(record.officer_name, 115, sigY + 28);
+    doc.text(cleanText(record.officer_name), 115, sigY + 28);
 
     // 8. Footer notice
     doc.setFont('Helvetica', 'italic');
@@ -369,19 +364,19 @@ export const pdfGenerator = {
     
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Customer Name:    ${debtor.customer_name}`, 20, 64);
-    doc.text(`Phone Number:     ${debtor.phone_number}`, 20, 70);
-    doc.text(`Payment Due Date:  ${debtor.due_date}`, 20, 76);
+    doc.text(`Customer Name:    ${cleanText(debtor.customer_name)}`, 20, 64);
+    doc.text(`Phone Number:     ${cleanText(debtor.phone_number)}`, 20, 70);
+    doc.text(`Payment Due Date:  ${cleanText(debtor.due_date)}`, 20, 76);
     
-    doc.text(`Receipt Reference: RTO-DB-${debtor.id.substring(0, 6).toUpperCase()}`, 110, 64);
-    doc.text(`Transaction Date:  ${tx.date}`, 110, 70);
-    doc.text(`Account Status:    ${debtor.status.toUpperCase()}`, 110, 76);
+    doc.text(`Receipt Reference: RTO-DB-${cleanText(debtor.id.substring(0, 6).toUpperCase())}`, 110, 64);
+    doc.text(`Transaction Date:  ${cleanText(tx.date)}`, 110, 70);
+    doc.text(`Account Status:    ${cleanText(debtor.status.toUpperCase())}`, 110, 76);
 
     // 4. Transaction Description Table
     const txTypeLabel = tx.type === 'repayment' ? 'REPAYMENT CASH DEDUCTION (-)' : 'ADDITIONAL CREDIT ACCRUAL (+)';
     const logRows = [[
       txTypeLabel,
-      tx.reason || (tx.type === 'repayment' ? 'Cash settlement repayment' : 'Accrued credit addition'),
+      cleanText(tx.reason || (tx.type === 'repayment' ? 'Cash settlement repayment' : 'Accrued credit addition')),
       `N${parseFloat(tx.amount).toFixed(2)}`
     ]];
 
@@ -470,7 +465,7 @@ export const pdfGenerator = {
     doc.setTextColor(100, 116, 139);
     doc.text('AUTHORIZING AUDIT OFFICER', 115, sigY + 23);
     doc.setFont('Helvetica', 'bold');
-    doc.text(tx.received_by || 'Staff Officer', 115, sigY + 28);
+    doc.text(cleanText(tx.received_by || 'Staff Officer'), 115, sigY + 28);
 
     // 8. Footer notice
     doc.setFont('Helvetica', 'italic');
