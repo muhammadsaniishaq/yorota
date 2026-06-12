@@ -702,18 +702,105 @@ export const pdfGenerator = {
   },
 
   // --- PRINT DEBTOR TRANSACTION THERMAL SLIP DIRECTLY TO BLUETOOTH/SYSTEM PRINTER ---
-  printDebtorThermalSlip: async (debtor, tx) => {
-    // Try Direct Bluetooth BLE Print first if supported
-    if (navigator.bluetooth) {
-      try {
-        const success = await pdfGenerator.printDebtorThermalSlipDirect(debtor, tx);
-        if (success) return;
-      } catch (bleErr) {
-        console.warn('Direct Bluetooth print failed or cancelled, falling back to browser print dialog:', bleErr);
-      }
-    }
-
+  printDebtorThermalSlip: async (debtor, tx, existingWindow = null) => {
+    let printWindow = existingWindow;
     try {
+      if (!printWindow) {
+        // 1. Open the popup window synchronously to satisfy the browser's user-gesture requirement
+        printWindow = window.open('', '_blank', 'width=350,height=600');
+        if (!printWindow) {
+          throw new Error('Popup blocked! Please allow popups for this site to print receipts.');
+        }
+      }
+
+      // Check if navigator.bluetooth is supported
+      if (navigator.bluetooth) {
+        // If we opened a new window, write the loading state.
+        // If it was already opened by the caller, it already has a loading state.
+        if (!existingWindow) {
+          printWindow.document.open();
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>YOROTA Print Connector</title>
+              <meta charset="utf-8">
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                  text-align: center;
+                  padding: 30px 15px;
+                  color: #e2e8f0;
+                  background-color: #0f172a;
+                  margin: 0;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 80vh;
+                }
+                .card {
+                  background: #1e293b;
+                  border: 1px solid #334155;
+                  border-radius: 16px;
+                  padding: 24px;
+                  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                  max-width: 280px;
+                }
+                .spinner {
+                  margin: 20px auto;
+                  width: 45px;
+                  height: 45px;
+                  border: 4px solid #334155;
+                  border-top: 4px solid #10b981;
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                h2 { font-size: 15px; margin: 12px 0 6px 0; font-weight: 700; color: #fff; }
+                p { font-size: 11px; color: #94a3b8; line-height: 1.4; margin: 4px 0; }
+                .fallback-hint {
+                  font-size: 9px;
+                  color: #64748b;
+                  margin-top: 20px;
+                  border-top: 1px dashed #334155;
+                  padding-top: 12px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div class="spinner"></div>
+                <h2>Connecting to Bluetooth Printer</h2>
+                <p>Please select your paired 58mm printer in the browser prompt.</p>
+                <div class="fallback-hint">
+                  If Bluetooth is unavailable or cancelled, the standard print system will open automatically.
+                </div>
+              </div>
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+        }
+
+        try {
+          // Attempt the actual bluetooth discovery and printing
+          const success = await pdfGenerator.printDebtorThermalSlipDirect(debtor, tx);
+          if (success) {
+            // Close the loading window if print was successful
+            printWindow.close();
+            return;
+          }
+        } catch (bleErr) {
+          console.warn('Direct Bluetooth print failed or cancelled, falling back to browser print dialog:', bleErr);
+          // Proceed to fallback
+        }
+      }
+
+      // 2. Fallback: Standard Web Print inside the pre-opened window
       const isRepayment = tx.type === 'repayment';
       const txTypeLabel = isRepayment ? 'DEBT REPAYMENT SLIP' : 'CREDIT ACCRUAL SLIP';
       const prevBal = isRepayment ? Number(tx.updatedBalance) + Number(tx.amount) : Number(tx.updatedBalance) - Number(tx.amount);
@@ -809,48 +896,48 @@ export const pdfGenerator = {
         <body>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
-          <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">${txTypeLabel}</div>
+          <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">\${txTypeLabel}</div>
           
           <div class="divider"></div>
           
           <div class="section-title">DEBTOR PROFILE:</div>
-          <div class="row"><span>Name:</span><span class="bold">${debtor.customer_name}</span></div>
-          <div class="row"><span>Phone:</span><span>${debtor.phone_number}</span></div>
-          <div class="row"><span>Ref:</span><span>RTO-DB-${debtor.id.substring(0, 6).toUpperCase()}</span></div>
-          <div class="row"><span>Date:</span><span>${tx.date}</span></div>
-          <div class="row"><span>Due Date:</span><span>${debtor.due_date}</span></div>
+          <div class="row"><span>Name:</span><span class="bold">\${debtor.customer_name}</span></div>
+          <div class="row"><span>Phone:</span><span>\${debtor.phone_number}</span></div>
+          <div class="row"><span>Ref:</span><span>RTO-DB-\${debtor.id.substring(0, 6).toUpperCase()}</span></div>
+          <div class="row"><span>Date:</span><span>\${tx.date}</span></div>
+          <div class="row"><span>Due Date:</span><span>\${debtor.due_date}</span></div>
           
           <div class="divider"></div>
           
           <div class="section-title">TRANSACTION DETAILS:</div>
           <div style="word-wrap: break-word; max-width: 50mm;">
             <span>Reason:</span><br/>
-            <span style="font-style: italic;">${tx.reason || (isRepayment ? 'Cash settlement repayment' : 'Accrued credit addition')}</span>
+            <span style="font-style: italic;">\${tx.reason || (isRepayment ? 'Cash settlement repayment' : 'Accrued credit addition')}</span>
           </div>
           <div class="amount-box bold">
-            AMOUNT: ₦${parseFloat(tx.amount).toFixed(2)}
+            AMOUNT: ₦\${parseFloat(tx.amount).toFixed(2)}
           </div>
           
           <div class="divider"></div>
           
           <div class="row">
             <span>Previous Balance:</span>
-            <span>₦${parseFloat(Math.max(0, prevBal)).toFixed(2)}</span>
+            <span>₦\${parseFloat(Math.max(0, prevBal)).toFixed(2)}</span>
           </div>
           <div class="row bold" style="font-size: 11px; margin-top: 2px;">
             <span>UPDATED BALANCE:</span>
-            <span>₦${parseFloat(tx.updatedBalance).toFixed(2)}</span>
+            <span>₦\${parseFloat(tx.updatedBalance).toFixed(2)}</span>
           </div>
           
           <div class="divider"></div>
           
           <div style="font-size: 8px; margin-top: 4px; text-align: justify;">
-            ${isRepayment 
+            \${isRepayment 
               ? 'Verified: Cash repayment collected and subtracted from outstanding balance.' 
               : 'Statement: Credit accrued subject to prompt settlement under regulatory terms.'}
           </div>
           <div style="margin-top: 6px; font-size: 8px;">
-            <span>Officer:</span> <span class="bold">${tx.received_by || 'Staff Officer'}</span>
+            <span>Officer:</span> <span class="bold">\${tx.received_by || 'Staff Officer'}</span>
           </div>
           
           <div class="signature-section">
@@ -883,14 +970,16 @@ export const pdfGenerator = {
         </html>
       `;
 
-      const printWindow = window.open('', '_blank', 'width=350,height=600');
-      if (!printWindow) {
-        throw new Error('Popup blocked! Please allow popups for this site to print receipts.');
-      }
+      // Clear the loading screen and write receipt content
+      printWindow.document.open();
       printWindow.document.write(htmlContent);
       printWindow.document.close();
+
     } catch (err) {
       console.error('printDebtorThermalSlip error:', err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
       throw err;
     }
   },

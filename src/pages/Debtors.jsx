@@ -167,6 +167,69 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       return;
     }
 
+    let printWindow = null;
+    if (useThermalPref) {
+      printWindow = window.open('', '_blank', 'width=350,height=600');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>YOROTA Print Connector</title>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                text-align: center;
+                padding: 30px 15px;
+                color: #e2e8f0;
+                background-color: #0f172a;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 80vh;
+              }
+              .card {
+                background: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 16px;
+                padding: 24px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                max-width: 280px;
+              }
+              .spinner {
+                margin: 20px auto;
+                width: 45px;
+                height: 45px;
+                border: 4px solid #334155;
+                border-top: 4px solid #10b981;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              h2 { font-size: 15px; margin: 12px 0 6px 0; font-weight: 700; color: #fff; }
+              p { font-size: 11px; color: #94a3b8; line-height: 1.4; margin: 4px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="spinner"></div>
+              <h2>Processing Ledger Transaction</h2>
+              <p>Please wait while the transaction is saved to the database. The receipt print screen will load automatically.</p>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    }
+
     setFormLoading(true);
     setError('');
 
@@ -199,7 +262,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       };
       try {
         if (useThermalPref) {
-          pdfGenerator.printDebtorThermalSlip(createdDebtor, createdTx);
+          pdfGenerator.printDebtorThermalSlip(createdDebtor, createdTx, printWindow);
         } else {
           await pdfGenerator.generateDebtorReceipt(createdDebtor, createdTx);
         }
@@ -209,6 +272,9 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       }
     } catch (err) {
       console.error(err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
       setError(err.message || 'Error creating debtor log.');
     } finally {
       setFormLoading(false);
@@ -225,6 +291,69 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     if (parseFloat(payAmount) > selectedDebtor.amount_owed) {
       setError('Payment amount cannot exceed the outstanding balance.');
       return;
+    }
+
+    let printWindow = null;
+    if (useThermalPref) {
+      printWindow = window.open('', '_blank', 'width=350,height=600');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>YOROTA Print Connector</title>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                text-align: center;
+                padding: 30px 15px;
+                color: #e2e8f0;
+                background-color: #0f172a;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 80vh;
+              }
+              .card {
+                background: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 16px;
+                padding: 24px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                max-width: 280px;
+              }
+              .spinner {
+                margin: 20px auto;
+                width: 45px;
+                height: 45px;
+                border: 4px solid #334155;
+                border-top: 4px solid #10b981;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              h2 { font-size: 15px; margin: 12px 0 6px 0; font-weight: 700; color: #fff; }
+              p { font-size: 11px; color: #94a3b8; line-height: 1.4; margin: 4px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="spinner"></div>
+              <h2>Processing Ledger Transaction</h2>
+              <p>Please wait while the transaction is saved to the database. The receipt print screen will load automatically.</p>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     }
 
     setFormLoading(true);
@@ -255,7 +384,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       };
       try {
         if (useThermalPref) {
-          pdfGenerator.printDebtorThermalSlip(updatedDebtor, repaymentTx);
+          pdfGenerator.printDebtorThermalSlip(updatedDebtor, repaymentTx, printWindow);
         } else {
           await pdfGenerator.generateDebtorReceipt(updatedDebtor, repaymentTx);
         }
@@ -265,6 +394,9 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       }
     } catch (err) {
       console.error(err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
       setError(err.message || 'Error posting payment.');
     } finally {
       setFormLoading(false);
@@ -277,6 +409,69 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     if (!addDebtAmount || isNaN(parseFloat(addDebtAmount)) || parseFloat(addDebtAmount) <= 0) {
       setError('Credit amount to add must be greater than ₦0.');
       return;
+    }
+
+    let printWindow = null;
+    if (useThermalPref) {
+      printWindow = window.open('', '_blank', 'width=350,height=600');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>YOROTA Print Connector</title>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                text-align: center;
+                padding: 30px 15px;
+                color: #e2e8f0;
+                background-color: #0f172a;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 80vh;
+              }
+              .card {
+                background: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 16px;
+                padding: 24px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                max-width: 280px;
+              }
+              .spinner {
+                margin: 20px auto;
+                width: 45px;
+                height: 45px;
+                border: 4px solid #334155;
+                border-top: 4px solid #10b981;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              h2 { font-size: 15px; margin: 12px 0 6px 0; font-weight: 700; color: #fff; }
+              p { font-size: 11px; color: #94a3b8; line-height: 1.4; margin: 4px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="spinner"></div>
+              <h2>Processing Ledger Transaction</h2>
+              <p>Please wait while the transaction is saved to the database. The receipt print screen will load automatically.</p>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     }
 
     setFormLoading(true);
@@ -308,7 +503,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       };
       try {
         if (useThermalPref) {
-          pdfGenerator.printDebtorThermalSlip(updatedDebtor, accrualTx);
+          pdfGenerator.printDebtorThermalSlip(updatedDebtor, accrualTx, printWindow);
         } else {
           await pdfGenerator.generateDebtorReceipt(updatedDebtor, accrualTx);
         }
@@ -318,6 +513,9 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
       }
     } catch (err) {
       console.error(err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
       setError(err.message || 'Error adding credit balance.');
     } finally {
       setFormLoading(false);
