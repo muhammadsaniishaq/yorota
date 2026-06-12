@@ -579,8 +579,140 @@ export const pdfGenerator = {
     doc.save(`thermal-slip-${debtor.customer_name.replace(/\s+/g, '_')}-${tx.type}.pdf`);
   },
 
+  // --- PRINT DEBTOR TRANSACTION THERMAL SLIP DIRECTLY TO BLUETOOTH BLE PRINTER ---
+  printDebtorThermalSlipDirect: async (debtor, tx) => {
+    if (!navigator.bluetooth) {
+      throw new Error('Web Bluetooth is not supported in this browser/device. Please use Google Chrome.');
+    }
+
+    const isRepayment = tx.type === 'repayment';
+    const txTypeLabel = isRepayment ? 'DEBT REPAYMENT SLIP' : 'CREDIT ACCRUAL SLIP';
+    const prevBal = isRepayment ? Number(tx.updatedBalance) + Number(tx.amount) : Number(tx.updatedBalance) - Number(tx.amount);
+
+    const optionalServices = [
+      '000018f0-0000-1000-8000-00805f9b34fb', // Generic BLE Print
+      '0000e7e7-0000-1000-8000-00805f9b34fb',
+      '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+      '0000fee7-0000-1000-8000-00805f9b34fb',
+      '0000ff00-0000-1000-8000-00805f9b34fb',
+      '0000af30-0000-1000-8000-00805f9b34fb'
+    ];
+
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: optionalServices
+    });
+
+    const server = await device.gatt.connect();
+
+    let writeChar = null;
+    for (const uuid of optionalServices) {
+      try {
+        const service = await server.getPrimaryService(uuid);
+        const chars = await service.getCharacteristics();
+        writeChar = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+        if (writeChar) break;
+      } catch (e) {
+        // ignore and try next
+      }
+    }
+
+    if (!writeChar) {
+      throw new Error('Could not find write characteristic on the printer.');
+    }
+
+    // Construct ESC/POS bytes
+    const encoder = new TextEncoder();
+    const bytes = [];
+    const addBytes = (arr) => bytes.push(...arr);
+    const addText = (text) => bytes.push(...encoder.encode(text));
+
+    const init = [0x1B, 0x40];
+    const alignCenter = [0x1B, 0x61, 0x01];
+    const alignLeft = [0x1B, 0x61, 0x00];
+    const boldOn = [0x1B, 0x45, 0x01];
+    const boldOff = [0x1B, 0x45, 0x00];
+    const feedLines = [0x0A, 0x0A, 0x0A, 0x0A];
+
+    addBytes(init);
+    addBytes(alignCenter);
+    addBytes(boldOn);
+    addText("YOROTA SMART OFFICE\n");
+    addBytes(boldOff);
+    addText("Yobe State Road Traffic\nManagement Agency\n");
+    addBytes(boldOn);
+    addText(`${txTypeLabel}\n`);
+    addBytes(boldOff);
+    addText("--------------------------------\n");
+
+    addBytes(alignLeft);
+    addBytes(boldOn);
+    addText("DEBTOR PROFILE:\n");
+    addBytes(boldOff);
+    addText(`Name:  ${debtor.customer_name}\n`);
+    addText(`Phone: ${debtor.phone_number}\n`);
+    addText(`Ref:   RTO-DB-${debtor.id.substring(0, 6).toUpperCase()}\n`);
+    addText(`Date:  ${tx.date}\n`);
+    addText(`Due:   ${debtor.due_date}\n`);
+    addText("--------------------------------\n");
+
+    addBytes(boldOn);
+    addText("TRANSACTION DETAILS:\n");
+    addBytes(boldOff);
+    const reasonVal = tx.reason || (isRepayment ? 'Cash settlement repayment' : 'Accrued credit addition');
+    addText(`Reason: ${reasonVal}\n\n`);
+
+    addBytes(alignCenter);
+    addBytes(boldOn);
+    addText(`AMOUNT: N${parseFloat(tx.amount).toFixed(2)}\n`);
+    addBytes(boldOff);
+
+    addBytes(alignLeft);
+    addText("--------------------------------\n");
+    addText(`Prev Bal:   N${parseFloat(Math.max(0, prevBal)).toFixed(2)}\n`);
+    addBytes(boldOn);
+    addText(`UPDATED:    N${parseFloat(tx.updatedBalance).toFixed(2)}\n`);
+    addBytes(boldOff);
+    addText("--------------------------------\n");
+
+    addText(isRepayment 
+      ? 'Verified: Cash repayment collected\nand subtracted from outstanding\nbalance.\n' 
+      : 'Statement: Credit accrued subject\nto prompt settlement under\nregulatory terms.\n');
+    addText(`Officer: ${tx.received_by || 'Staff Officer'}\n\n`);
+
+    addText("Officer Sig:       Cust Sig:\n\n\n");
+    addText("___________        ___________\n\n");
+
+    addBytes(alignCenter);
+    addText("Thank you for your cooperation!\n");
+    addText("YOROTA Smart Office\n");
+    addBytes(feedLines);
+
+    // Write chunked to characteristic
+    const dataBytes = new Uint8Array(bytes);
+    const chunkSize = 20;
+    for (let i = 0; i < dataBytes.length; i += chunkSize) {
+      const chunk = dataBytes.slice(i, i + chunkSize);
+      await writeChar.writeValue(chunk);
+      await new Promise(r => setTimeout(r, 15));
+    }
+
+    await device.gatt.disconnect();
+    return true;
+  },
+
   // --- PRINT DEBTOR TRANSACTION THERMAL SLIP DIRECTLY TO BLUETOOTH/SYSTEM PRINTER ---
-  printDebtorThermalSlip: (debtor, tx) => {
+  printDebtorThermalSlip: async (debtor, tx) => {
+    // Try Direct Bluetooth BLE Print first if supported
+    if (navigator.bluetooth) {
+      try {
+        const success = await pdfGenerator.printDebtorThermalSlipDirect(debtor, tx);
+        if (success) return;
+      } catch (bleErr) {
+        console.warn('Direct Bluetooth print failed or cancelled, falling back to browser print dialog:', bleErr);
+      }
+    }
+
     try {
       const isRepayment = tx.type === 'repayment';
       const txTypeLabel = isRepayment ? 'DEBT REPAYMENT SLIP' : 'CREDIT ACCRUAL SLIP';
