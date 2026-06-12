@@ -2,7 +2,7 @@
 // Integrates jsPDF and jsPDF-AutoTable for premium administrative prints
 
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 
 // Auto-sanitize texts passed to jsPDF to prevent WinAnsiEncoding (CP-1252) crashes
@@ -231,7 +231,7 @@ export const pdfGenerator = {
       `N${parseFloat(record.amount).toFixed(2)}`
     ]];
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 86,
       head: [['Service Rendered', 'Qty', 'Unit Price', 'Total Amount']],
       body: logRows,
@@ -380,7 +380,7 @@ export const pdfGenerator = {
       `N${parseFloat(tx.amount).toFixed(2)}`
     ]];
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 90,
       head: [['Transaction Type / Action', 'Justification / Details', 'Amount']],
       body: logRows,
@@ -861,7 +861,7 @@ export const pdfGenerator = {
       return [name, count.toString(), `N${totalAmount.toFixed(2)}`];
     });
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 118,
       head: [['Category Service Name', 'Units Logged', 'Revenue Generated']],
       body: catRows.length > 0 ? catRows : [['No data recorded', '0', 'N0.00']],
@@ -890,7 +890,7 @@ export const pdfGenerator = {
       rec.officer_name
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: currentY + 4,
       head: [['Date', 'Customer Name', 'Service Rendered', 'Qty', 'Amount', 'Officer']],
       body: logRows.length > 0 ? logRows : [['-', 'No logs recorded for this period', '-', '-', '-', '-']],
@@ -982,7 +982,7 @@ export const pdfGenerator = {
       t.collected_by
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 96,
       head: [['Date', 'Type', 'Purpose / Particulars', 'Amount', 'Collected / Paid By']],
       body: txRows.length > 0 ? txRows : [['-', 'No logs recorded', '-', '-', '-']],
