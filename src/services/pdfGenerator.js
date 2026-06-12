@@ -1097,6 +1097,9 @@ export const pdfGenerator = {
           </style>
         </head>
         <body>
+          <div class="text-center" style="margin-bottom: 6px;">
+            <img src="/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
+          </div>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
           <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">\${txTypeLabel}</div>
@@ -1458,6 +1461,9 @@ export const pdfGenerator = {
           </style>
         </head>
         <body>
+          <div class="text-center" style="margin-bottom: 6px;">
+            <img src="/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
+          </div>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
           <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">\${typeText.toUpperCase()} AUDIT SUMMARY</div>
@@ -1840,6 +1846,9 @@ export const pdfGenerator = {
           </style>
         </head>
         <body>
+          <div class="text-center" style="margin-bottom: 6px;">
+            <img src="/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
+          </div>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
           <div class="text-center bold" style="font-size: 9px; margin-top: 2px;">ICT DAILY PAYOUT SHEET</div>
