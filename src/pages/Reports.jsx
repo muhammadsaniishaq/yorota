@@ -12,7 +12,11 @@ import {
   AlertCircle,
   Shield,
   Activity,
-  Award
+  Award,
+  Bluetooth,
+  CheckCircle,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { db } from '../services/db';
 import { pdfGenerator } from '../services/pdfGenerator';
@@ -52,7 +56,107 @@ export default function Reports({ currentUser, setGlobalNotification }) {
 
   useEffect(() => {
     loadData();
+    // Try to silently auto-connect to previously paired printer
+    if (pdfGenerator.isBlePrinterConnected()) {
+      setPrinterStatus('Connected');
+      setPrinterName(pdfGenerator.activeBleDevice?.name || 'Generic BT Printer');
+    } else {
+      pdfGenerator.tryAutoConnectBlePrinter().then(name => {
+        if (name) {
+          setPrinterStatus('Connected');
+          setPrinterName(name);
+          setGlobalNotification({ message: `Auto-reconnected to Bluetooth printer: ${name}`, type: 'success' });
+        }
+      });
+    }
   }, []);
+
+  // Bluetooth Printer States
+  const [printerModalOpen, setPrinterModalOpen] = useState(false);
+  const [printerStatus, setPrinterStatus] = useState('Disconnected');
+  const [printerName, setPrinterName] = useState(localStorage.getItem('yorota_last_printer_name') || '');
+  const [isPrinterScanning, setIsPrinterScanning] = useState(false);
+  const [useThermalPref, setUseThermalPref] = useState(() => {
+    return localStorage.getItem('yorota_pref_thermal_print') === 'true';
+  });
+  const [error, setError] = useState('');
+
+  const handleConnectPrinter = async () => {
+    setIsPrinterScanning(true);
+    setError('');
+    try {
+      const name = await pdfGenerator.connectBlePrinter();
+      setPrinterStatus('Connected');
+      setPrinterName(name);
+      setGlobalNotification({ message: `Successfully connected to printer: ${name}!`, type: 'success' });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Bluetooth connection failed or cancelled.');
+    } finally {
+      setIsPrinterScanning(false);
+    }
+  };
+
+  const handleDisconnectPrinter = async () => {
+    try {
+      await pdfGenerator.disconnectBlePrinter();
+      setPrinterStatus('Disconnected');
+      setPrinterName('');
+      setGlobalNotification({ message: 'Disconnected Bluetooth printer.', type: 'info' });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Error disconnecting printer.');
+    }
+  };
+
+  const handlePrintTestSlip = async () => {
+    try {
+      await pdfGenerator.printBleTestSlip();
+      setGlobalNotification({ message: 'Test slip printed successfully!', type: 'success' });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to print test slip.');
+    }
+  };
+
+  const handlePrintReportThermal = async (existingWindow = null) => {
+    let printWindow = existingWindow;
+    if (useThermalPref && !printWindow) {
+      printWindow = window.open('', '_blank', 'width=350,height=600');
+    }
+    
+    try {
+      const typeText = 
+        filterType === 'daily' ? 'Daily Summary' :
+        filterType === '10days' ? '10 Days Auditing' :
+        filterType === 'monthly' ? 'Monthly Operational' : 'Custom Bounds';
+
+      const summaryPayload = {
+        totalCount,
+        totalAmount,
+        ledgerNet,
+        categories: serviceSummary,
+        setAsideTotal,
+        setAsideHQ,
+        setAsideOffice,
+        hqRemitted,
+        hqOutstanding,
+        officeDisbursed,
+        officeBalance,
+        ledgerIncome,
+        ledgerExpense
+      };
+
+      await pdfGenerator.printReportThermalSlip(typeText, dateRangeText, summaryPayload, printWindow);
+      setGlobalNotification({ message: 'Audit summary printed successfully!', type: 'success' });
+    } catch (err) {
+      console.error(err);
+      if (printWindow) {
+        try { printWindow.close(); } catch(e) {}
+      }
+      setGlobalNotification({ message: 'Failed to print report summary: ' + err.message, type: 'error' });
+    }
+  };
 
   // Compute boundaries based on selection
   const getFilterBounds = () => {
@@ -332,13 +436,25 @@ export default function Reports({ currentUser, setGlobalNotification }) {
           </p>
         </div>
         
-        <button
-          onClick={loadData}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-850 hover:border-[#F5C800]/40 font-extrabold text-[10px] sm:text-xs transition-all duration-300 shadow-md hover:shadow-[#F5C800]/5 cursor-pointer select-none active:scale-[0.98]"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-[#F5C800] animate-spin-slow" />
-          REFRESH AUDIT DATA
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPrinterModalOpen(true)}
+            className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border font-black text-[10px] sm:text-xs transition duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer select-none \${printerStatus === 'Connected' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 shadow-md shadow-emerald-500/5' : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-850'}`}
+            title="Configure Bluetooth Thermal Printer"
+          >
+            <Bluetooth className={`w-4 h-4 \${printerStatus === 'Connected' ? 'text-emerald-400 animate-pulse' : 'text-slate-400'}`} />
+            {printerStatus === 'Connected' ? `PRINTER: \${printerName.substring(0, 10)}` : 'PRINTER SETTINGS'}
+          </button>
+
+          <button
+            onClick={loadData}
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-850 hover:border-[#F5C800]/40 font-extrabold text-[10px] sm:text-xs transition-all duration-300 shadow-md hover:shadow-[#F5C800]/5 cursor-pointer select-none active:scale-[0.98]"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-[#F5C800] animate-spin-slow" />
+            REFRESH AUDIT DATA
+          </button>
+        </div>
       </div>
 
       {/* Period Filter Selector Tabs - highly compact & premium */}
@@ -550,14 +666,43 @@ export default function Reports({ currentUser, setGlobalNotification }) {
                   <p className="text-[9px] sm:text-[10px] text-slate-550 mt-0.5">Entries logged during this auditing scope.</p>
                 </div>
                 
-                <button
-                  onClick={handleExportPDF}
-                  disabled={filteredRecords.length === 0}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs transition duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 select-none cursor-pointer shadow-md shadow-[#F5C800]/5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  GENERATE PDF AUDIT REPORT
-                </button>
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                  {/* Thermal Printer Option Checkbox */}
+                  <div className="flex items-center gap-2 mr-2 select-none">
+                    <input
+                      type="checkbox"
+                      id="thermal_report_pref"
+                      checked={useThermalPref}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setUseThermalPref(checked);
+                        localStorage.setItem('yorota_pref_thermal_print', checked ? 'true' : 'false');
+                      }}
+                      className="rounded border-slate-800 text-[#F5C800] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    />
+                    <label htmlFor="thermal_report_pref" className="text-[10px] font-bold text-slate-400 cursor-pointer">
+                      Use Thermal Printer
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={handleExportPDF}
+                    disabled={filteredRecords.length === 0}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-450 hover:to-emerald-550 text-slate-950 font-black text-xs transition duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 select-none cursor-pointer shadow-md shadow-emerald-500/5"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    GENERATE PDF REPORT
+                  </button>
+
+                  <button
+                    onClick={() => handlePrintReportThermal(null)}
+                    disabled={filteredRecords.length === 0}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs transition duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 select-none cursor-pointer shadow-md shadow-[#F5C800]/5"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-[#070a13]" />
+                    MINI PRINT REPORT
+                  </button>
+                </div>
               </div>
 
               {/* Range Logs Section */}
@@ -1149,6 +1294,111 @@ export default function Reports({ currentUser, setGlobalNotification }) {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Modal - Bluetooth Printer Settings */}
+      {printerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-6 relative text-xs text-slate-350 font-semibold animate-in zoom-in-95 duration-200">
+            
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-500 to-[#10b981]" />
+
+            <h2 className="text-xs font-black text-slate-100 mb-4 flex items-center gap-1.5 uppercase tracking-wide">
+              <Bluetooth className="w-4.5 h-4.5 text-blue-500 shrink-0" />
+              Bluetooth Thermal Printer Settings
+            </h2>
+
+            {error && (
+              <div className="mb-4 p-2.5 rounded-xl bg-red-950/40 border border-red-500/20 text-red-200 text-[10px] font-bold">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="p-3 bg-slate-950/60 rounded-xl text-xs space-y-2 border border-slate-850">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-455">Bluetooth Support:</span>
+                  {navigator.bluetooth ? (
+                    <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                      <CheckCircle className="w-3.5 h-3.5" /> Supported
+                    </span>
+                  ) : (
+                    <span className="text-red-400 font-extrabold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Unsupported (Use Chrome)
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-between items-center border-t border-slate-850/40 pt-2 mt-1">
+                  <span className="text-slate-455">Printer Status:</span>
+                  <span className={`font-black uppercase tracking-wider \${printerStatus === 'Connected' ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`}>
+                    {printerStatus}
+                  </span>
+                </div>
+                {printerStatus === 'Connected' && (
+                  <div className="flex justify-between items-center border-t border-slate-850/40 pt-2 mt-1">
+                    <span className="text-slate-455">Device Name:</span>
+                    <span className="font-extrabold text-slate-200">{printerName}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {printerStatus !== 'Connected' ? (
+                  <button
+                    type="button"
+                    onClick={handleConnectPrinter}
+                    disabled={isPrinterScanning || !navigator.bluetooth}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase shadow-md shadow-blue-500/10 transition cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPrinterScanning ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Scanning for Printers...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4" />
+                        Scan & Connect Near Printer
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handlePrintTestSlip}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-[#10b981] text-[#070a13] font-black text-xs uppercase shadow-md shadow-emerald-500/10 transition cursor-pointer select-none"
+                    >
+                      <Printer className="w-4 h-4" />
+                      Print Test Slip
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectPrinter}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900/60 hover:bg-red-900/40 border border-slate-850 text-red-400 hover:text-red-300 font-extrabold text-xs uppercase transition cursor-pointer select-none"
+                    >
+                      Disconnect Printer
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="text-[9px] text-slate-500 leading-normal bg-slate-950/20 p-2.5 rounded-lg border border-slate-850/50">
+                <span className="font-bold text-slate-400">Pairing Instructions:</span> Make sure your 58mm thermal printer is powered ON and has Bluetooth enabled. When you click scan, select it in the browser's device chooser. Once paired, it will remain connected for subsequent transactions.
+              </div>
+
+              <div className="flex justify-end pt-2 mt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setPrinterModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-800 bg-slate-955/40 hover:bg-slate-850 text-slate-400 hover:text-slate-200 transition font-bold uppercase select-none cursor-pointer"
+                >
+                  Close Settings
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
