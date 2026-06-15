@@ -1098,7 +1098,7 @@ export const pdfGenerator = {
         </head>
         <body>
           <div class="text-center" style="margin-bottom: 6px;">
-            <img src="${window.location.origin}/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
+            <img id="logo-img" src="${window.location.origin}/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
           </div>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
@@ -1165,12 +1165,20 @@ export const pdfGenerator = {
           </div>
           
           <script>
-            window.onload = function() {
-              window.print();
-            };
             window.onafterprint = function() {
               window.close();
             };
+            var img = document.getElementById('logo-img');
+            if (img && !img.complete) {
+              img.onload = function() {
+                window.print();
+              };
+              img.onerror = function() {
+                window.print();
+              };
+            } else {
+              window.print();
+            }
           </script>
         </body>
         </html>
@@ -1462,7 +1470,7 @@ export const pdfGenerator = {
         </head>
         <body>
           <div class="text-center" style="margin-bottom: 6px;">
-            <img src="${window.location.origin}/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
+            <img id="logo-img" src="${window.location.origin}/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
           </div>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
@@ -1514,8 +1522,20 @@ export const pdfGenerator = {
           </div>
           
           <script>
-            window.onload = function() { window.print(); };
-            window.onafterprint = function() { window.close(); };
+            window.onafterprint = function() {
+              window.close();
+            };
+            var img = document.getElementById('logo-img');
+            if (img && !img.complete) {
+              img.onload = function() {
+                window.print();
+              };
+              img.onerror = function() {
+                window.print();
+              };
+            } else {
+              window.print();
+            }
           </script>
         </body>
         </html>
@@ -1847,7 +1867,7 @@ export const pdfGenerator = {
         </head>
         <body>
           <div class="text-center" style="margin-bottom: 6px;">
-            <img src="${window.location.origin}/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
+            <img id="logo-img" src="${window.location.origin}/logo.png" style="width: 14mm; height: 14mm; object-fit: contain;" alt="YOROTA Logo">
           </div>
           <div class="text-center bold title">YOROTA SMART OFFICE</div>
           <div class="text-center subtitle">Yobe State Road Traffic Management Agency</div>
@@ -1889,8 +1909,20 @@ export const pdfGenerator = {
           <div class="footer">YOROTA Smart Office</div>
           
           <script>
-            window.onload = function() { window.print(); };
-            window.onafterprint = function() { window.close(); };
+            window.onafterprint = function() {
+              window.close();
+            };
+            var img = document.getElementById('logo-img');
+            if (img && !img.complete) {
+              img.onload = function() {
+                window.print();
+              };
+              img.onerror = function() {
+                window.print();
+              };
+            } else {
+              window.print();
+            }
           </script>
         </body>
         </html>
