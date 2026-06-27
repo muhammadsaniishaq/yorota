@@ -14,6 +14,7 @@ import DailyWorkForm from './pages/DailyWorkForm';
 import DailyEntries from './pages/DailyEntries';
 import Ledger from './pages/Ledger';
 import Debtors from './pages/Debtors';
+import { pdfGenerator } from './services/pdfGenerator';
 import Reports from './pages/Reports';
 import Surcharges from './pages/Surcharges';
 import PendingDrafts from './pages/PendingDrafts';
@@ -47,6 +48,23 @@ export default function App() {
   }, []);
 
   // Global Notification trigger helper
+  // Auto-connect to previously paired printer globally on app load
+  useEffect(() => {
+    const initPrinter = async () => {
+      try {
+        if (!pdfGenerator.isBlePrinterConnected()) {
+          const name = await pdfGenerator.tryAutoConnectBlePrinter();
+          if (name) {
+            console.log('Globally reconnected to printer:', name);
+          }
+        }
+      } catch (err) {
+        console.warn('Global auto-reconnect failed', err);
+      }
+    };
+    initPrinter();
+  }, []);
+
   const triggerNotification = (payload) => {
     setNotification(payload);
     // Auto-dismiss after 4 seconds
