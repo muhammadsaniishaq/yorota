@@ -301,6 +301,15 @@ export const db = {
       return updated;
     },
 
+    delete: async (id) => {
+      const { error } = await supabase
+        .from('debtors')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    },
+
     recordPayment: async (id, amount, collectedBy) => {
       const { data: debtor, error: dError } = await supabase
         .from('debtors')

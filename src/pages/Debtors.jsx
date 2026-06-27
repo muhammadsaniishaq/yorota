@@ -20,7 +20,8 @@ import {
   X,
   MessageSquare,
   Printer,
-  Bluetooth
+  Bluetooth,
+  Trash
 } from 'lucide-react';
 import { db } from '../services/db';
 import { pdfGenerator } from '../services/pdfGenerator';
@@ -58,6 +59,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [addDebtModalOpen, setAddDebtModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDebtor, setSelectedDebtor] = useState(null);
 
   // Form State - Add New Debtor Profile
@@ -76,6 +78,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
 
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deletePin, setDeletePin] = useState('');
 
   const handleSendReminder = (debtor) => {
     const rawPhone = debtor.phone_number.replace(/\D/g, ''); // strip non-digits
@@ -223,6 +226,34 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     setDueDate(debtor.due_date || '');
     setError('');
     setEditModalOpen(true);
+  };
+
+  const openDeleteModal = (debtor) => {
+    setSelectedDebtor(debtor);
+    setDeletePin('');
+    setError('');
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteDebtor = async (e) => {
+    e.preventDefault();
+    if (deletePin !== '1234') {
+      setError('Incorrect Security PIN.');
+      return;
+    }
+    setFormLoading(true);
+    setError('');
+    try {
+      await db.debtors.delete(selectedDebtor.id);
+      setGlobalNotification({ message: `Deleted account for ${selectedDebtor.customer_name}`, type: 'success' });
+      setDeleteModalOpen(false);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Error deleting account.');
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleEditDebtor = async (e) => {
@@ -798,6 +829,12 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                       >
                         EDIT INFO
                       </button>
+                      <button
+                        onClick={() => openDeleteModal(deb)}
+                        className="flex items-center gap-1 text-[10px] font-black text-slate-450 hover:text-red-400 transition"
+                      >
+                        DELETE
+                      </button>
                     </div>
 
                     <div className="flex gap-1.5 flex-wrap">
@@ -958,6 +995,14 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                               className="flex items-center gap-1 px-3 py-2 rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500 hover:text-white text-blue-400 transition font-black text-[10px] uppercase cursor-pointer select-none active:scale-[0.98]"
                             >
                               EDIT INFO
+                            </button>
+
+                            <button
+                              onClick={() => openDeleteModal(deb)}
+                              className="flex items-center gap-1 px-3 py-2 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500 hover:text-white text-red-400 transition font-black text-[10px] uppercase cursor-pointer select-none active:scale-[0.98]"
+                            >
+                              <Trash className="w-3.5 h-3.5" />
+                              DELETE
                             </button>
 
                             {/* 1. Add Debt (+) ALWAYS VISIBLE */}
@@ -1470,6 +1515,65 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                   className="w-1/2 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-gradient-to-r from-[#F5C800] to-[#EAB308] text-[#070a13] font-black text-xs uppercase shadow-md shadow-[#F5C800]/10 transition cursor-pointer select-none active:scale-[0.99]"
                 >
                   {formLoading ? 'Accruing...' : 'Add dynamic debt'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal - Delete Debtor Account */}
+      {deleteModalOpen && selectedDebtor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-6 relative text-xs text-slate-350 font-semibold animate-in zoom-in-95 duration-200">
+            
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-red-500 to-red-600" />
+
+            <h2 className="text-xs font-black text-slate-100 mb-4 flex items-center gap-1.5 uppercase tracking-wide">
+              <Trash className="w-4.5 h-4.5 text-red-500 shrink-0" />
+              Delete Account
+            </h2>
+
+            {error && (
+              <div className="mb-4 p-2.5 rounded-xl bg-red-950/40 border border-red-500/20 text-red-200 text-[10px] font-bold">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleDeleteDebtor} className="space-y-4">
+              <p className="text-slate-400 text-xs">
+                Are you sure you want to completely delete the account for <strong className="text-red-400">{selectedDebtor.customer_name}</strong>? This action cannot be undone.
+              </p>
+
+              <div>
+                <label className="block text-[8px] font-black text-slate-555 uppercase tracking-wider mb-1.5">
+                  Enter Security PIN to confirm *
+                </label>
+                <input
+                  type="password"
+                  value={deletePin}
+                  onChange={(e) => setDeletePin(e.target.value)}
+                  placeholder="****"
+                  required
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2.5 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-red-500 transition text-center tracking-[1em]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="w-1/2 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-850 text-slate-400 hover:text-slate-200 transition font-bold uppercase select-none cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="w-1/2 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase shadow-md shadow-red-500/10 transition cursor-pointer select-none active:scale-[0.98]"
+                >
+                  {formLoading ? 'Deleting...' : 'Confirm Delete'}
                 </button>
               </div>
             </form>
