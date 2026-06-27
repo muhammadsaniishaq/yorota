@@ -290,6 +290,17 @@ export const db = {
       return inserted;
     },
 
+    updateInfo: async (id, data) => {
+      const { data: updated, error } = await supabase
+        .from('debtors')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return updated;
+    },
+
     recordPayment: async (id, amount, collectedBy) => {
       const { data: debtor, error: dError } = await supabase
         .from('debtors')

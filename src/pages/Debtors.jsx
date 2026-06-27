@@ -57,6 +57,7 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [addDebtModalOpen, setAddDebtModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedDebtor, setSelectedDebtor] = useState(null);
 
   // Form State - Add New Debtor Profile
@@ -213,6 +214,40 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
     setAddDebtOfficer(currentUser?.name || '');
     setError('');
     setAddDebtModalOpen(true);
+  };
+
+  const openEditModal = (debtor) => {
+    setSelectedDebtor(debtor);
+    setName(debtor.customer_name);
+    setPhone(debtor.phone_number);
+    setDueDate(debtor.due_date || '');
+    setError('');
+    setEditModalOpen(true);
+  };
+
+  const handleEditDebtor = async (e) => {
+    e.preventDefault();
+    if (!name.trim() || !phone.trim() || !dueDate) {
+      setError('Please fill in all mandatory fields.');
+      return;
+    }
+    setFormLoading(true);
+    setError('');
+    try {
+      await db.debtors.updateInfo(selectedDebtor.id, {
+        customer_name: name.trim(),
+        phone_number: phone.trim(),
+        due_date: dueDate
+      });
+      setGlobalNotification({ message: `Updated profile for ${name}`, type: 'success' });
+      setEditModalOpen(false);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Error updating debtor info.');
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleAddDebtor = async (e) => {
@@ -748,46 +783,56 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
 
                   {/* Dynamic Action Buttons Footer for Mobile - Separate ACCRUE and DEDUCT triggers */}
                   <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-850/60 justify-between items-center">
-                    <button
-                      onClick={() => toggleHistory(deb.id)}
-                      className="flex items-center gap-1 text-[10px] font-black text-slate-450 hover:text-slate-200 transition"
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      {isHistoryOpen ? 'HIDE LOGS' : 'VIEW LOGS'}
-                      {isHistoryOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => toggleHistory(deb.id)}
+                        className="flex items-center gap-1 text-[10px] font-black text-slate-450 hover:text-slate-200 transition"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        {isHistoryOpen ? 'HIDE LOGS' : 'VIEW LOGS'}
+                        {isHistoryOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      </button>
+                      <button
+                        onClick={() => openEditModal(deb)}
+                        className="flex items-center gap-1 text-[10px] font-black text-slate-450 hover:text-blue-400 transition"
+                      >
+                        EDIT INFO
+                      </button>
+                    </div>
 
-                    {deb.status === 'unpaid' && (
-                      <div className="flex gap-1.5 flex-wrap">
-                        {/* 1. Add Debt (+) */}
-                        <button
-                          onClick={() => openAddDebtModal(deb)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 hover:bg-[#CA8A04] hover:text-[#070a13] text-[#F5C800] transition font-black text-[9px] uppercase cursor-pointer"
-                        >
-                          <PlusCircle className="w-3.5 h-3.5" />
-                          ADD DEBT
-                        </button>
-                        
-                        {/* 2. Deduct Debt (-) */}
-                        <button
-                          onClick={() => openPayModal(deb)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#10b981] hover:text-[#070a13] text-emerald-400 transition font-black text-[9px] uppercase cursor-pointer"
-                        >
-                          <MinusCircle className="w-3.5 h-3.5" />
-                          DEDUCT
-                        </button>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {/* 1. Add Debt (+) - ALWAYS VISIBLE */}
+                      <button
+                        onClick={() => openAddDebtModal(deb)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 hover:bg-[#CA8A04] hover:text-[#070a13] text-[#F5C800] transition font-black text-[9px] uppercase cursor-pointer"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" />
+                        ADD DEBT
+                      </button>
+                      
+                      {deb.status === 'unpaid' && (
+                        <>
+                          {/* 2. Deduct Debt (-) */}
+                          <button
+                            onClick={() => openPayModal(deb)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#10b981] hover:text-[#070a13] text-emerald-400 transition font-black text-[9px] uppercase cursor-pointer"
+                          >
+                            <MinusCircle className="w-3.5 h-3.5" />
+                            DEDUCT
+                          </button>
 
-                        {/* 3. Send WhatsApp Reminder */}
-                        <button
-                          onClick={() => handleSendReminder(deb)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#128C7E] hover:text-white text-[#25D366] transition font-black text-[9px] uppercase cursor-pointer"
-                          title="Send polite WhatsApp due reminder"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          REMIND
-                        </button>
-                      </div>
-                    )}
+                          {/* 3. Send WhatsApp Reminder */}
+                          <button
+                            onClick={() => handleSendReminder(deb)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-[#128C7E] hover:text-white text-[#25D366] transition font-black text-[9px] uppercase cursor-pointer"
+                            title="Send polite WhatsApp due reminder"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            REMIND
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Expanded Mobile Audit History logs */}
@@ -908,17 +953,24 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                         </td>
                         <td className="py-4 px-4 text-right">
                           <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => openEditModal(deb)}
+                              className="flex items-center gap-1 px-3 py-2 rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500 hover:text-white text-blue-400 transition font-black text-[10px] uppercase cursor-pointer select-none active:scale-[0.98]"
+                            >
+                              EDIT INFO
+                            </button>
+
+                            {/* 1. Add Debt (+) ALWAYS VISIBLE */}
+                            <button
+                              onClick={() => openAddDebtModal(deb)}
+                              className="flex items-center gap-1 px-3 py-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 hover:bg-[#CA8A04] hover:text-[#070a13] text-[#F5C800] transition font-black text-[10px] uppercase cursor-pointer select-none active:scale-[0.98]"
+                            >
+                              <PlusCircle className="w-3.5 h-3.5" />
+                              ACCURUE DEBT
+                            </button>
+
                             {deb.status === 'unpaid' ? (
                               <>
-                                {/* 1. Add Debt (+) */}
-                                <button
-                                  onClick={() => openAddDebtModal(deb)}
-                                  className="flex items-center gap-1 px-3 py-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 hover:bg-[#CA8A04] hover:text-[#070a13] text-[#F5C800] transition font-black text-[10px] uppercase cursor-pointer select-none active:scale-[0.98]"
-                                >
-                                  <PlusCircle className="w-3.5 h-3.5" />
-                                  ACCURUE DEBT
-                                </button>
-                                
                                 {/* 2. Deduct/Pay Debt (-) */}
                                 <button
                                   onClick={() => openPayModal(deb)}
@@ -1141,6 +1193,88 @@ export default function Debtors({ currentUser, setGlobalNotification }) {
                   className="w-1/2 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase shadow-md shadow-red-500/10 transition cursor-pointer select-none active:scale-[0.98]"
                 >
                   {formLoading ? 'Saving...' : 'Register Debt'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal - Edit Debtor Info */}
+      {editModalOpen && selectedDebtor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-6 relative text-xs text-slate-350 font-semibold animate-in zoom-in-95 duration-200">
+            
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400" />
+
+            <h2 className="text-xs font-black text-slate-100 mb-4 flex items-center gap-1.5 uppercase tracking-wide">
+              <UserCheck className="w-4.5 h-4.5 text-blue-500 shrink-0" />
+              Edit Client Profile
+            </h2>
+
+            {error && (
+              <div className="mb-4 p-2.5 rounded-xl bg-red-950/40 border border-red-500/20 text-red-200 text-[10px] font-bold">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleEditDebtor} className="space-y-4">
+              <div>
+                <label className="block text-[8px] font-black text-slate-555 uppercase tracking-wider mb-1.5">
+                  Customer Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Muhammadu Buhari"
+                  required
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2.5 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[8px] font-black text-slate-555 uppercase tracking-wider mb-1.5">
+                  Phone Number Contact *
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. 08031234567"
+                  required
+                  className="w-full bg-slate-950/60 border border-slate-850 rounded-xl py-2.5 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[8px] font-black text-slate-555 uppercase tracking-wider mb-1.5">
+                  Due Date *
+                </label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  required
+                  className="w-full bg-slate-950/60 border border-slate-855 rounded-xl py-2.5 px-3 text-xs text-slate-400 focus:outline-none focus:border-blue-500 transition cursor-pointer"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="w-1/2 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-850 text-slate-400 hover:text-slate-200 transition font-bold uppercase select-none cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="w-1/2 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase shadow-md shadow-blue-500/10 transition cursor-pointer select-none active:scale-[0.98]"
+                >
+                  {formLoading ? 'Saving...' : 'Save Info'}
                 </button>
               </div>
             </form>
