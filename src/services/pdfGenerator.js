@@ -664,10 +664,12 @@ export const pdfGenerator = {
 
     try {
       const devices = await navigator.bluetooth.getDevices();
-      if (devices && devices.length > 0) {
-        const device = devices[0];
-        const lastUsedName = localStorage.getItem('yorota_last_printer_name');
-        if (lastUsedName && device.name === lastUsedName) {
+      const lastUsedName = localStorage.getItem('yorota_last_printer_name');
+      
+      if (devices && devices.length > 0 && lastUsedName) {
+        const device = devices.find(d => d.name === lastUsedName) || devices[0]; // fallback to first if name changed or not found but permitted
+        
+        if (device) {
           const optionalServices = [
             '000018f0-0000-1000-8000-00805f9b34fb',
             '0000ffe0-0000-1000-8000-00805f9b34fb',
